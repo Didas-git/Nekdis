@@ -35,7 +35,7 @@ All the current types apart from array on redis-om would not be changed but supp
 import { client } from "redis-om";
 
 const memberSchema = client.schema({
-    name: { type: "string", required: "true" },
+    name: { type: "string", required: true },
     points: { type: "number", default: 0 },
     // The array type if passed a data property will be a tuple (and it supports objects)
     followingArtists: { type: "array", data: [{
@@ -55,7 +55,7 @@ Or optionally you could also import the schema class itself.
 import { Schema } from "redis-om";
 
 const memberSchema = new Schema({
-    name: { type: "string", required: "true" },
+    name: { type: "string", required: true },
     points: { type: "number", default: 0 },
     followingArtists: { type: "array", data: [{
         name: "string",
@@ -83,7 +83,7 @@ Or optionally you can import the model class itself.<br/>
 ```ts
 import { Model } from "redis-om";
 
-const memberModel = new Model(memberSchema)
+const memberModel = new Model(memberSchema, client)
 ```
 
 <details>
@@ -112,7 +112,7 @@ memberModel.createAndSave({
     followingArtists: [
         {
             name: "EGOIST",
-            // null is saved to the database independant of the data type but undefined will throw an error
+            // null is saved to the database independent of the data type but undefined will throw an error
             reference: null
         },
         {
@@ -124,10 +124,39 @@ memberModel.createAndSave({
 ```
 <br/>
 
+#### Creating methods
+
+Example writen in typescript
+
+```ts
+import { Model } from "redis-om";
+
+const userSchema = client.schema({
+    name: { type: "string", required: true },
+    email: { type: "string", required: true },
+    address: { type: "string" }
+})
+
+interface UserFunctions {
+    searchByName: (this: Model<T>, name: string) => Promise<string | Array<string>>
+}
+
+// This is a function just because of typescript runtime types
+const userMethods = userSchema.methods<UserFunctions>();
+
+// This can't be an arrow function because of how `this` works
+userMethods.searchByName = async function(name: string) {
+    return await this.query().where("name").equals(name);
+}
+
+const userModel = client.model("User", userSchema);
+const usersNamedDidaS = await userModel.searchByName("DidaS");
+```
+
 
 ### Structure
 
-![structure](./img/structure.png)
+![structure](/img/oop-structure.png)
 
 ### Documentation
 <br/>
@@ -173,8 +202,8 @@ memberModel.createAndSave({
 | deleteOne(data: Record<PropertyKey, any>)                                         | a more limited version of `searchOneAndDelete`                                                                            |
 | watch()                                                                           | creates an event emiter so you can listen to changes on data using that model                                             |
 | aggregate()                                                                       | retrieves the entry and aggregates data to it (a more verbose update, and idk if i want to keep it)                       |
-| where(what: any)                                                                  | creates a search query                                                                                                    |
-| query(data: Array<any>)                                                           | raw redis search                                                                                                          |
+| rawSearch(data: Array<any>)                                                       | raw redis search query                                                                                                    |
+| query()                                                                           | creates a search query                                                                                                    |
 | createAndSave(data: any)                                                          | ALIAS TO `const nModel = model.create({}); nModel.save()`                                                                 |
 <br/>
 
