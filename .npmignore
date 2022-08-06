@@ -1,0 +1,11 @@
+node_modules/
+src/
+spec/
+coverage/
+.github/
+.vscode/
+.idea/
+.gitignore
+tsconfig.json
+vitest.config.ts
+.DS_Store
