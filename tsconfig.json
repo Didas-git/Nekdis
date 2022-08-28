@@ -31,7 +31,10 @@
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "incremental": false
+    "incremental": false,
+    "types": [
+      "@infinite-fansub/logger/globals"
+    ]
   },
   "exclude": [
     "node_modules",
