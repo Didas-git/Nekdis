@@ -4,6 +4,10 @@ import { TupleField } from "./schema-definition";
 
 export type ParseTupleField<T extends TupleField> = T["required"] extends true
     ? ParseTuple<T>
+
+    : T["default"] extends {}
+    ? ParseTuple<T>
+
     : ParseTuple<T> | undefined;
 
 export type ParseTuple<T extends TupleField> = T["mutable"] extends true

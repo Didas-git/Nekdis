@@ -5,11 +5,19 @@ import { ParseObjectField } from "./parse-object-field";
 import { ParseTupleField } from "./parse-tuple-field";
 import { ArrayField, FieldTypes, ObjectField, SchemaDefinition, TupleField } from "./schema-definition";
 
-export type MapSchema<T extends SchemaDefinition> = Pick<Map<T>, {
-    [K in keyof T]: T[K] extends FieldTypes ? T[K]["required"] extends true ? K : never : never
-}[keyof T]> & Partial<Map<T>>;
+export type MapSchema<T extends SchemaDefinition, CAS = false> = Pick<PreMap<T>, {
+    [K in keyof T]: T[K] extends FieldTypes
+    ? T[K]["required"] extends true
+    ? K
+    : T[K]["default"] extends {}
+    ? CAS extends true
+    ? never
+    : K
+    : never
+    : never
+}[keyof T]> & Partial<PreMap<T>>;
 
-export type Map<T extends SchemaDefinition> = {
+export type PreMap<T extends SchemaDefinition> = {
     -readonly [K in keyof T]: T[K] extends ObjectField
     ? ParseObjectField<T[K]>
 

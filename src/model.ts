@@ -35,7 +35,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
         await this.#client.json.set(`${this.name}:${doc._id}`, "$", JSON.parse(doc.toString()));
     }
 
-    public async createAndSave(data: { _id?: string | number } & MapSchema<ExtractSchemaDefinition<S>>) {
+    public async createAndSave(data: { _id?: string | number } & MapSchema<ExtractSchemaDefinition<S>, true>) {
         const doc = new Document(this.#schema[schemaData], data._id?.toString() ?? randomUUID(), data);
         this.save(doc);
     }

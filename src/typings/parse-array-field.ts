@@ -7,6 +7,10 @@ import { ArrayField, FieldTypes, ObjectField, SchemaDefinition, TupleField } fro
 
 export type ParseArrayField<T extends ArrayField> = T["required"] extends true
     ? ParseArray<T>
+
+    : T["default"] extends {}
+    ? ParseArray<T>
+
     : ParseArray<T> | undefined;
 
 export type ParseArray<T extends ArrayField> = T["elements"] extends ObjectField
