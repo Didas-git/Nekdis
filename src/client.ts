@@ -1,7 +1,17 @@
 import { createClient } from "redis";
 import { Model } from "./model";
 import { Schema } from "./schema";
-import { ExtractSchemaMethods, MethodsDefinition, SchemaDefinition, SchemaOptions, Module, WithModules, URLObject, RedisClient } from "./typings";
+import {
+    ExtractSchemaMethods,
+    MethodsDefinition,
+    SchemaDefinition,
+    SchemaOptions,
+    Module,
+    WithModules,
+    URLObject,
+    RedisClient,
+    ExctractName
+} from "./typings";
 
 export class Client {
     #client!: RedisClient;
@@ -44,7 +54,7 @@ export class Client {
         return new Schema<T, M>(schemaData, methods, options);
     }
 
-    public withModules<T extends ReadonlyArray<Module>>(modules: T): this & WithModules<T> {
+    public withModules<T extends Array<Module>>(modules: ExctractName<T>): this & WithModules<T> {
         modules.forEach((module) => {
             //@ts-expect-error shenanigans
             this[module.name] = new module.ctor();
