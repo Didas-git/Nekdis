@@ -24,7 +24,7 @@ describe("client", () => {
 
     describe("model", () => {
         test.todo("create model", () => {
-            expect(userModel).toStrictEqual(new Model(userSchema, createClient()))
+            expect(userModel).toStrictEqual(new Model(createClient(), "User", userSchema))
         })
 
         describe("fetch model from client cache", () => {
@@ -33,7 +33,7 @@ describe("client", () => {
             })
 
             test("fetch existent", () => {
-                expect(client.model("User")).toEqual(new Model(userSchema, createClient()))
+                expect(client.model("User")).toEqual(new Model(createClient(), "User", userSchema))
             })
         })
     })

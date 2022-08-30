@@ -76,3 +76,5 @@ export class Client {
         return <any>model;
     }
 }
+
+export const client = new Client();
