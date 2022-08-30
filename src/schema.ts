@@ -35,7 +35,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
                 if (value === "object" || value === "tuple")
                     throw new PrettyError(`Type '${value}' needs to use its object definition`, {
                         errCode: "R403",
-                        ref: `packages${sep}json-db${sep}src`,
+                        ref: `proposal-redis-om-v2${sep}src`,
                         lines: [
                             {
                                 err: inspect({ [key]: schema[key] }, { colors: true }),

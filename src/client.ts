@@ -13,6 +13,9 @@ import {
     ExctractName
 } from "./typings";
 
+// Load in the lib
+require("@infinite-fansub/logger");
+
 export class Client {
     #client!: RedisClient;
     #models: Map<string, Model<any>> = new Map();
