@@ -16,18 +16,27 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
 
     // TODO: #defineMethods()
 
-    public create(id?: string): Document<ExtractSchemaDefinition<S>> & MapSchema<ExtractSchemaDefinition<S>> {
+    public async get(id: string | number) {
+        const data = await this.#client.json.get(`${this.name}:${id}`);
+
+        if (!data) return undefined;
+
+        return new Document(this.#schema[schemaData], id.toString(), data)
+    }
+
+    public create(id?: string | number): Document<ExtractSchemaDefinition<S>> & MapSchema<ExtractSchemaDefinition<S>> {
         // Using `any` because of the MapSchema type
-        return <any>new Document(this.#schema[schemaData], id ?? randomUUID());
+        return <any>new Document(this.#schema[schemaData], id?.toString() ?? randomUUID());
     }
 
-    public save(doc: Document<SchemaDefinition>) {
+    public async save(doc: Document<SchemaDefinition>) {
         validateData(doc, <ParsedSchemaDefinition>this.#schema[schemaData]);
-        if (!this.#schema.options.dataStructure || this.#schema.options.dataStructure === "JSON")
-            //@ts-ignore JS Shenanigans
-            this.client.json.set(this.name, "$", JSON.parse(doc.toString()))
-        else if (this.#schema.options.dataStructure === "HASH")
-            this.#client.hSet(this.#schema.constructor.name, "$", doc.toString());
+
+        await this.#client.json.set(`${this.name}:${doc._id}`, "$", JSON.parse(doc.toString()));
     }
 
+    public async createAndSave(data: { _id?: string | number } & MapSchema<ExtractSchemaDefinition<S>>) {
+        const doc = new Document(this.#schema[schemaData], data._id?.toString() ?? randomUUID(), data);
+        this.save(doc);
+    }
 }
