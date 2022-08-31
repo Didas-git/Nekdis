@@ -13,3 +13,4 @@ export * from "./parse-tuple-field";
 export * from "./modules";
 export * from "./url-object";
 export * from "./redis-client";
+export * from "./parsed-search-schema";

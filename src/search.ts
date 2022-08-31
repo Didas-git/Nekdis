@@ -1,56 +1,67 @@
-import { readdir, readFile } from "node:fs/promises";
-import { Client } from "./client";
-import { ParsedSchemaDefinition, SchemaDefinition } from "./typings";
+import { FieldTypes, Parsed, RedisClient, SchemaDefinition } from "./typings";
 import { Document } from "./document";
 
 export class Search<S extends SchemaDefinition> {
-    //@ts-expect-error To implement
-    #query: Record<string, unknown> = {};
-    #path: string;
-    #schema: ParsedSchemaDefinition;
-    //@ts-expect-error To use yet (maybe not on the json client)
-    #client: Client;
+    protected query: Array<string> = [];
+    readonly #client: RedisClient;
+    readonly #schema: S;
+    readonly #parsedSchema: Map<Parsed["pars"], Parsed>;
+    readonly #IDX: string;
+    #negated: boolean = false;
+    #currentField: { field: string, type: FieldTypes["type"]; } = <any>{};
 
-    public constructor(path: string, schema: ParsedSchemaDefinition, client: Client) {
-        this.#path = path;
-        this.#schema = schema;
+    public constructor(client: RedisClient, schema: S, parsedSchema: Map<Parsed["pars"], Parsed>, idx: string) {
         this.#client = client;
+        this.#schema = schema;
+        this.#parsedSchema = parsedSchema;
+        this.#IDX = idx;
     }
 
-    public async returnAll(): Promise<Array<Document<S>>> {
+    public async returnAll() {
         return await this.#search();
     }
 
-    async #search(): Promise<Array<Document<S>>> {
+    public async returnFirst() {
+        return (await this.#search())[0];
+    }
 
-        //! JSON version only
-        const results: Array<Document<S>> = [];
+    async #search() {
+        const docs: Array<Document<S>> = [];
 
-        (await readdir(this.#path)).forEach(async (fileName) => {
-
-            const file: Document<S> = JSON.parse((await readFile(`${this.#path}/${fileName}`)).toString());
-
-            //@ts-expect-error On the making
-            if (this.#match(file)) results.push(file);
+        const { documents } = await this.#client.ft.search(this.#IDX, this.query.join(" "));
+        documents.forEach((doc) => {
+            docs.push(new Document(this.#schema, /:(.+)/.exec(doc.id)![1], doc.value));
         });
 
-        return results;
+        return docs;
     }
 
-    //@ts-expect-error TODO
+    public where(field: string) {
+        this.#createWhere(field);
+        return this;
+    }
+
+    public equals(value: string | number) {
+        this.#buildQuery(value);
+        return this;
+    };
+
+    public negate() {
+        this.#negated = !this.#negated;
+    }
+
     #createWhere(field: string) {
-        const value = this.#schema[field];
+        if (!this.#parsedSchema.has(field)) throw new Error(`'${field}' doesnt exist on the schema`);
 
-        if (!value) throw new Error();
+        const { value } = this.#parsedSchema.get(field)!;
 
-        if (value.type === "object") return;
-        if (value.type === "array") return;
-        if (value.type === "tuple") return;
-        if (value.type === "date") return;
-        if (value.type === "point") return;
-        if (value.type === "boolean") return;
-        if (value.type === "number") return;
-        if (value.type === "string") return;
-        /* value.type === "text" */ return;
+        if (value.type === "object") throw new Error("Searching entire objects is not supported yet");
+
+        this.#currentField = { field, type: value.type };
     }
+
+    #buildQuery(value: unknown) {
+        const isNegated = this.#negated ? "-" : "";
+        this.query.push(`(${isNegated}@${this.#currentField.field}:${this.#currentField.type === "number" ? `[${value} ${value}]` : `{${value}}`})`);
+    };
 }
