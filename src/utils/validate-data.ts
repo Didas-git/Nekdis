@@ -36,12 +36,11 @@ export function validateData(data: Document<SchemaDefinition> | SchemaDefinition
             if (typeof dataVal !== "object") throw new Error();
             if (!dataVal.longitude || !dataVal.latitude) throw new Error();
             if (Object.keys(dataVal).length > 2) throw new Error();
-        } else if (value.type === "boolean") {
-            if (typeof dataVal !== "boolean") throw new Error();
-        } else if (value.type === "number") {
-            if (typeof dataVal !== "number") throw new Error();
-        } else {
+        } else if (value.type === "text") {
             if (typeof dataVal !== "string") throw new Error();
+        } else {
+            // This handles `number`, `boolean` and `string` types
+            if (typeof dataVal !== value.type) throw new Error();
         }
     });
 }
