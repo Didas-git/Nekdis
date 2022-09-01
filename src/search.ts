@@ -56,6 +56,7 @@ export class Search<S extends SchemaDefinition> {
         const { value } = this.#parsedSchema.get(field)!;
 
         if (value.type === "object") throw new Error("Searching entire objects is not supported yet");
+        if (value.type === "point") throw new Error("Searching for points (GEO) is not supported yet");
 
         this.#currentField = { field, type: value.type };
     }
