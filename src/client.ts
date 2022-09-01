@@ -40,17 +40,21 @@ export class Client {
     }
 
     public async disconnect(): Promise<Client> {
-        await this.#client?.quit();
+        await this.#client.quit();
 
-        this.isOpen = false
+        this.isOpen = false;
         return this;
     }
 
     public async forceDisconnect(): Promise<Client> {
-        await this.#client?.disconnect();
+        await this.#client.disconnect();
 
-        this.isOpen = false
+        this.isOpen = false;
         return this;
+    }
+
+    public async flushall() {
+        return await this.#client.flushAll();
     }
 
     public schema<T extends SchemaDefinition, M extends MethodsDefinition>(schemaData: T, methods?: M, options?: SchemaOptions): Schema<T, M> {
