@@ -9,7 +9,7 @@ export function parse(schema: ParsedSchemaDefinition, k?: string) {
             parsed.forEach((p) => objs.push(p));
         }
 
-        return objs.push({ value: schema[key], pars: k ? `${k}.${key}` : key });
+        objs.push({ value: schema[key], pars: k ? `${k}.${key}` : key });
     });
 
     return objs;
