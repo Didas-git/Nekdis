@@ -2,12 +2,11 @@ import { FieldTypes, Parsed, RedisClient, SchemaDefinition } from "./typings";
 import { Document } from "./document";
 
 export class Search<S extends SchemaDefinition> {
-    protected query: Array<string> = [];
+    #query: Array<string> = [];
     readonly #client: RedisClient;
     readonly #schema: S;
     readonly #parsedSchema: Map<Parsed["pars"], Parsed>;
     readonly #IDX: string;
-    #negated: boolean = false;
     #currentField: { field: string, type: FieldTypes["type"]; } = <any>{};
 
     public constructor(client: RedisClient, schema: S, parsedSchema: Map<Parsed["pars"], Parsed>, idx: string) {
@@ -28,7 +27,7 @@ export class Search<S extends SchemaDefinition> {
     async #search() {
         const docs: Array<Document<S>> = [];
 
-        const { documents } = await this.#client.ft.search(this.#IDX, this.query.join(" "));
+        const { documents } = await this.#client.ft.search(this.#IDX, this.#query.join(" "));
         documents.forEach((doc) => {
             docs.push(new Document(this.#schema, /:(.+)/.exec(doc.id)![1], doc.value));
         });
@@ -46,10 +45,6 @@ export class Search<S extends SchemaDefinition> {
         return this;
     };
 
-    public negate() {
-        this.#negated = !this.#negated;
-    }
-
     #createWhere(field: string) {
         if (!this.#parsedSchema.has(field)) throw new Error(`'${field}' doesnt exist on the schema`);
 
@@ -62,7 +57,6 @@ export class Search<S extends SchemaDefinition> {
     }
 
     #buildQuery(value: unknown) {
-        const isNegated = this.#negated ? "-" : "";
-        this.query.push(`(${isNegated}@${this.#currentField.field}:${this.#currentField.type === "number" ? `[${value} ${value}]` : `{${value}}`})`);
+        this.#query.push(`(@${this.#currentField.field}:${this.#currentField.type === "number" ? `[${value} ${value}]` : `{${value}}`})`);
     };
 }

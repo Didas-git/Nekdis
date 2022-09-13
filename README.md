@@ -13,7 +13,6 @@ The proposal aims to improve the developer experience by switching to a more sim
 ### Examples
 
 **Disclaimer:** The `Model` is used just for the sake of the examples, I am aware that both users and redis-om devs would probably like to keep it as `Repository`.
-<br/>
 
 #### Connecting to redis
 
@@ -25,7 +24,6 @@ client.connect().then(() => {
     console.log("Connected to redis")
 })
 ```
-<br/>
 
 #### Creating a schema
 
@@ -37,11 +35,10 @@ import { client } from "redis-om";
 const memberSchema = client.schema({
     name: { type: "string", required: true },
     points: { type: "number", default: 0 },
-    // The array type if passed a data property will be a tuple (and it supports objects)
-    followingArtists: { type: "array", data: [{
+    followingArtists: { type: "array", elements: {
         name: "string",
         points: "number"
-    }]},
+    }},
     address: { type: "object", data: {
         city: "string",
         postalCode: "number" 
@@ -57,17 +54,16 @@ import { Schema } from "redis-om";
 const memberSchema = new Schema({
     name: { type: "string", required: true },
     points: { type: "number", default: 0 },
-    followingArtists: { type: "array", data: [{
+    followingArtists: { type: "array", elements: {
         name: "string",
         reference: "string"
-    }]},
+    }},
     address: { type: "object", data: {
         city: "string",
         postalCode: "number" 
     }},
 })
 ```
-<br/>
 
 #### Creating a Model
 
@@ -83,7 +79,7 @@ Or optionally you can import the model class itself.<br/>
 ```ts
 import { Model } from "redis-om";
 
-const memberModel = new Model(memberSchema, client)
+const memberModel = new Model(client, "Member", memberSchema)
 ```
 
 <details>
@@ -97,15 +93,12 @@ import { client } from "redis-om";
 client.addModel("Member", memberModel)
 ```
 
-</details><br/>
+</details>
 
 #### Creating a key on the database
 
 ```ts
 import { client } from "redis-om";
-
-//Fetching an already existent model from the client collection
-const memberModel = client.model("Member");
 
 memberModel.createAndSave({
     name: "DidaS",
@@ -122,11 +115,8 @@ memberModel.createAndSave({
     ]
 })
 ```
-<br/>
 
 #### Creating methods
-
-Example writen in typescript
 
 ```ts
 import { Model } from "redis-om";
@@ -135,77 +125,60 @@ const userSchema = client.schema({
     name: { type: "string", required: true },
     email: { type: "string", required: true },
     address: { type: "string" }
+}, {
+    searchByName: async function(name: string) {
+        return await this.search().where("name").equals(name).returnAll();
+    }
 })
-
-interface UserFunctions {
-    searchByName: (this: Model<T>, name: string) => Promise<string | Array<string>>
-}
-
-// This is a function just because of typescript runtime types
-const userMethods = userSchema.methods<UserFunctions>();
-
-// This can't be an arrow function because of how `this` works
-userMethods.searchByName = async function(name: string) {
-    return await this.query().where("name").equals(name);
-}
 
 const userModel = client.model("User", userSchema);
 const usersNamedDidaS = await userModel.searchByName("DidaS");
 ```
 
-
-### Structure
-
-![structure](/img/oop-structure.png)
-
 ### Documentation
-<br/>
 
 #### Client
 
-| Syntax                                 | Description                                                                             |
-| -------------------------------------- | --------------------------------------------------------------------------------------- |
-| connect(uri: string \| URL)            | connects to the redis database                                                          |
-| close()                                | closes the current connection with the redis database                                   |
-| isOpen()                               | checks if the connection is still active or not                                         |
-| schema(data: Record<string, any>)      | ALIAS TO `new Schema()` (creates a new schema)                                          |
-| model(name: string, data: Schema<T>)   | creates a new model and adds it to the client collection of models                      |
-| addModel(name: string, data: Model<T>) | takes in an instance of a model class and adds it to the client collection of models    |
-| search()                               | a global query that you can search anything on your database without being model locked |
-<br/>
+| Syntax                | Description                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------ |
+| connect(url)          | connects to the redis database                                                       |
+| disconnect()          | closes the current connection after finishing the ongoing transactions               |
+| forceDisconnect()     | closses the current connection without finishing transactions.                       |
+| schema(data)          | ALIAS TO `new Schema()` (creates a new schema)                                       |
+| model(name, schema)   | creates a new model and adds it to the client collection of models                   |
+| addModel(name, model) | takes in an instance of a model class and adds it to the client collection of models |
+| isOpen                | returs a boolean depending reflecting the state of the client                        |
+| raw                   | Exposes the `node-redis` client                                                      |
 
 #### Schema
-| Syntax                              | Description                                                                                    |
-| ----------------------------------- | ---------------------------------------------------------------------------------------------- |
-| add(data: Record<string, { type }>) | adds data to the schema after it being created, this method is not recommend but its an option |
-<br/>
+| Syntax        | Description                                                                                    |
+| ------------- | ---------------------------------------------------------------------------------------------- |
+| add(data)     | adds data to the schema after it being created, this method is not recommend but its an option |
+| methods(data) | adds methods to the schema after it being created, also not recommended                        |
 
 #### Model
-| Syntax                                                                            | Description                                                                                                               |
-| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| create(data: any)                                                                 | creates a new entry on the database.                                                                                      |
-| save()                                                                            | saves the current data to its corresponding entry on the the database if changes were made                                |
-| delete(model?: T)                                                                 | deletes the corresponding entry on the database                                                                           |
-| update(data: any, model?: T)                                                      | updates the entry on the database, ALIAS TO `modelproperty = value; modelsave()`                                          |
-| exists(index?: string)                                                            | checks whether the current model has an entry or if the index passed already exists                                       |
-| count()                                                                           | returns the amount of existent entries corresponding to the model schema                                                  |
-| search(data: Record<PropertyKey, any>)                                            | search for a specific entry                                                                                               |
-| searchOne(data: Record<PropertyKey, any>)                                         | just like `search` but only returns the first entry                                                                       |
-| searchAndUpdate(data: Record<PropertyKey, any>, new: Record<PropertyKey, any>)    | search for a specific entry(ies) and update its content, ALIAS TO `modelsearch()property = value; modelsearch()save()`    |
-| searchAndDelete(data:Record<PropertyKey, any>)                                    | search for a specific entry(ies) and delete it, ALIAS TO `modelsearch()forEach(delete)`                                   |
-| searchOneAndUpdate(data: Record<PropertyKey, any>, new: Record<PropertyKey, any>) | just like `searchAndUpdate` but only updates the first entry                                                              |
-| searchOneAndDelete(data: Record<PropertyKey, any>)                                | just like `searchAndDelete` but only deletes the first entry                                                              |
-| searchByIndex(index?: string)                                                     | search for the the model id or a specific one                                                                             |
-| searchByIndexAndUpdate(data: Record<PropertyKey, any>, index?: string)            | search for a specific index and update its content, ALIAS TO `modelsearchById()property = value; modelsearchById()save()` |
-| searchByIndexAndDelete(index?: string)                                            | search for a specific index and delete it, ALIAS TO `modelsearchByIndex()delete()`                                        |
-| updateOne(data: Record<PropertyKey, any>, new: Record<PropertyKey, any>)          | a more limited version of  `searchOneAndUpdate`                                                                           |
-| deleteOne(data: Record<PropertyKey, any>)                                         | a more limited version of `searchOneAndDelete`                                                                            |
-| watch()                                                                           | creates an event emiter so you can listen to changes on data using that model                                             |
-| aggregate()                                                                       | retrieves the entry and aggregates data to it (a more verbose update, and idk if i want to keep it)                       |
-| rawSearch(data: Array<any>)                                                       | raw redis search query                                                                                                    |
-| query()                                                                           | creates a search query                                                                                                    |
-| createAndSave(data: any)                                                          | ALIAS TO `const nModel = model.create({}); nModel.save()`                                                                 |
-<br/>
+| Syntax                        | Description                                                                                |
+| ----------------------------- | ------------------------------------------------------------------------------------------ |
+| create(id)                    | creates a new entry on the database.                                                       |
+| save(document)                | saves the current data to its corresponding entry on the the database if changes were made |
+| delete(documents)             | deletes the corresponding entry on the database                                            |
+| exists(documents)             | checks whether the current model has an entry or if the index passed already exists        |
+| search()                      | search for a specific entry                                                                |
+| createAndSave()               | ALIAS TO `const nModel = model.create(); save(nModel)`                                     |
+| ~~update(document, newData)~~ | updates the entry on the database                                                          |
+| ~~count()~~                   | returns the amount of existent entries corresponding to the model schema                   |
+| ~~searchOne()~~               | just like `search` but only returns the first entry                                        |
+| ~~searchAndUpdate()~~         | search for a specific entry(ies) and update its content                                    |
+| ~~searchAndDelete()~~         | search for a specific entry(ies) and delete it                                             |
+| ~~searchOneAndUpdate()~~      | just like `searchAndUpdate` but only updates the first entry                               |
+| ~~searchOneAndDelete()~~      | just like `searchAndDelete` but only deletes the first entry                               |
+| ~~searchByIndex()~~           | search for the the model id or a specific one                                              |
+| ~~searchByIndexAndUpdate()~~  | search for a specific index and update its content                                         |
+| ~~searchByIndexAndDelete()~~  | search for a specific index and delete it                                                  |
+| ~~updateOne()~~               | a more limited version of  `searchOneAndUpdate`                                            |
+| ~~watch()~~                   | creates an event emiter so you can listen to changes on data using that model              |
+| ~~aggregate()~~               | retrieves the entry and aggregates data to it                                              |
+| ~~rawSearch()~~               | raw redis search query                                                                     |
 
 #### Query
 Refer to the current redis-om version for now

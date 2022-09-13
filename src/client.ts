@@ -18,10 +18,10 @@ require("@infinite-fansub/logger");
 
 export class Client {
     #client!: RedisClient;
+    #raw!: RedisClient;
     #models: Map<string, Model<any>> = new Map();
     public isOpen: boolean = false;
 
-    public readonly raw: RedisClient = this.#client;
 
     public async connect(url: string | URLObject = "redis://localhost:6379"): Promise<Client> {
         if (this.isOpen) return this;
@@ -34,6 +34,7 @@ export class Client {
 
         this.#client = createClient({ url });
         this.#client.connect();
+        this.#raw = this.#client;
         this.isOpen = true;
 
         return this;
@@ -51,10 +52,6 @@ export class Client {
 
         this.isOpen = false;
         return this;
-    }
-
-    public async flushall() {
-        return await this.#client.flushAll();
     }
 
     public schema<T extends SchemaDefinition, M extends MethodsDefinition>(schemaData: T, methods?: M, options?: SchemaOptions): Schema<T, M> {
@@ -78,6 +75,17 @@ export class Client {
         const model = new Model(this.#client, name, schema);
         this.#models.set(name, model);
         return <any>model;
+    }
+
+    public addModel(name: string, model: Model<any>, override: boolean = false): void {
+        if (this.#models.has(name) && !override) throw new Error("The model passed already exists, if you wish to override it pass in `true` as the third argument");
+        if (!(model instanceof Model)) throw new Error("The recieved model was of the wrong type");
+
+        this.#models.set(name, model);
+    }
+
+    public get raw(): RedisClient {
+        return this.#raw;
     }
 }
 
