@@ -1,0 +1,1 @@
+{"version":3,"file":"extract-generic.d.ts","sourceRoot":"","sources":["../../src/typings/extract-generic.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,WAAW,CAAC;AAEnC,oBAAY,uBAAuB,CAAC,CAAC,IAAI,CAAC,SAAS,MAAM,CAAC,MAAM,CAAC,EAAE,GAAG,CAAC,GAAG,CAAC,GAAG,KAAK,CAAC;AACpF,oBAAY,oBAAoB,CAAC,CAAC,IAAI,CAAC,SAAS,MAAM,CAAC,GAAG,EAAE,MAAM,CAAC,CAAC,GAAG,CAAC,GAAG,KAAK,CAAC"}
