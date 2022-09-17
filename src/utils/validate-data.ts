@@ -1,46 +1,63 @@
-import { FieldTypes, ParsedSchemaDefinition, SchemaDefinition } from "../typings";
+import { SchemaDefinition } from "../typings";
 import { Document } from "../document";
 
-export function validateData(data: Document<SchemaDefinition> | SchemaDefinition, schema: ParsedSchemaDefinition, isField: boolean = false): void {
-    const schemaKeySet = new Set(Object.keys(schema));
-    const dataKeySet = new Set(Object.keys(data ?? {}));
+export const proxyHandler: ProxyHandler<Document<SchemaDefinition>> = {
+    set(target, key, value) {
 
-    schemaKeySet.forEach((val) => {
-        if (!isField && !dataKeySet.has(val)) throw new Error();
+        if (typeof key === "symbol") return false;
 
-        const value = schema[val];
-        const dataVal = data[val];
+        if (value === null) {
+            target[key] = undefined;
+            return true;
+        };
 
-        if (dataVal === null) return;
-        if (typeof dataVal === "undefined" && !value.required) return;
-        if (typeof dataVal === "undefined" && value.required && typeof value.default === "undefined") throw new Error();
+        if (key === "_id") {
+            if (typeof value === "number")
+                target[key] = value.toString();
+            else if (typeof value !== "string")
+                throw new Error("Invalid `_id` type");
+            else
+                target[key] = value;
+            return true;
+        };
 
-        if (value.type === "object") {
-            if (!value.data) return;
-            validateData(dataVal, <ParsedSchemaDefinition>value.data, true);
-        } else if (value.type === "array") {
-            if (typeof value.elements === "object")
-                validateData(dataVal, <ParsedSchemaDefinition>value.elements, true);
-            else {
-                dataVal.every((vall: unknown) => {
-                    if (typeof vall !== value.elements) throw new Error();
-                });
-            }
-        } else if (value.type === "tuple") {
-            (<Array<FieldTypes>>value.elements).forEach((element, i) => {
-                validateData(<SchemaDefinition><unknown>{ ...[dataVal[i]] }, <ParsedSchemaDefinition><unknown>{ ...[element] }, true);
-            });
-        } else if (value.type === "date") {
-            if (!(dataVal instanceof Date)) throw new Error();
-        } else if (value.type === "point") {
-            if (typeof dataVal !== "object") throw new Error();
-            if (!dataVal.longitude || !dataVal.latitude) throw new Error();
-            if (Object.keys(dataVal).length > 2) throw new Error();
-        } else if (value.type === "text") {
-            if (typeof dataVal !== "string") throw new Error();
+        const type = target[key].type;
+
+        if (type === "tuple" || type === "array") {
+            if (!Array.isArray(value))
+                throw new Error(`${key} expects the value to be in an array format`);
+            target[key] = value;
+        } else if (type === "object") {
+            if (typeof value !== "object" || Array.isArray(value) || value === null)
+                throw new Error(`${key} expects a plain object`);
+            target[key] = value;
+        } else if (type === "date") {
+            if (!(value instanceof Date))
+                throw new Error(`${key} expects a Date object`);
+            target[key] = value.getTime();
+        } else if (type === "point") {
+            if (typeof value !== "object") throw new Error(`${key} expects a Point-like object`);
+            if (!value.longitude || !value.latitude) throw new Error(`${key} doesnt not have a \`longitude\` and/or \`latitude\``);
+            if (Object.keys(value).length > 2) throw new Error(`${key} has an invalid amount of keys`);
+        } else if (type === "text") {
+            if (typeof value !== "string")
+                throw new Error(`${key} expects a string`)
+            target[key] = value;
         } else {
-            // This handles `number`, `boolean` and `string` types
-            if (typeof dataVal !== value.type) throw new Error();
-        }
-    });
+            if (typeof value !== type)
+                throw new Error(`${key} recieved an invalid data type`)
+        };
+        return true;
+    },
+
+    get(target, key) {
+        const val = target[key];
+        if (val instanceof Function) {
+            return function (...args: any) {
+                return val.apply(target, args);
+            }
+        };
+
+        return val.value;
+    },
 }

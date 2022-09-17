@@ -1,6 +1,6 @@
 import { Schema } from "./schema";
 import { Document } from "./document";
-import { parse, schemaData, validateData } from "./utils";
+import { parse, proxyHandler, schemaData } from "./utils";
 import { ExtractSchemaDefinition, SchemaDefinition, MapSchema, MethodsDefinition, ParsedSchemaDefinition, RedisClient, Parsed } from "./typings";
 import { randomUUID } from "node:crypto";
 import { Search } from "./search";
@@ -29,17 +29,16 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
 
         if (!data) return null;
 
-        return new Document(this.#schema[schemaData], id.toString(), data);
+        return new Proxy(new Document(this.#schema[schemaData], id.toString(), data), proxyHandler);
     }
 
     public create(id?: string | number): Document<ExtractSchemaDefinition<S>> & MapSchema<ExtractSchemaDefinition<S>> {
         // Using `any` because of the MapSchema type
-        return <any>new Document(this.#schema[schemaData], id?.toString() ?? randomUUID());
+        return <any>new Proxy(new Document(this.#schema[schemaData], id?.toString() ?? randomUUID()), proxyHandler);
     }
 
     public async save(doc: Document<SchemaDefinition>) {
         if (!doc) throw new Error();
-        validateData(doc, <ParsedSchemaDefinition>this.#schema[schemaData]);
 
         await this.#client.json.set(`${this.name}:${doc._id}`, "$", JSON.parse(doc.toString()));
     }
@@ -62,7 +61,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     }
 
     public async createAndSave(data: { _id?: string | number; } & MapSchema<ExtractSchemaDefinition<S>, true>) {
-        const doc = new Document(this.#schema[schemaData], data._id?.toString() ?? randomUUID(), data);
+        const doc = new Proxy(new Document(this.#schema[schemaData], data._id?.toString() ?? randomUUID(), data), proxyHandler);
         await this.save(doc);
     }
 

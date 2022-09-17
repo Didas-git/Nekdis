@@ -1,5 +1,6 @@
 import { FieldTypes, Parsed, RedisClient, SchemaDefinition } from "./typings";
 import { Document } from "./document";
+import { proxyHandler } from "./utils";
 
 export class Search<S extends SchemaDefinition> {
     #query: Array<string> = [];
@@ -29,7 +30,7 @@ export class Search<S extends SchemaDefinition> {
 
         const { documents } = await this.#client.ft.search(this.#IDX, this.#query.join(" "));
         documents.forEach((doc) => {
-            docs.push(new Document(this.#schema, /:(.+)/.exec(doc.id)![1], doc.value));
+            docs.push(<any>new Proxy(new Document(this.#schema, /:(.+)/.exec(doc.id)![1], doc.value), proxyHandler));
         });
 
         return docs;
