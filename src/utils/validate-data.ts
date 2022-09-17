@@ -7,7 +7,7 @@ export const proxyHandler: ProxyHandler<Document<SchemaDefinition>> = {
         if (typeof key === "symbol") return false;
 
         if (value === null) {
-            target[key] = undefined;
+            target[key].value = undefined;
             return true;
         };
 
@@ -26,15 +26,15 @@ export const proxyHandler: ProxyHandler<Document<SchemaDefinition>> = {
         if (type === "tuple" || type === "array") {
             if (!Array.isArray(value))
                 throw new Error(`${key} expects the value to be in an array format`);
-            target[key] = value;
+            target[key].value = value;
         } else if (type === "object") {
             if (typeof value !== "object" || Array.isArray(value) || value === null)
                 throw new Error(`${key} expects a plain object`);
-            target[key] = value;
+            target[key].value = value;
         } else if (type === "date") {
             if (!(value instanceof Date))
                 throw new Error(`${key} expects a Date object`);
-            target[key] = value.getTime();
+            target[key].value = value.getTime();
         } else if (type === "point") {
             if (typeof value !== "object") throw new Error(`${key} expects a Point-like object`);
             if (!value.longitude || !value.latitude) throw new Error(`${key} doesnt not have a \`longitude\` and/or \`latitude\``);
@@ -42,22 +42,25 @@ export const proxyHandler: ProxyHandler<Document<SchemaDefinition>> = {
         } else if (type === "text") {
             if (typeof value !== "string")
                 throw new Error(`${key} expects a string`)
-            target[key] = value;
+            target[key].value = value;
         } else {
             if (typeof value !== type)
                 throw new Error(`${key} recieved an invalid data type`)
+            target[key].value = value;
         };
         return true;
     },
 
-    get(target, key) {
+    get(target, key, receiver) {
         const val = target[key];
         if (val instanceof Function) {
             return function (...args: any) {
-                return val.apply(target, args);
+                //@ts-expect-error
+                return val.apply(this === receiver ? target : this, args);
             }
         };
-
+        if (key === "_id")
+            return target[key];
         return val.value;
     },
 }

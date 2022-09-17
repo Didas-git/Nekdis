@@ -64,7 +64,7 @@ export class Document<S extends SchemaDefinition> {
         const obj: Record<string, FieldTypes> = {};
 
         Object.keys(this.#schema).forEach((key) => {
-            obj[key] = this[key];
+            obj[key] = this[key].value;
         });
 
         return JSON.stringify(obj, null);
