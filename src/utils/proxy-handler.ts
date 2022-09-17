@@ -51,12 +51,11 @@ export const proxyHandler: ProxyHandler<Document<SchemaDefinition>> = {
         return true;
     },
 
-    get(target, key, receiver) {
+    get(target, key) {
         const val = target[key];
         if (val instanceof Function) {
             return function (...args: any) {
-                //@ts-expect-error
-                return val.apply(this === receiver ? target : this, args);
+                return val.apply(target, args);
             }
         };
         if (key === "_id")
