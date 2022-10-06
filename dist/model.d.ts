@@ -6,7 +6,7 @@ export declare class Model<S extends Schema<SchemaDefinition, MethodsDefinition>
     #private;
     readonly name: string;
     constructor(client: RedisClient, name: string, data: S);
-    get(id: string | number): Promise<Document<Record<string, import("./typings").FieldTypes>> | null>;
+    get(id: string | number): Promise<Document<ExtractSchemaDefinition<S>> & MapSchema<ExtractSchemaDefinition<S>> | null>;
     create(id?: string | number): Document<ExtractSchemaDefinition<S>> & MapSchema<ExtractSchemaDefinition<S>>;
     save(doc: Document<SchemaDefinition>): Promise<void>;
     delete(...docs: Array<string | number | Document<SchemaDefinition>>): Promise<void>;

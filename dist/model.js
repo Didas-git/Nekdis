@@ -28,16 +28,15 @@ class Model {
         const data = await this.#client.json.get(`${this.name}:${id}`);
         if (!data)
             return null;
-        return new document_1.Document(this.#schema[utils_1.schemaData], id.toString(), data);
+        return new Proxy(new document_1.Document(this.#schema[utils_1.schemaData], id.toString(), data), utils_1.proxyHandler);
     }
     create(id) {
         // Using `any` because of the MapSchema type
-        return new document_1.Document(this.#schema[utils_1.schemaData], id?.toString() ?? (0, node_crypto_1.randomUUID)());
+        return new Proxy(new document_1.Document(this.#schema[utils_1.schemaData], id?.toString() ?? (0, node_crypto_1.randomUUID)()), utils_1.proxyHandler);
     }
     async save(doc) {
         if (!doc)
             throw new Error();
-        (0, utils_1.validateData)(doc, this.#schema[utils_1.schemaData]);
         await this.#client.json.set(`${this.name}:${doc._id}`, "$", JSON.parse(doc.toString()));
     }
     async delete(...docs) {
@@ -60,7 +59,7 @@ class Model {
         });
     }
     async createAndSave(data) {
-        const doc = new document_1.Document(this.#schema[utils_1.schemaData], data._id?.toString() ?? (0, node_crypto_1.randomUUID)(), data);
+        const doc = new Proxy(new document_1.Document(this.#schema[utils_1.schemaData], data._id?.toString() ?? (0, node_crypto_1.randomUUID)(), data), utils_1.proxyHandler);
         await this.save(doc);
     }
     search() {

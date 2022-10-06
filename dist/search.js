@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Search = void 0;
 const document_1 = require("./document");
+const utils_1 = require("./utils");
 class Search {
     #query = [];
     #client;
@@ -25,7 +26,7 @@ class Search {
         const docs = [];
         const { documents } = await this.#client.ft.search(this.#IDX, this.#query.join(" "));
         documents.forEach((doc) => {
-            docs.push(new document_1.Document(this.#schema, /:(.+)/.exec(doc.id)[1], doc.value));
+            docs.push(new Proxy(new document_1.Document(this.#schema, /:(.+)/.exec(doc.id)[1], doc.value), utils_1.proxyHandler));
         });
         return docs;
     }
