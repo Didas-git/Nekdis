@@ -60,15 +60,15 @@ class Schema {
                 if (!value.type)
                     throw new PrettyError("Type not defined");
                 if (value.type !== "array" && value.type !== "object" && value.type !== "tuple") {
-                    if (!value.default)
+                    if (typeof value.default === "undefined")
                         value.default = undefined;
-                    if (!value.required)
+                    if (typeof value.required === "undefined")
                         value.required = false;
                 }
                 else if (value.type === "array") {
-                    if (!value.default)
+                    if (typeof value.default === "undefined")
                         value.default = undefined;
-                    if (!value.required)
+                    if (typeof value.required === "undefined")
                         value.required = false;
                     if (!value.elements)
                         value.elements = "string";
@@ -76,11 +76,11 @@ class Schema {
                         value.elements = this.#parse(value.elements);
                 }
                 else if (value.type === "tuple") {
-                    if (!value.default)
+                    if (typeof value.default === "undefined")
                         value.default = undefined;
-                    if (!value.required)
+                    if (typeof value.required === "undefined")
                         value.required = false;
-                    if (!value.mutable)
+                    if (typeof value.mutable === "undefined")
                         value.mutable = false;
                     if (!value.elements || !Array.isArray(value.elements) || !value.elements.length)
                         throw new PrettyError("A Tuple type needs to have its elements defined");
@@ -88,9 +88,9 @@ class Schema {
                         value.elements = this.#parse(value.elements);
                 }
                 else {
-                    if (!value.default)
+                    if (typeof value.default === "undefined")
                         value.default = undefined;
-                    if (!value.required)
+                    if (typeof value.required === "undefined")
                         value.required = false;
                     if (!value.data)
                         value.data = undefined;
