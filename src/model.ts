@@ -23,13 +23,13 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
 
     // TODO: #defineMethods()
 
-    public async get(id: string | number) {
+    public async get(id: string | number): Promise<Document<ExtractSchemaDefinition<S>> & MapSchema<ExtractSchemaDefinition<S>> | null> {
         if (!id) throw new Error();
         const data = await this.#client.json.get(`${this.name}:${id}`);
 
         if (!data) return null;
 
-        return new Proxy(new Document(this.#schema[schemaData], id.toString(), data), proxyHandler);
+        return <any>new Proxy(new Document(this.#schema[schemaData], id.toString(), data), proxyHandler);
     }
 
     public create(id?: string | number): Document<ExtractSchemaDefinition<S>> & MapSchema<ExtractSchemaDefinition<S>> {
