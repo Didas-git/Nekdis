@@ -59,22 +59,22 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
             } else {
                 if (!value.type) throw new PrettyError("Type not defined");
                 if (value.type !== "array" && value.type !== "object" && value.type !== "tuple") {
-                    if (!value.default) value.default = undefined;
-                    if (!value.required) value.required = false;
+                    if (typeof value.default === "undefined") value.default = undefined;
+                    if (typeof value.required === "undefined") value.required = false;
                 } else if (value.type === "array") {
-                    if (!value.default) value.default = undefined;
-                    if (!value.required) value.required = false;
+                    if (typeof value.default === "undefined") value.default = undefined;
+                    if (typeof value.required === "undefined") value.required = false;
                     if (!value.elements) value.elements = "string";
                     if (typeof value.elements === "object" && !Array.isArray(value.elements)) value.elements = this.#parse(value.elements);
                 } else if (value.type === "tuple") {
-                    if (!value.default) value.default = undefined;
-                    if (!value.required) value.required = false;
-                    if (!value.mutable) value.mutable = false;
+                    if (typeof value.default === "undefined") value.default = undefined;
+                    if (typeof value.required === "undefined") value.required = false;
+                    if (typeof value.mutable === "undefined") value.mutable = false;
                     if (!value.elements || !Array.isArray(value.elements) || !value.elements.length) throw new PrettyError("A Tuple type needs to have its elements defined");
                     else value.elements = <TupleField["elements"]><unknown>this.#parse(<SchemaDefinition><unknown>value.elements);
                 } else {
-                    if (!value.default) value.default = undefined;
-                    if (!value.required) value.required = false;
+                    if (typeof value.default === "undefined") value.default = undefined;
+                    if (typeof value.required === "undefined") value.required = false;
                     if (!value.data) value.data = undefined;
                     else value.data = this.#parse(value.data);
                 }
