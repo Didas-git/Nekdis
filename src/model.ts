@@ -1,6 +1,6 @@
 import { Schema } from "./schema";
 import { Document } from "./document";
-import { parse, proxyHandler, schemaData } from "./utils";
+import { methods, parse, proxyHandler, schemaData } from "./utils";
 import { ExtractSchemaDefinition, SchemaDefinition, MapSchema, MethodsDefinition, ParsedSchemaDefinition, RedisClient, Parsed } from "./typings";
 import { randomUUID } from "node:crypto";
 import { Search } from "./search";
@@ -19,9 +19,8 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
         parse(<ParsedSchemaDefinition>this.#schema[schemaData]).forEach((parsedVal) => {
             this.#parsedSchema.set(parsedVal.pars, { value: parsedVal.value, pars: parsedVal.pars.replace(/[.]/g, "_") });
         });
+        this.#defineMethods();
     }
-
-    // TODO: #defineMethods()
 
     public async get(id: string | number): Promise<Document<ExtractSchemaDefinition<S>> & MapSchema<ExtractSchemaDefinition<S>> | null> {
         if (!id) throw new Error();
@@ -33,7 +32,6 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     }
 
     public create(id?: string | number): Document<ExtractSchemaDefinition<S>> & MapSchema<ExtractSchemaDefinition<S>> {
-        // Using `any` because of the MapSchema type
         return <any>new Proxy(new Document(this.#schema[schemaData], id?.toString() ?? randomUUID()), proxyHandler);
     }
 
@@ -66,7 +64,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     }
 
     public search() {
-        return new Search<ExtractSchemaDefinition<S>>(this.#client, <any>this.#schema[schemaData], this.#parsedSchema, this.#searchIndexName);
+        return new Search<ExtractSchemaDefinition<S>>(this.#client, this.#parsedSchema);
     }
 
     public async createIndex() {
@@ -95,5 +93,12 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
 
     public async rawSearch(...args: Array<string>) {
         return this.#client.ft.search(this.#searchIndexName, args.join(" "));
+    }
+
+    #defineMethods() {
+        Object.keys(this.#schema[methods]).forEach((key) => {
+            //@ts-expect-error
+            this[key] = this.#schema[methods][key]
+        })
     }
 }
