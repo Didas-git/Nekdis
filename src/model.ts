@@ -64,7 +64,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     }
 
     public search() {
-        return new Search<ExtractSchemaDefinition<S>>(this.#client, this.#parsedSchema);
+        return new Search<ExtractSchemaDefinition<S>>(this.#client, <any>this.#schema[schemaData], this.#parsedSchema, this.#searchIndexName);
     }
 
     public async createIndex() {

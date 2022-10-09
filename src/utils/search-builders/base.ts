@@ -4,29 +4,36 @@ import { SchemaDefinition } from "../../typings";
 export abstract class SearchField<T extends SchemaDefinition> {
 
     protected negated: boolean = false;
+    protected value: unknown;
 
-    constructor(protected search: Search<T>) { }
+    constructor(protected search: Search<T>, protected field: string) { }
 
     /** Syntatic sugar, calls `eq` */
-    abstract equalsTo(): Search<T>;
+    abstract equalsTo(value: unknown): Search<T>;
     /** Syntatic sugar, calls `eq` */
-    abstract equals(): Search<T>;
-    abstract eq(): Search<T>;
+    abstract equals(value: unknown): Search<T>;
+    abstract eq(value: unknown): Search<T>;
     /** Syntatic sugar, return self */
-    get does() {
+    public get does() {
         return this;
     }
     /** Syntatic sugar, return self */
-    get is() {
+    public get is() {
         return this;
     }
 
-    get not() {
+    public get not() {
         this.negate();
         return this;
     }
 
     protected negate(): void {
         this.negated = !this.negated
+    }
+
+    protected abstract createField(): string;
+
+    public toString() {
+        return `${this.negated ? "-" : ""}(${this.createField()})`
     }
 }

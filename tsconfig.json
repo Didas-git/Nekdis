@@ -38,7 +38,7 @@
   },
   "exclude": [
     "node_modules",
-    "*.config.ts",
+    "vitest.config.ts",
     "spec/*",
     "dist/*"
   ],

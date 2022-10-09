@@ -3,7 +3,6 @@ import { Color } from "colours.js/dst";
 import { SchemaDefinition, SchemaOptions, MethodsDefinition, TupleField, ParsedSchemaDefinition } from "./typings";
 import { methods, schemaData } from "./utils/symbols";
 import { ParsingError } from "./utils";
-import { sep } from "node:path";
 
 export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
 
@@ -35,7 +34,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
                 if (value === "object" || value === "tuple")
                     throw new PrettyError(`Type '${value}' needs to use its object definition`, {
                         errCode: "R403",
-                        ref: `proposal-redis-om-v2${sep}src`,
+                        ref: `redis-om`,
                         lines: [
                             {
                                 err: inspect({ [key]: schema[key] }, { colors: true }),

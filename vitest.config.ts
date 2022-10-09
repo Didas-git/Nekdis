@@ -7,7 +7,7 @@ export default defineConfig({
             reporter: ["text", "html"],
             exclude: [
                 "spec/*",
-                "src/*/typings/*"
+                "src/typings/*"
             ]
         }
     }
