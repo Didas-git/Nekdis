@@ -3,9 +3,10 @@ import { SchemaDefinition } from "../../typings";
 import { SearchField } from "./base";
 
 export class StringField<T extends SchemaDefinition> extends SearchField<T> {
+
     eq(value: string): Search<T> {
         this.value = value;
-        this.search.query.push(this.toString())
+        this.search.query.push(this)
         return this.search;
     }
 
@@ -17,7 +18,7 @@ export class StringField<T extends SchemaDefinition> extends SearchField<T> {
         return this.eq(value);
     }
 
-    protected createField(): string {
-        return `@${this.field}:{${this.value}}`
+    protected construct(): string {
+        return `{${this.value}}`
     }
 }

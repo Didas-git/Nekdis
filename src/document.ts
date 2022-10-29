@@ -8,7 +8,7 @@ export class Document<S extends SchemaDefinition> {
     * Using any so everything works as intended
     * I couldn't find any other way to do this or implement the MapSchema type directly in th class
     */
-    [key: string | symbol]: any;
+    [key: string]: any;
 
     public constructor(schema: S, public _id: string | number, data?: {}) {
 

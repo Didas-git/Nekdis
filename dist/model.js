@@ -20,19 +20,18 @@ class Model {
         (0, utils_1.parse)(this.#schema[utils_1.schemaData]).forEach((parsedVal) => {
             this.#parsedSchema.set(parsedVal.pars, { value: parsedVal.value, pars: parsedVal.pars.replace(/[.]/g, "_") });
         });
+        this.#defineMethods();
     }
-    // TODO: #defineMethods()
     async get(id) {
         if (!id)
             throw new Error();
         const data = await this.#client.json.get(`${this.name}:${id}`);
         if (!data)
             return null;
-        return new Proxy(new document_1.Document(this.#schema[utils_1.schemaData], id.toString(), data), utils_1.proxyHandler);
+        return new document_1.Document(this.#schema[utils_1.schemaData], id.toString(), data);
     }
     create(id) {
-        // Using `any` because of the MapSchema type
-        return new Proxy(new document_1.Document(this.#schema[utils_1.schemaData], id?.toString() ?? (0, node_crypto_1.randomUUID)()), utils_1.proxyHandler);
+        return new document_1.Document(this.#schema[utils_1.schemaData], id?.toString() ?? (0, node_crypto_1.randomUUID)());
     }
     async save(doc) {
         if (!doc)
@@ -59,7 +58,7 @@ class Model {
         });
     }
     async createAndSave(data) {
-        const doc = new Proxy(new document_1.Document(this.#schema[utils_1.schemaData], data._id?.toString() ?? (0, node_crypto_1.randomUUID)(), data), utils_1.proxyHandler);
+        const doc = new document_1.Document(this.#schema[utils_1.schemaData], data._id?.toString() ?? (0, node_crypto_1.randomUUID)(), data);
         await this.save(doc);
     }
     search() {
@@ -82,6 +81,12 @@ class Model {
     }
     async rawSearch(...args) {
         return this.#client.ft.search(this.#searchIndexName, args.join(" "));
+    }
+    #defineMethods() {
+        Object.keys(this.#schema[utils_1.methods]).forEach((key) => {
+            //@ts-expect-error
+            this[key] = this.#schema[utils_1.methods][key];
+        });
     }
 }
 exports.Model = Model;

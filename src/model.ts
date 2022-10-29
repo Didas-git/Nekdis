@@ -1,6 +1,6 @@
 import { Schema } from "./schema";
 import { Document } from "./document";
-import { methods, parse, proxyHandler, schemaData } from "./utils";
+import { methods, parse, schemaData } from "./utils";
 import { ExtractSchemaDefinition, SchemaDefinition, MapSchema, MethodsDefinition, ParsedSchemaDefinition, RedisClient, Parsed } from "./typings";
 import { randomUUID } from "node:crypto";
 import { Search } from "./search";
@@ -28,11 +28,11 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
 
         if (!data) return null;
 
-        return <any>new Proxy(new Document(this.#schema[schemaData], id.toString(), data), proxyHandler);
+        return <any>new Document(this.#schema[schemaData], id.toString(), data);
     }
 
     public create(id?: string | number): Document<ExtractSchemaDefinition<S>> & MapSchema<ExtractSchemaDefinition<S>> {
-        return <any>new Proxy(new Document(this.#schema[schemaData], id?.toString() ?? randomUUID()), proxyHandler);
+        return <any>new Document(this.#schema[schemaData], id?.toString() ?? randomUUID());
     }
 
     public async save(doc: Document<SchemaDefinition>) {
@@ -59,7 +59,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     }
 
     public async createAndSave(data: { _id?: string | number; } & MapSchema<ExtractSchemaDefinition<S>, true>) {
-        const doc = new Proxy(new Document(this.#schema[schemaData], data._id?.toString() ?? randomUUID(), data), proxyHandler);
+        const doc = new Document(this.#schema[schemaData], data._id?.toString() ?? randomUUID(), data);
         await this.save(doc);
     }
 

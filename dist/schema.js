@@ -5,7 +5,6 @@ const node_util_1 = require("node:util");
 const dst_1 = require("colours.js/dst");
 const symbols_1 = require("./utils/symbols");
 const utils_1 = require("./utils");
-const node_path_1 = require("node:path");
 class Schema {
     data;
     options;
@@ -35,7 +34,7 @@ class Schema {
                 if (value === "object" || value === "tuple")
                     throw new PrettyError(`Type '${value}' needs to use its object definition`, {
                         errCode: "R403",
-                        ref: `proposal-redis-om-v2${node_path_1.sep}src`,
+                        ref: `redis-om`,
                         lines: [
                             {
                                 err: (0, node_util_1.inspect)({ [key]: schema[key] }, { colors: true }),

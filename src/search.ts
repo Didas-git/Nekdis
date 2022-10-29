@@ -1,14 +1,14 @@
 import { Parsed, RedisClient, SchemaDefinition } from "./typings";
 import { Document } from "./document";
 import { StringField } from "./utils/search-builders/string";
-import { proxyHandler } from "./utils";
+import { SearchField } from "./utils/search-builders/base";
 
 export class Search<T extends SchemaDefinition> {
     readonly #client: RedisClient;
     readonly #schema: T;
     readonly #parsedSchema: Map<Parsed["pars"], Parsed>;
     readonly #index: string;
-    query: Array<string> = [];
+    query: Array<SearchField<T>> = [];
 
     public constructor(client: RedisClient, schema: T, parsedSchema: Map<Parsed["pars"], Parsed>, searchIndex: string) {
         this.#client = client;
@@ -21,14 +21,17 @@ export class Search<T extends SchemaDefinition> {
         return this.#createWhere(field);
     }
 
-    or() { }
+    or(_value: unknown) {
+
+    }
+
     and() { }
     async returnAll() {
         const docs: Array<Document<T>> = [];
         const { documents } = await this.#client.ft.search(this.#index, this.query.join(" "));
 
         documents.forEach((doc) => {
-            docs.push(new Proxy<Document<T>>(new Document(this.#schema, /:(.+)/.exec(doc.id)![1], doc.value), proxyHandler))
+            docs.push(new Document(this.#schema, /:(.+)/.exec(doc.id)![1], doc.value));
         })
 
         return docs;

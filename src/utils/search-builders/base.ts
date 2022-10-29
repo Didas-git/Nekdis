@@ -5,6 +5,8 @@ export abstract class SearchField<T extends SchemaDefinition> {
 
     protected negated: boolean = false;
     protected value: unknown;
+    protected or: unknown;
+    protected and: unknown;
 
     constructor(protected search: Search<T>, protected field: string) { }
 
@@ -13,6 +15,7 @@ export abstract class SearchField<T extends SchemaDefinition> {
     /** Syntatic sugar, calls `eq` */
     abstract equals(value: unknown): Search<T>;
     abstract eq(value: unknown): Search<T>;
+
     /** Syntatic sugar, return self */
     public get does() {
         return this;
@@ -21,7 +24,7 @@ export abstract class SearchField<T extends SchemaDefinition> {
     public get is() {
         return this;
     }
-
+    /** Negate query, return self */
     public get not() {
         this.negate();
         return this;
@@ -31,9 +34,9 @@ export abstract class SearchField<T extends SchemaDefinition> {
         this.negated = !this.negated
     }
 
-    protected abstract createField(): string;
+    protected abstract construct(): string;
 
     public toString() {
-        return `${this.negated ? "-" : ""}(${this.createField()})`
+        return `${this.negated ? "-" : ""}(@${this.field}:)`
     }
 }

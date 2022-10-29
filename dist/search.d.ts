@@ -1,11 +1,14 @@
 import { Parsed, RedisClient, SchemaDefinition } from "./typings";
 import { Document } from "./document";
-export declare class Search<S extends SchemaDefinition> {
+import { StringField } from "./utils/search-builders/string";
+import { SearchField } from "./utils/search-builders/base";
+export declare class Search<T extends SchemaDefinition> {
     #private;
-    constructor(client: RedisClient, schema: S, parsedSchema: Map<Parsed["pars"], Parsed>, idx: string);
-    returnAll(): Promise<Document<S>[]>;
-    returnFirst(): Promise<Document<S>>;
-    where(field: string): this;
-    equals(value: string | number): this;
+    query: Array<SearchField<T>>;
+    constructor(client: RedisClient, schema: T, parsedSchema: Map<Parsed["pars"], Parsed>, searchIndex: string);
+    where(field: string): StringField<T>;
+    or(_value: unknown): void;
+    and(): void;
+    returnAll(): Promise<Document<T>[]>;
 }
 //# sourceMappingURL=search.d.ts.map

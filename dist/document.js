@@ -28,7 +28,7 @@ class Document {
             const value = schema[val];
             const dataVal = data instanceof Document ? data[val].value : data[val];
             if (dataVal === null)
-                return;
+                throw new Error();
             if (typeof dataVal === "undefined" && !value.required)
                 return;
             if (typeof dataVal === "undefined" && value.required && typeof value.default === "undefined")
