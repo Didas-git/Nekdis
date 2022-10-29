@@ -5,8 +5,8 @@ export abstract class SearchField<T extends SchemaDefinition> {
 
     protected negated: boolean = false;
     protected value: unknown;
-    protected or: unknown;
-    protected and: unknown;
+    or: Array<unknown> = [];
+    // and: unknown;
 
     constructor(protected search: Search<T>, protected field: string) { }
 
@@ -35,8 +35,7 @@ export abstract class SearchField<T extends SchemaDefinition> {
     }
 
     protected abstract construct(): string;
-
     public toString() {
-        return `${this.negated ? "-" : ""}(@${this.field}:)`
+        return `(${this.negated ? "-" : ""}(@${this.field}:${this.construct()}))`
     }
 }

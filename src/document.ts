@@ -17,13 +17,13 @@ export class Document<S extends SchemaDefinition> {
         if (data) {
             Object.keys(data).forEach((key) => {
                 //@ts-expect-error
-                this[key] = { value: data[key], type: schema[key].type };
+                this[key] = data[key];
             });
         }
 
         Object.keys(schema).forEach((key) => {
-            if (this[key]) return;
-            this[key] = { value: (<ParsedSchemaDefinition><unknown>schema[key]).default, type: (<ParsedSchemaDefinition><unknown>schema[key]).type };
+            if (typeof this[key] !== "undefined") return;
+            this[key] = (<ParsedSchemaDefinition><unknown>schema[key]).default;
         });
     }
 
@@ -31,10 +31,10 @@ export class Document<S extends SchemaDefinition> {
         const schema = schem ?? <ParsedSchemaDefinition>this.#schema
         const data = dat ?? this;
         Object.keys(schema).forEach((val) => {
-            if (!isField && !data[val]) throw new Error();
+            if (isField && !data[val]) throw new Error();
 
             const value = schema[val];
-            const dataVal = data instanceof Document ? data[val].value : data[val];
+            const dataVal = data[val];
 
             if (dataVal === null) throw new Error();
             if (typeof dataVal === "undefined" && !value.required) return;
@@ -75,7 +75,7 @@ export class Document<S extends SchemaDefinition> {
         const obj: Record<string, FieldTypes> = {};
 
         Object.keys(this.#schema).forEach((key) => {
-            obj[key] = this[key].value;
+            obj[key] = this[key];
         });
 
         return JSON.stringify(obj, null);
