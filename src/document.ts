@@ -10,7 +10,7 @@ export class Document<S extends SchemaDefinition> {
     */
     [key: string]: any;
 
-    public constructor(schema: S, public _id: string | number, data?: {}) {
+    public constructor(schema: S, public $id: string | number, data?: {}) {
 
         this.#schema = schema
 
@@ -35,6 +35,8 @@ export class Document<S extends SchemaDefinition> {
 
             const value = schema[val];
             const dataVal = data[val];
+
+            if (val === "$id") return;
 
             if (dataVal === null) throw new Error();
             if (typeof dataVal === "undefined" && !value.required) return;

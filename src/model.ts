@@ -38,28 +38,28 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     public async save(doc: Document<SchemaDefinition>) {
         if (!doc) throw new Error();
 
-        await this.#client.json.set(`${this.name}:${doc._id}`, "$", JSON.parse(doc.toString()));
+        await this.#client.json.set(`${this.name}:${doc.$id}`, "$", JSON.parse(doc.toString()));
     }
 
     public async delete(...docs: Array<string | number | Document<SchemaDefinition>>) {
         if (!docs) throw new Error();
-        await this.#client.del(docs.map((el) => `${this.name}:${el instanceof Document ? el._id : el.toString()}`));
+        await this.#client.del(docs.map((el) => `${this.name}:${el instanceof Document ? el.$id : el.toString()}`));
     };
 
     public async exists(...docs: Array<string | number | Document<SchemaDefinition>>) {
         if (!docs) throw new Error();
-        return await this.#client.exists(docs.map((el) => `${this.name}:${el instanceof Document ? el._id : el.toString()}`));
+        return await this.#client.exists(docs.map((el) => `${this.name}:${el instanceof Document ? el.$id : el.toString()}`));
     };
 
     public async expire(docs: Array<string | number | Document<SchemaDefinition>>, seconds: number, mode?: 'NX' | 'XX' | 'GT' | 'LT') {
         if (!docs) throw new Error();
-        docs.map((el) => `${this.name}:${el instanceof Document ? el._id : el.toString()}`).forEach((doc) => {
+        docs.map((el) => `${this.name}:${el instanceof Document ? el.$id : el.toString()}`).forEach((doc) => {
             this.#client.expire(doc, seconds, mode);
         });
     }
 
-    public async createAndSave(data: { _id?: string | number; } & MapSchema<ExtractSchemaDefinition<S>, true>) {
-        const doc = new Document(this.#schema[schemaData], data._id?.toString() ?? randomUUID(), data);
+    public async createAndSave(data: { $id?: string | number; } & MapSchema<ExtractSchemaDefinition<S>, true>) {
+        const doc = new Document(this.#schema[schemaData], data.$id?.toString() ?? randomUUID(), data);
         await this.save(doc);
     }
 
