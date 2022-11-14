@@ -3,6 +3,7 @@ import { Document } from "./document";
 import { StringField } from "./utils/search-builders/string";
 import { SearchField } from "./utils/search-builders/base";
 import { NumberField } from "./utils/search-builders/number";
+import { MapSearchField } from "./typings/map-search-fields";
 
 export class Search<T extends SchemaDefinition> {
     readonly #client: RedisClient;
@@ -19,7 +20,11 @@ export class Search<T extends SchemaDefinition> {
         this.#index = searchIndex;
     }
 
-    public where(field: string) {
+    public where<S extends keyof T>(field: S) {
+        return this.#createWhere(field);
+    }
+
+    public and<S extends keyof T>(field: S) {
         return this.#createWhere(field);
     }
 
@@ -38,9 +43,9 @@ export class Search<T extends SchemaDefinition> {
         return this;
     }
 
-    else(_value: unknown) { }
+    else(_value: unknown) {
 
-    // and() { }
+    }
 
     async returnAll() {
         const docs: Array<Document<T>> = [];
@@ -61,7 +66,9 @@ export class Search<T extends SchemaDefinition> {
         return this.query.map((q) => q.toString()).join(" ")
     }
 
-    #createWhere(field: string) {
+    #createWhere<S extends keyof T>(field: S): MapSearchField<S, T> {
+
+        if (typeof field !== "string") throw new PrettyError();
 
         if (!this.#parsedSchema.has(field)) throw new PrettyError(`'${field}' doesnt exist on the schema`)
 
@@ -70,11 +77,11 @@ export class Search<T extends SchemaDefinition> {
         switch (parsedField.value.type) {
             case "string": {
                 this.#workingType = "string";
-                return new StringField<T>(this, field);
+                return <never>new StringField<T>(this, field);
             }
             case "number": {
                 this.#workingType = "number";
-                return new NumberField<T>(this, field);
+                return <never>new NumberField<T>(this, field);
             }
         }
 

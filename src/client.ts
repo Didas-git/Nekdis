@@ -64,17 +64,17 @@ export class Client {
             this[module.name] = new module.ctor();
         });
 
-        return <any>this;
+        return <never>this;
     }
 
     public model<T extends Schema<SchemaDefinition, MethodsDefinition>>(name: string, schema?: T): Model<T> & ExtractSchemaMethods<T> {
-        if (this.#models.has(name)) return <any>this.#models.get(name)!;
+        if (this.#models.has(name)) return <never>this.#models.get(name)!;
 
         if (!schema) throw new Error("You have to pass a schema if it doesnt exist");
 
         const model = new Model(this.#client, name, schema);
         this.#models.set(name, model);
-        return <any>model;
+        return <never>model;
     }
 
     public addModel(name: string, model: Model<any>, override: boolean = false): void {

@@ -28,11 +28,11 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
 
         if (!data) return null;
 
-        return <any>new Document(this.#schema[schemaData], id.toString(), data);
+        return <never>new Document(this.#schema[schemaData], id.toString(), data);
     }
 
     public create(id?: string | number): Document<ExtractSchemaDefinition<S>> & MapSchema<ExtractSchemaDefinition<S>> {
-        return <any>new Document(this.#schema[schemaData], id?.toString() ?? randomUUID());
+        return <never>new Document(this.#schema[schemaData], id?.toString() ?? randomUUID());
     }
 
     public async save(doc: Document<SchemaDefinition>) {

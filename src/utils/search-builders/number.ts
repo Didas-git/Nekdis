@@ -4,7 +4,7 @@ import { SearchField } from "./base";
 
 export class NumberField<T extends SchemaDefinition> extends SearchField<T> {
 
-    declare protected value: [number | string, number | string];
+    declare protected value: [number, number];
 
     eq(value: number): Search<T> {
         this.value = [value, value];

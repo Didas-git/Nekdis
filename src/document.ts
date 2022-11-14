@@ -36,8 +36,6 @@ export class Document<S extends SchemaDefinition> {
             const value = schema[val];
             const dataVal = data[val];
 
-            if (val === "$id") return;
-
             if (dataVal === null) throw new Error();
             if (typeof dataVal === "undefined" && !value.required) return;
             if (typeof dataVal === "undefined" && value.required && typeof value.default === "undefined") throw new Error();

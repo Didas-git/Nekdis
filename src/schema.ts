@@ -28,13 +28,18 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
 
     #parse<T extends SchemaDefinition>(schema: T): ParsedSchemaDefinition {
         Object.keys(schema).forEach((key) => {
+            if (key.startsWith("$")) throw new PrettyError("Keys cannot start with '$'", {
+                ref: "redis-om"
+            });
+
+
             let value = schema[key];
+
             if (typeof value === "string") {
                 //@ts-expect-error Anti-JS
                 if (value === "object" || value === "tuple")
                     throw new PrettyError(`Type '${value}' needs to use its object definition`, {
-                        errCode: "R403",
-                        ref: `redis-om`,
+                        ref: "redis-om",
                         lines: [
                             {
                                 err: inspect({ [key]: schema[key] }, { colors: true }),
