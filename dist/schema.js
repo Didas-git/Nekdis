@@ -6,20 +6,20 @@ const dst_1 = require("colours.js/dst");
 const symbols_1 = require("./utils/symbols");
 const utils_1 = require("./utils");
 class Schema {
-    data;
+    rawData;
     options;
     [symbols_1.methods];
     [symbols_1.schemaData];
-    constructor(data, methodsData, options = {}) {
-        this.data = data;
+    constructor(rawData, methodsData, options = {}) {
+        this.rawData = rawData;
         this.options = options;
-        this[symbols_1.schemaData] = this.#parse(data);
+        // R.I.P. Performance
+        this[symbols_1.schemaData] = this.#parse(JSON.parse(JSON.stringify(rawData)));
         this[symbols_1.methods] = methodsData ?? {};
-        if (!options.dataStructure)
-            this.options.dataStructure = "JSON";
+        this.options.dataStructure = options.dataStructure ?? "JSON";
     }
     add(data) {
-        this[symbols_1.schemaData] = { ...this[symbols_1.schemaData], ...data };
+        this[symbols_1.schemaData] = { ...this[symbols_1.schemaData], ...this.#parse(data) };
         return this;
     }
     methods(data) {
@@ -28,13 +28,16 @@ class Schema {
     }
     #parse(schema) {
         Object.keys(schema).forEach((key) => {
+            if (key.startsWith("$"))
+                throw new PrettyError("Keys cannot start with '$'", {
+                    ref: "redis-om"
+                });
             let value = schema[key];
             if (typeof value === "string") {
                 //@ts-expect-error Anti-JS
                 if (value === "object" || value === "tuple")
                     throw new PrettyError(`Type '${value}' needs to use its object definition`, {
-                        errCode: "R403",
-                        ref: `redis-om`,
+                        ref: "redis-om",
                         lines: [
                             {
                                 err: (0, node_util_1.inspect)({ [key]: schema[key] }, { colors: true }),
@@ -58,7 +61,7 @@ class Schema {
             else {
                 if (!value.type)
                     throw new PrettyError("Type not defined");
-                if (value.type !== "array" && value.type !== "object" && value.type !== "tuple") {
+                if (value.type !== "array" && value.type !== "object" && value.type !== "tuple" && value.type !== "date") {
                     if (typeof value.default === "undefined")
                         value.default = undefined;
                     if (typeof value.required === "undefined")
@@ -86,15 +89,26 @@ class Schema {
                     else
                         value.elements = this.#parse(value.elements);
                 }
+                else if (value.type === "date") {
+                    if (value.default instanceof Date)
+                        value.default = value.default.getTime();
+                    //@ts-expect-error using `new Date()` seems to return a string sometimes
+                    if (typeof value.default === "string")
+                        value.default = new Date(value.default).getTime();
+                    if (typeof value.default === "undefined")
+                        value.default = undefined;
+                    if (typeof value.required === "undefined")
+                        value.required = false;
+                }
                 else {
                     if (typeof value.default === "undefined")
                         value.default = undefined;
                     if (typeof value.required === "undefined")
                         value.required = false;
-                    if (!value.data)
-                        value.data = undefined;
+                    if (!value.properties)
+                        value.properties = undefined;
                     else
-                        value.data = this.#parse(value.data);
+                        value.properties = this.#parse(value.properties);
                 }
             }
             //@ts-expect-error More Shenanigans

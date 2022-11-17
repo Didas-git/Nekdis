@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.StringField = void 0;
+exports.NumberField = void 0;
 const base_1 = require("./base");
-class StringField extends base_1.SearchField {
+class NumberField extends base_1.SearchField {
     eq(value) {
-        this.value = value;
+        this.value = [value, value];
         this.search.query.push(this);
         return this.search;
     }
@@ -15,7 +15,7 @@ class StringField extends base_1.SearchField {
         return this.eq(value);
     }
     construct() {
-        return `{${this.value}${this.or.length > 0 ? ` | ${this.or.join(" | ")}` : ""}}`;
+        return `[${this.value[0]} ${this.value[1]}]${this.or.length > 0 ? "" : ""}`;
     }
 }
-exports.StringField = StringField;
+exports.NumberField = NumberField;

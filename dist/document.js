@@ -2,31 +2,31 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Document = void 0;
 class Document {
-    _id;
+    $id;
     #schema;
-    constructor(schema, _id, data) {
-        this._id = _id;
+    constructor(schema, $id, data) {
+        this.$id = $id;
         this.#schema = schema;
         if (data) {
             Object.keys(data).forEach((key) => {
                 //@ts-expect-error
-                this[key] = { value: data[key], type: schema[key].type };
+                this[key] = data[key];
             });
         }
         Object.keys(schema).forEach((key) => {
-            if (this[key])
+            if (typeof this[key] !== "undefined")
                 return;
-            this[key] = { value: schema[key].default, type: schema[key].type };
+            this[key] = schema[key].default;
         });
     }
     #validateData(dat, schem, isField = false) {
         const schema = schem ?? this.#schema;
         const data = dat ?? this;
         Object.keys(schema).forEach((val) => {
-            if (!isField && !data[val])
+            if (isField && !data[val])
                 throw new Error();
             const value = schema[val];
-            const dataVal = data instanceof Document ? data[val].value : data[val];
+            const dataVal = data[val];
             if (dataVal === null)
                 throw new Error();
             if (typeof dataVal === "undefined" && !value.required)
@@ -34,9 +34,9 @@ class Document {
             if (typeof dataVal === "undefined" && value.required && typeof value.default === "undefined")
                 throw new Error();
             if (value.type === "object") {
-                if (!value.data)
+                if (!value.properties)
                     return;
-                this.#validateData(dataVal, value.data, true);
+                this.#validateData(dataVal, value.properties, true);
             }
             else if (value.type === "array") {
                 if (typeof value.elements === "object")
@@ -80,7 +80,7 @@ class Document {
         this.#validateData();
         const obj = {};
         Object.keys(this.#schema).forEach((key) => {
-            obj[key] = this[key].value;
+            obj[key] = this[key];
         });
         return JSON.stringify(obj, null);
     }

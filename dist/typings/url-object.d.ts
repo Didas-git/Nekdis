@@ -1,4 +1,4 @@
-export declare type URLObject = {
+export type URLObject = {
     username: string;
     password: string;
     entrypoint: string;

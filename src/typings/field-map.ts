@@ -10,7 +10,7 @@ export interface FieldMap<T = string, M = false> {
     number: number;
     boolean: boolean;
     text: string;
-    date: Date;
+    date: Date | number;
     point: Point;
     array: Array<T>;
     tuple: M extends true ? T : { readonly [K in keyof T]: T[K] };

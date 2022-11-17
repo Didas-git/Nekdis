@@ -13,7 +13,7 @@ export declare class Model<S extends Schema<SchemaDefinition, MethodsDefinition>
     exists(...docs: Array<string | number | Document<SchemaDefinition>>): Promise<number>;
     expire(docs: Array<string | number | Document<SchemaDefinition>>, seconds: number, mode?: 'NX' | 'XX' | 'GT' | 'LT'): Promise<void>;
     createAndSave(data: {
-        _id?: string | number;
+        $id?: string | number;
     } & MapSchema<ExtractSchemaDefinition<S>, true>): Promise<void>;
     search(): Search<ExtractSchemaDefinition<S>>;
     createIndex(): Promise<void>;

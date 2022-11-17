@@ -5,8 +5,7 @@ export declare abstract class SearchField<T extends SchemaDefinition> {
     protected field: string;
     protected negated: boolean;
     protected value: unknown;
-    protected or: unknown;
-    protected and: unknown;
+    or: Array<unknown>;
     constructor(search: Search<T>, field: string);
     /** Syntatic sugar, calls `eq` */
     abstract equalsTo(value: unknown): Search<T>;
@@ -17,6 +16,7 @@ export declare abstract class SearchField<T extends SchemaDefinition> {
     get does(): this;
     /** Syntatic sugar, return self */
     get is(): this;
+    /** Negate query, return self */
     get not(): this;
     protected negate(): void;
     protected abstract construct(): string;

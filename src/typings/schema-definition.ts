@@ -35,7 +35,7 @@ export interface TextField extends BaseField {
 
 export interface DateField extends BaseField {
     type: "date";
-    default?: Date | undefined;
+    default?: Date | number | undefined;
 }
 
 export interface PointField extends BaseField {
@@ -58,6 +58,6 @@ export interface TupleField extends BaseField {
 
 export interface ObjectField extends BaseField {
     type: "object";
-    data?: SchemaDefinition | undefined;
+    properties?: SchemaDefinition | undefined;
     default?: Record<string, unknown> | undefined;
 }

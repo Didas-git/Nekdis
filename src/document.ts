@@ -41,8 +41,8 @@ export class Document<S extends SchemaDefinition> {
             if (typeof dataVal === "undefined" && value.required && typeof value.default === "undefined") throw new Error();
 
             if (value.type === "object") {
-                if (!value.data) return;
-                this.#validateData(dataVal, <ParsedSchemaDefinition>value.data, true);
+                if (!value.properties) return;
+                this.#validateData(dataVal, <ParsedSchemaDefinition>value.properties, true);
             } else if (value.type === "array") {
                 if (typeof value.elements === "object")
                     this.#validateData(dataVal, <ParsedSchemaDefinition>value.elements, true);

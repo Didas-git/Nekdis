@@ -9,6 +9,6 @@ export type ParseObjectField<T extends ObjectField> = T["required"] extends true
 
     : ParseObject<T> | undefined;
 
-export type ParseObject<T extends ObjectField> = T["data"] extends SchemaDefinition
-    ? MapSchema<Exclude<T["data"], undefined>>
+export type ParseObject<T extends ObjectField> = T["properties"] extends SchemaDefinition
+    ? MapSchema<Exclude<T["properties"], undefined>>
     : Record<string, any>;

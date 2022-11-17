@@ -1,9 +1,9 @@
 import { FieldMap } from "./field-map";
 import { Point } from "./point";
-export declare type ParsedSchemaDefinition = SchemaDefinition extends Record<string, infer T> ? Record<string, Exclude<T, keyof FieldMap>> : never;
-export declare type SchemaDefinition = Record<string, keyof Omit<FieldMap, "object" | "tuple"> | FieldTypes>;
-export declare type TupleDefinition = keyof Omit<FieldMap, "object" | "tuple" | "array"> | FieldTypes | SchemaDefinition;
-export declare type FieldTypes = StringField | NumberField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField;
+export type ParsedSchemaDefinition = SchemaDefinition extends Record<string, infer T> ? Record<string, Exclude<T, keyof FieldMap>> : never;
+export type SchemaDefinition = Record<string, keyof Omit<FieldMap, "object" | "tuple"> | FieldTypes>;
+export type TupleDefinition = keyof Omit<FieldMap, "object" | "tuple" | "array"> | FieldTypes | SchemaDefinition;
+export type FieldTypes = StringField | NumberField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField;
 export interface BaseField {
     type: keyof FieldMap;
     required?: boolean | undefined;
@@ -27,7 +27,7 @@ export interface TextField extends BaseField {
 }
 export interface DateField extends BaseField {
     type: "date";
-    default?: Date | undefined;
+    default?: Date | number | undefined;
 }
 export interface PointField extends BaseField {
     type: "point";
@@ -46,7 +46,7 @@ export interface TupleField extends BaseField {
 }
 export interface ObjectField extends BaseField {
     type: "object";
-    data?: SchemaDefinition | undefined;
+    properties?: SchemaDefinition | undefined;
     default?: Record<string, unknown> | undefined;
 }
 //# sourceMappingURL=schema-definition.d.ts.map

@@ -36,29 +36,29 @@ class Model {
     async save(doc) {
         if (!doc)
             throw new Error();
-        await this.#client.json.set(`${this.name}:${doc._id}`, "$", JSON.parse(doc.toString()));
+        await this.#client.json.set(`${this.name}:${doc.$id}`, "$", JSON.parse(doc.toString()));
     }
     async delete(...docs) {
         if (!docs)
             throw new Error();
-        await this.#client.del(docs.map((el) => `${this.name}:${el instanceof document_1.Document ? el._id : el.toString()}`));
+        await this.#client.del(docs.map((el) => `${this.name}:${el instanceof document_1.Document ? el.$id : el.toString()}`));
     }
     ;
     async exists(...docs) {
         if (!docs)
             throw new Error();
-        return await this.#client.exists(docs.map((el) => `${this.name}:${el instanceof document_1.Document ? el._id : el.toString()}`));
+        return await this.#client.exists(docs.map((el) => `${this.name}:${el instanceof document_1.Document ? el.$id : el.toString()}`));
     }
     ;
     async expire(docs, seconds, mode) {
         if (!docs)
             throw new Error();
-        docs.map((el) => `${this.name}:${el instanceof document_1.Document ? el._id : el.toString()}`).forEach((doc) => {
+        docs.map((el) => `${this.name}:${el instanceof document_1.Document ? el.$id : el.toString()}`).forEach((doc) => {
             this.#client.expire(doc, seconds, mode);
         });
     }
     async createAndSave(data) {
-        const doc = new document_1.Document(this.#schema[utils_1.schemaData], data._id?.toString() ?? (0, node_crypto_1.randomUUID)(), data);
+        const doc = new document_1.Document(this.#schema[utils_1.schemaData], data.$id?.toString() ?? (0, node_crypto_1.randomUUID)(), data);
         await this.save(doc);
     }
     search() {

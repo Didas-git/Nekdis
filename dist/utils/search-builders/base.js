@@ -6,8 +6,8 @@ class SearchField {
     field;
     negated = false;
     value;
-    or;
-    and;
+    or = [];
+    // and: unknown;
     constructor(search, field) {
         this.search = search;
         this.field = field;
@@ -20,6 +20,7 @@ class SearchField {
     get is() {
         return this;
     }
+    /** Negate query, return self */
     get not() {
         this.negate();
         return this;
@@ -28,7 +29,7 @@ class SearchField {
         this.negated = !this.negated;
     }
     toString() {
-        return `${this.negated ? "-" : ""}(@${this.field}:)`;
+        return `(${this.negated ? "-" : ""}(@${this.field}:${this.construct()}))`;
     }
 }
 exports.SearchField = SearchField;

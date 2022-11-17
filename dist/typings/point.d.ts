@@ -1,4 +1,4 @@
-export declare type Point = {
+export type Point = {
     longitude: number;
     latitude: number;
 };

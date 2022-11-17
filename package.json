@@ -27,11 +27,12 @@
     "@microsoft/tsdoc": "^0.14.1",
     "@microsoft/tsdoc-config": "^0.16.1",
     "@types/node": "^18.7.15",
+    "@vitest/coverage-c8": "^0.25.2",
     "c8": "^7.11.3",
     "ts-node": "^10.8.0",
     "tslib": "^2.3.1",
     "typescript": "^4.5.5",
-    "vitest": "^0.24.3"
+    "vitest": "^0.25.2"
   },
   "dependencies": {
     "@infinite-fansub/logger": "^2.1.0",

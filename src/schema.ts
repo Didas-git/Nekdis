@@ -9,15 +9,16 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
     [methods]: M;
     [schemaData]: ParsedSchemaDefinition;
 
-    public constructor(public data: S, methodsData?: M, public readonly options: SchemaOptions = {}) {
-        this[schemaData] = this.#parse(data);
+    public constructor(public rawData: S, methodsData?: M, public readonly options: SchemaOptions = {}) {
+        // R.I.P. Performance
+        this[schemaData] = this.#parse(JSON.parse(JSON.stringify(rawData)));
         this[methods] = methodsData ?? <M>{};
-        if (!options.dataStructure) this.options.dataStructure = "JSON";
+        this.options.dataStructure = options.dataStructure ?? "JSON";
 
     }
 
     public add<SD extends SchemaDefinition>(data: SD): this {
-        this[schemaData] = { ...this[schemaData], ...data };
+        this[schemaData] = { ...this[schemaData], ...this.#parse(data) };
         return this;
     }
 
@@ -31,7 +32,6 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
             if (key.startsWith("$")) throw new PrettyError("Keys cannot start with '$'", {
                 ref: "redis-om"
             });
-
 
             let value = schema[key];
 
@@ -62,7 +62,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
                     value = { type: value, default: undefined, required: false };
             } else {
                 if (!value.type) throw new PrettyError("Type not defined");
-                if (value.type !== "array" && value.type !== "object" && value.type !== "tuple") {
+                if (value.type !== "array" && value.type !== "object" && value.type !== "tuple" && value.type !== "date") {
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
                 } else if (value.type === "array") {
@@ -76,11 +76,17 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
                     if (typeof value.mutable === "undefined") value.mutable = false;
                     if (!value.elements || !Array.isArray(value.elements) || !value.elements.length) throw new PrettyError("A Tuple type needs to have its elements defined");
                     else value.elements = <TupleField["elements"]><unknown>this.#parse(<SchemaDefinition><unknown>value.elements);
+                } else if (value.type === "date") {
+                    if (value.default instanceof Date) value.default = value.default.getTime();
+                    //@ts-expect-error using `new Date()` seems to return a string sometimes
+                    if (typeof value.default === "string") value.default = new Date(value.default).getTime();
+                    if (typeof value.default === "undefined") value.default = undefined;
+                    if (typeof value.required === "undefined") value.required = false;
                 } else {
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
-                    if (!value.data) value.data = undefined;
-                    else value.data = this.#parse(value.data);
+                    if (!value.properties) value.properties = undefined;
+                    else value.properties = this.#parse(value.properties);
                 }
             }
             //@ts-expect-error More Shenanigans
