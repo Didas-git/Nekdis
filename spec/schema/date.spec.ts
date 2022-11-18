@@ -9,8 +9,8 @@ describe("date fields", () => {
             dateField3: { type: "date", default: 874195200000 },
             dateField4: { type: "date", required: true },
             dateField5: { type: "date", default: new Date(874195200000), required: true }
-        })
-    })
+        });
+    });
 
     test("formatted data", () => {
         expect(dateSchema[schemaData]).toStrictEqual({
@@ -19,6 +19,6 @@ describe("date fields", () => {
             dateField3: { type: "date", default: 874195200000, required: false },
             dateField4: { type: "date", default: undefined, required: true },
             dateField5: { type: "date", default: 874195200000, required: true }
-        })
-    })
+        });
+    });
 })

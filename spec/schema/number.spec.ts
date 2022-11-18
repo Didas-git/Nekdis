@@ -9,8 +9,8 @@ describe("number fields", () => {
             numberField3: { type: "number", default: 3 },
             numberField4: { type: "number", required: true },
             numberField5: { type: "number", default: 5, required: true }
-        })
-    })
+        });
+    });
 
     test("formatted data", () => {
         expect(numberSchema[schemaData]).toStrictEqual({
@@ -19,6 +19,6 @@ describe("number fields", () => {
             numberField3: { type: "number", default: 3, required: false },
             numberField4: { type: "number", default: undefined, required: true },
             numberField5: { type: "number", default: 5, required: true }
-        })
-    })
+        });
+    });
 })

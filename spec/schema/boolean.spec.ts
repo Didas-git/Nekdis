@@ -9,8 +9,8 @@ describe("boolean fields", () => {
             booleanField3: { type: "boolean", default: true },
             booleanField4: { type: "boolean", required: true },
             booleanField5: { type: "boolean", default: false, required: true }
-        })
-    })
+        });
+    });
 
     test("formatted data", () => {
         expect(booleanSchema[schemaData]).toStrictEqual({
@@ -19,6 +19,6 @@ describe("boolean fields", () => {
             booleanField3: { type: "boolean", default: true, required: false },
             booleanField4: { type: "boolean", default: undefined, required: true },
             booleanField5: { type: "boolean", default: false, required: true }
-        })
-    })
+        });
+    });
 })

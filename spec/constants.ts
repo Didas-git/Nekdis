@@ -39,3 +39,102 @@ export const dateSchema = new Schema({
     dateField4: { type: "date", required: true },
     dateField5: { type: "date", default: new Date(874195200000), required: true }
 })
+
+export const pointSchema = new Schema({
+    pointField1: "point",
+    pointField2: { type: "point" },
+    pointField3: { type: "point", default: { longitude: 3, latitude: 3 } },
+    pointField4: { type: "point", required: true },
+    pointField5: { type: "point", default: { longitude: 5, latitude: 5 }, required: true }
+})
+
+export const arraySchema = new Schema({
+    arrayField1: "array",
+    arrayField2: { type: "array" },
+    arrayField3: { type: "array", elements: "number" },
+    arrayField4: { type: "array", default: ["s"] },
+    arrayField5: { type: "array", required: true },
+    arrayField6: { type: "array", elements: "boolean", default: [false], required: true },
+    arrayField7: { type: "array", elements: { element1: "string" } }
+})
+
+export const simpleTupleSchema = new Schema({
+    tupleField1: { type: "tuple", elements: ["string", "number"] },
+    tupleField2: { type: "tuple", elements: ["string", "number"], default: ["S", 2] },
+    tupleField3: { type: "tuple", elements: ["string", "number"], mutable: true },
+    tupleField4: { type: "tuple", elements: ["string", "number"], default: ["SS", 4], mutable: true },
+    tupleField5: { type: "tuple", elements: ["string", "number"], required: true },
+    tupleField6: { type: "tuple", elements: ["string", "number"], default: ["SSS", 6], required: true },
+    tupleField7: { type: "tuple", elements: ["string", "number"], mutable: true, required: true }
+})
+
+export const complexTupleSchema = new Schema({
+    tupleField1: {
+        type: "tuple",
+        elements: [
+            {
+                type: "object",
+                properties: {
+                    propertie1: "string",
+                    propertie2: {
+                        type: "object",
+                        properties: {
+                            nestedPropertie1: {
+                                type: "tuple",
+                                elements: ["boolean", { type: "tuple", elements: ["date"] }],
+                                default: [true]
+                            }
+                        }
+                    }
+                }
+            },
+            "number",
+            { type: "array" }
+        ],
+        required: true,
+        mutable: true
+    }
+})
+
+export const objectSchema = new Schema({
+    objectField1: {
+        type: "object",
+        properties: {
+            nestedProperty1: "string",
+            nestedProperty2: "number",
+            nestedProperty3: "boolean",
+            nestedProperty4: "text",
+            nestedProperty5: "date",
+            nestedProperty6: "point",
+            nestedProperty7: "array",
+            nestedProperty8: {
+                type: "tuple",
+                elements: ["number"],
+                mutable: true
+            },
+            nestedProperty9: {
+                type: "object",
+                properties: {
+                    deep1: "string",
+                    deep2: {
+                        type: "object",
+                        properties: {
+                            nest: {
+                                type: "object",
+                                properties: {
+                                    finalNestBczImLazy: "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        default: {
+            nestedProperty9: {
+                deep1: "S"
+            }
+        },
+        required: true
+    }
+})
