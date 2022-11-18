@@ -2,19 +2,19 @@ import { Search } from "../../search";
 import { SchemaDefinition } from "../../typings";
 import { SearchField } from "./base";
 
-export class StringField<T extends SchemaDefinition> extends SearchField<T> {
+export class BooleanField<T extends SchemaDefinition> extends SearchField<T> {
 
-    eq(value: string): Search<T> {
+    eq(value: boolean): Search<T> {
         this.value = value;
-        this.search.query.push(this)
+        this.search.query.push(this);
         return this.search;
     }
 
-    equals(value: string): Search<T> {
+    equalsTo(value: boolean): Search<T> {
         return this.eq(value);
     }
 
-    equalsTo(value: string): Search<T> {
+    equals(value: boolean): Search<T> {
         return this.eq(value);
     }
 

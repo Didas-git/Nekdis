@@ -35,6 +35,7 @@ export abstract class SearchField<T extends SchemaDefinition> {
     }
 
     protected abstract construct(): string;
+
     public toString() {
         return `(${this.negated ? "-" : ""}(@${this.field}:${this.construct()}))`
     }
