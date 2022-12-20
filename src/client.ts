@@ -10,7 +10,7 @@ import {
     WithModules,
     URLObject,
     RedisClient,
-    ExctractName
+    ExtractName
 } from "./typings";
 
 // Load in the lib
@@ -58,7 +58,7 @@ export class Client {
         return new Schema<T, M>(schemaData, methods, options);
     }
 
-    public withModules<T extends Array<Module>>(modules: ExctractName<T>): this & WithModules<T> {
+    public withModules<T extends Array<Module>>(modules: ExtractName<T>): this & WithModules<T> {
         modules.forEach((module) => {
             //@ts-expect-error shenanigans
             this[module.name] = new module.ctor();
