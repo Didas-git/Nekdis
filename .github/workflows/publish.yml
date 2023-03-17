@@ -12,6 +12,10 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
+      - uses: pnpm/action-setup@v2
+        id: pnpm-install
+        with:
+          version: latest
       - name: Install Dependencies
         run: pnpm i
       - name: Lint
