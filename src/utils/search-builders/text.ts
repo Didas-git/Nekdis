@@ -23,15 +23,35 @@ export class TextField<T extends SchemaDefinition> extends SearchField<T> {
         return this.eq(value);
     }
 
-    get exactly(): Exclude<typeof this, "exact"> {
-        this.value.exact = true;
-        return <never>this;
-    }
-
     exact(value: string): Search<T> {
         this.value = { val: value, exact: true };
         this.search._query.push(this);
         return this.search;
+    }
+
+    match(value: string): Search<T> {
+        return this.eq(value);
+    }
+
+    matchExact(value: string): Search<T> {
+        return this.exact(value);
+    }
+
+    matches(value: string): Search<T> {
+        return this.eq(value)
+    }
+
+    matchExactly(value: string): Search<T> {
+        return this.exact(value)
+    }
+
+    matchesExactly(value: string): Search<T> {
+        return this.exact(value)
+    }
+
+    get exactly(): Exclude<typeof this, "exact"> {
+        this.value.exact = true;
+        return <never>this;
     }
 
     protected construct(): string {
