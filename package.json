@@ -9,7 +9,8 @@
       "require": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./dist/utils/*.js": null
   },
   "files": [
     "./dist/"
