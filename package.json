@@ -1,28 +1,32 @@
 {
-  "name": "redis-om",
-  "version": "2.0.0",
+  "name": "nekdis",
+  "version": "1.0.0",
   "description": "Object mapping, and more, for Redis and Node.js. Written in TypeScript.",
   "main": "dist/index.js",
-  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "./dist/"
+  ],
   "scripts": {
     "test": "vitest run --coverage",
     "build": "rm -rf ./dist && tsc",
     "build:test": "tsc --noEmit"
   },
-  "repository": "github:redis/redis-om-node",
-  "homepage": "https://github.com/redis/redis-om-node#readme",
+  "repository": "github:Didas-git/Nekdis",
+  "homepage": "https://github.com/Didas-git/Nekdis#readme",
   "keywords": [
     "redis",
     "orm"
   ],
   "license": "MIT",
-  "author": "Guy Royse <guy@guyroyse.com> (http://guyroyse.com/)",
-  "contributors": [
-    "DidaS <didasoficial@gmail.com>"
-  ],
-  "engines": {
-    "node": ">= 16"
-  },
+  "author": "DidaS <didasoficial@gmail.com>",
   "devDependencies": {
     "@microsoft/tsdoc": "^0.14.1",
     "@microsoft/tsdoc-config": "^0.16.1",
