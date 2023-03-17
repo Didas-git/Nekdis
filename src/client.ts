@@ -13,8 +13,7 @@ import type {
     ExtractName
 } from "./typings";
 
-// Load in the lib
-require("@infinite-fansub/logger");
+import "@infinite-fansub/logger";
 
 export class Client {
     #client!: RedisClient;

@@ -72,7 +72,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
                     if (typeof value.elements === "object" && !Array.isArray(value.elements)) value.elements = this.#parse(value.elements);
                 } else if (value.type === "date") {
                     if (value.default instanceof Date) value.default = value.default.getTime();
-                    //@ts-expect-error using `new Date()` seems to return a string sometimes
+
                     if (typeof value.default === "string") value.default = new Date(value.default).getTime();
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;

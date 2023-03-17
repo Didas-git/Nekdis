@@ -34,7 +34,7 @@ export interface TextField extends BaseField {
 
 export interface DateField extends BaseField {
     type: "date";
-    default?: Date | number | undefined;
+    default?: Date | number | string | undefined;
 }
 
 export interface PointField extends BaseField {

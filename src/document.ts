@@ -51,10 +51,6 @@ export class Document<S extends SchemaDefinition> {
                         if (typeof vall !== value.elements) throw new Error();
                     });
                 }
-                // } else if (value.type === "tuple") {
-                //     (<Array<FieldTypes>>value.elements).forEach((element, i) => {
-                //         this.#validateData(<SchemaDefinition><unknown>{ ...[dataVal[i]] }, <ParsedSchemaDefinition><unknown>{ ...[element] }, true);
-                //     });
             } else if (value.type === "date") {
                 if (!(dataVal instanceof Date) || typeof dataVal !== "number") throw new Error();
             } else if (value.type === "point") {
