@@ -1,8 +1,8 @@
 import { Document } from "./document";
 import { SearchField, StringField, NumberField, BooleanField, TextField, DateField } from "./utils/search-builders";
-import type { FieldTypes, Parsed, RedisClient, SchemaDefinition, MapSearchField } from "./typings";
+import type { FieldTypes, Parsed, RedisClient, SchemaDefinition, MapSearchField, ParseSchema, MapSchema } from "./typings";
 
-export class Search<T extends SchemaDefinition> {
+export class Search<T extends SchemaDefinition, P extends ParseSchema<T> = ParseSchema<T>> {
     readonly #client: RedisClient;
     readonly #schema: T;
     readonly #parsedSchema: Map<Parsed["path"], Parsed>;
@@ -18,11 +18,11 @@ export class Search<T extends SchemaDefinition> {
         this.#index = searchIndex;
     }
 
-    public where<S extends keyof T>(field: S) {
+    public where<F extends keyof P>(field: F) {
         return this.#createWhere(field);
     }
 
-    public and<S extends keyof T>(field: S) {
+    public and<F extends keyof P>(field: F) {
         return this.#createWhere(field);
     }
 
@@ -38,12 +38,12 @@ export class Search<T extends SchemaDefinition> {
 
     }
 
-    async returnAll() {
-        const docs: Array<Document<T>> = [];
+    async returnAll(): Promise<Array<Document<T> & MapSchema<T>>> {
+        const docs: Array<never> = [];
         const { documents } = await this.#client.ft.search(this.#index, this.#buildQuery());
 
         documents.forEach((doc) => {
-            docs.push(new Document(this.#schema, /:(.+)/.exec(doc.id)![1], doc.value));
+            docs.push(<never>new Document(this.#schema, /:(.+)/.exec(doc.id)![1], doc.value));
         })
 
         return docs;
@@ -57,7 +57,7 @@ export class Search<T extends SchemaDefinition> {
         return this._query.map((q) => q.toString()).join(" ")
     }
 
-    #createWhere<S extends keyof T>(field: S): MapSearchField<S, T> {
+    #createWhere<F extends keyof P>(field: F): MapSearchField<F, T, P> {
 
         if (typeof field !== "string") throw new PrettyError();
 

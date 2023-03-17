@@ -3,7 +3,6 @@
     "target": "ESNext",
     "module": "CommonJS",
     "moduleResolution": "node",
-    "rootDir": "src",
     "outDir": "dist",
     "baseUrl": ".",
     "strict": true,
@@ -37,11 +36,8 @@
       "@infinite-fansub/logger/globals"
     ]
   },
-  "exclude": [
-    "node_modules",
-    "vitest.config.ts",
-    "spec/*",
-    "dist/*"
+  "include": [
+    "src/**/*"
   ],
   "typedocOptions": {
     "entryPoints": [
