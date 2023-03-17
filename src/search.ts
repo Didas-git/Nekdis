@@ -1,19 +1,17 @@
-import { FieldTypes, Parsed, RedisClient, SchemaDefinition } from "./typings";
 import { Document } from "./document";
-import { StringField } from "./utils/search-builders/string";
-import { SearchField } from "./utils/search-builders/base";
-import { NumberField } from "./utils/search-builders/number";
-import { MapSearchField } from "./typings/map-search-fields";
+import { SearchField, StringField, NumberField, BooleanField } from "./utils/search-builders";
+import type { FieldTypes, Parsed, RedisClient, SchemaDefinition, MapSearchField } from "./typings";
 
 export class Search<T extends SchemaDefinition> {
     readonly #client: RedisClient;
     readonly #schema: T;
-    readonly #parsedSchema: Map<Parsed["pars"], Parsed>;
+    readonly #parsedSchema: Map<Parsed["path"], Parsed>;
     readonly #index: string;
-    #workingType: FieldTypes["type"] = "string";
-    query: Array<SearchField<T>> = [];
+    #workingType!: FieldTypes["type"];
+    /** @internal */
+    _query: Array<SearchField<T>> = [];
 
-    public constructor(client: RedisClient, schema: T, parsedSchema: Map<Parsed["pars"], Parsed>, searchIndex: string) {
+    public constructor(client: RedisClient, schema: T, parsedSchema: Map<Parsed["path"], Parsed>, searchIndex: string) {
         this.#client = client;
         this.#schema = schema;
         this.#parsedSchema = parsedSchema;
@@ -31,11 +29,15 @@ export class Search<T extends SchemaDefinition> {
     or(value: unknown) {
         switch (this.#workingType) {
             case "string": {
-                this.query.at(-1)?.or.push(value);
+                this._query.at(-1)?.or.push(value);
                 break;
             }
             case "number": {
-                this.query.at(-1)?.or.push([value, value])
+                this._query.at(-1)?.or.push([value, value])
+                break;
+            }
+            case "boolean": {
+                this._query.at(-1)?.or.push(value);
                 break;
             }
         }
@@ -63,16 +65,16 @@ export class Search<T extends SchemaDefinition> {
     }
 
     #buildQuery(): string {
-        return this.query.map((q) => q.toString()).join(" ")
+        return this._query.map((q) => q.toString()).join(" ")
     }
 
     #createWhere<S extends keyof T>(field: S): MapSearchField<S, T> {
 
         if (typeof field !== "string") throw new PrettyError();
 
-        if (!this.#parsedSchema.has(field)) throw new PrettyError(`'${field}' doesnt exist on the schema`)
+        const parsedField = this.#parsedSchema.get(field);
 
-        const parsedField = this.#parsedSchema.get(field)!;
+        if (!parsedField) throw new PrettyError(`'${field}' doesn't exist on the schema`)
 
         switch (parsedField.value.type) {
             case "string": {
@@ -83,8 +85,12 @@ export class Search<T extends SchemaDefinition> {
                 this.#workingType = "number";
                 return <never>new NumberField<T>(this, field);
             }
+            case "boolean": {
+                this.#workingType = "boolean";
+                return <never>new BooleanField<T>(this, field);
+            }
         }
 
-        throw new PrettyError("Some error occured creating the field");
+        throw new PrettyError("Some error occurred creating the field");
     }
 }

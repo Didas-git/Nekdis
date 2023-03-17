@@ -28,19 +28,19 @@
   "license": "MIT",
   "author": "DidaS <didasoficial@gmail.com>",
   "devDependencies": {
-    "@microsoft/tsdoc": "^0.14.1",
-    "@microsoft/tsdoc-config": "^0.16.1",
-    "@types/node": "^18.7.15",
-    "@vitest/coverage-c8": "^0.25.2",
-    "c8": "^7.11.3",
-    "ts-node": "^10.8.0",
-    "tslib": "^2.3.1",
-    "typescript": "^4.5.5",
-    "vitest": "^0.25.2"
+    "@microsoft/tsdoc": "^0.14.2",
+    "@microsoft/tsdoc-config": "^0.16.2",
+    "@types/node": "^18.15.3",
+    "@vitest/coverage-c8": "^0.29.3",
+    "c8": "^7.13.0",
+    "ts-node": "^10.9.1",
+    "tslib": "^2.5.0",
+    "typescript": "^5.0.2",
+    "vitest": "^0.29.3"
   },
   "dependencies": {
     "@infinite-fansub/logger": "^2.1.0",
     "colours.js": "^3.1.2",
-    "redis": "^4.0.4"
+    "redis": "^4.6.5"
   }
 }

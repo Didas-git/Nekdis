@@ -58,43 +58,43 @@ export const arraySchema = new Schema({
     arrayField7: { type: "array", elements: { element1: "string" } }
 })
 
-export const simpleTupleSchema = new Schema({
-    tupleField1: { type: "tuple", elements: ["string", "number"] },
-    tupleField2: { type: "tuple", elements: ["string", "number"], default: ["S", 2] },
-    tupleField3: { type: "tuple", elements: ["string", "number"], mutable: true },
-    tupleField4: { type: "tuple", elements: ["string", "number"], default: ["SS", 4], mutable: true },
-    tupleField5: { type: "tuple", elements: ["string", "number"], required: true },
-    tupleField6: { type: "tuple", elements: ["string", "number"], default: ["SSS", 6], required: true },
-    tupleField7: { type: "tuple", elements: ["string", "number"], mutable: true, required: true }
-})
+// export const simpleTupleSchema = new Schema({
+//     tupleField1: { type: "tuple", elements: ["string", "number"] },
+//     tupleField2: { type: "tuple", elements: ["string", "number"], default: ["S", 2] },
+//     tupleField3: { type: "tuple", elements: ["string", "number"], mutable: true },
+//     tupleField4: { type: "tuple", elements: ["string", "number"], default: ["SS", 4], mutable: true },
+//     tupleField5: { type: "tuple", elements: ["string", "number"], required: true },
+//     tupleField6: { type: "tuple", elements: ["string", "number"], default: ["SSS", 6], required: true },
+//     tupleField7: { type: "tuple", elements: ["string", "number"], mutable: true, required: true }
+// })
 
-export const complexTupleSchema = new Schema({
-    tupleField1: {
-        type: "tuple",
-        elements: [
-            {
-                type: "object",
-                properties: {
-                    propertie1: "string",
-                    propertie2: {
-                        type: "object",
-                        properties: {
-                            nestedPropertie1: {
-                                type: "tuple",
-                                elements: ["boolean", { type: "tuple", elements: ["date"] }],
-                                default: [true]
-                            }
-                        }
-                    }
-                }
-            },
-            "number",
-            { type: "array" }
-        ],
-        required: true,
-        mutable: true
-    }
-})
+// export const complexTupleSchema = new Schema({
+//     tupleField1: {
+//         type: "tuple",
+//         elements: [
+//             {
+//                 type: "object",
+//                 properties: {
+//                     propertie1: "string",
+//                     propertie2: {
+//                         type: "object",
+//                         properties: {
+//                             nestedPropertie1: {
+//                                 type: "tuple",
+//                                 elements: ["boolean", { type: "tuple", elements: ["date"] }],
+//                                 default: [true]
+//                             }
+//                         }
+//                     }
+//                 }
+//             },
+//             "number",
+//             { type: "array" }
+//         ],
+//         required: true,
+//         mutable: true
+//     }
+// })
 
 export const objectSchema = new Schema({
     objectField1: {
@@ -107,11 +107,11 @@ export const objectSchema = new Schema({
             nestedProperty5: "date",
             nestedProperty6: "point",
             nestedProperty7: "array",
-            nestedProperty8: {
-                type: "tuple",
-                elements: ["number"],
-                mutable: true
-            },
+            // nestedProperty8: {
+            //     type: "tuple",
+            //     elements: ["number"],
+            //     mutable: true
+            // },
             nestedProperty9: {
                 type: "object",
                 properties: {

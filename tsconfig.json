@@ -32,6 +32,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "incremental": false,
+    "stripInternal": true,
     "types": [
       "@infinite-fansub/logger/globals"
     ]

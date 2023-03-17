@@ -4,7 +4,6 @@ TODO
 - [ ] Rewrite README
 - [ ] Date Search
 - [ ] Point Search
-- [ ] Tuple Search
 - [ ] Object Search
 - [ ] Recode Parser[^1]
 - [ ] Remake Mapping Types

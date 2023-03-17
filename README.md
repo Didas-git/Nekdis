@@ -27,7 +27,7 @@ client.connect().then(() => {
 
 #### Creating a schema
 
-All the current types apart from array on redis-om would not be changed but support for nested objects and tuples would be added. I still dont have a great idea on how to go about nested objects so whats is shown on the example is the current way I can think of doing it.
+All the current types apart from array on redis-om would not be changed but support for nested objects would be added. I still dont have a great idea on how to go about nested objects so whats is shown on the example is the current way I can think of doing it.
 
 ```ts
 import { client } from "redis-om";

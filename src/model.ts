@@ -1,23 +1,23 @@
 import { Schema } from "./schema";
 import { Document } from "./document";
 import { methods, parse, schemaData } from "./utils";
-import { ExtractSchemaDefinition, SchemaDefinition, MapSchema, MethodsDefinition, ParsedSchemaDefinition, RedisClient, Parsed } from "./typings";
 import { randomUUID } from "node:crypto";
 import { Search } from "./search";
+import type { ExtractSchemaDefinition, SchemaDefinition, MapSchema, MethodsDefinition, ParsedSchemaDefinition, RedisClient, Parsed } from "./typings";
 
 export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     readonly #schema: S;
     readonly #client: RedisClient;
     readonly #searchIndexName: string;
     readonly #searchIndex: Array<string> = ["FT.CREATE"];
-    readonly #parsedSchema = new Map<Parsed["pars"], Parsed>();
+    readonly #parsedSchema = new Map<Parsed["path"], Parsed>();
 
     public constructor(client: RedisClient, public readonly name: string, data: S) {
         this.#client = client;
         this.#schema = data;
         this.#searchIndexName = `${name}:index`;
         parse(<ParsedSchemaDefinition>this.#schema[schemaData]).forEach((parsedVal) => {
-            this.#parsedSchema.set(parsedVal.pars, { value: parsedVal.value, pars: parsedVal.pars.replace(/[.]/g, "_") });
+            this.#parsedSchema.set(parsedVal.path, { value: parsedVal.value, path: parsedVal.path.replace(/[.]/g, "_") });
         });
         this.#defineMethods();
     }
@@ -73,10 +73,20 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
 
         this.#searchIndex.push(this.#searchIndexName, "ON", "JSON", "PREFIX", "1", `${this.name}:`, "SCHEMA");
         this.#parsedSchema.forEach((val, key) => {
+            let arrayPath: string = "";
+
+            if (val.value.type === "array") {
+                if (typeof val.value.elements !== "string") {
+                    throw new Error("Object definitions on `array` are not yet supported by the parser")
+                }
+
+                arrayPath = val.value.elements === "text" ? "[*]" : (val.value.elements === "number" || val.value.elements === "point") ? "" : "*";
+            }
+
             this.#searchIndex.push(
-                `$.${key}${val.value.type === "array" ? "[*]" : ""}`,
+                `$.${key}${arrayPath}`,
                 "AS",
-                val.pars,
+                val.path,
                 val.value.type === "text" ? "TEXT" : val.value.type === "number" ? "NUMERIC" : val.value.type === "point" ? "GEO" : "TAG"
             );
         });

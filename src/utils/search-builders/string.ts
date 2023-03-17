@@ -6,7 +6,7 @@ export class StringField<T extends SchemaDefinition> extends SearchField<T> {
 
     eq(value: string): Search<T> {
         this.value = value;
-        this.search.query.push(this)
+        this.search._query.push(this);
         return this.search;
     }
 

@@ -8,14 +8,6 @@ export const ParsingError = {
             }
         }, { colors: true, compact: false });
     },
-    Tuple: (key: string): string => {
-        return inspect({
-            [key]: {
-                type: "tuple",
-                elements: ["string"]
-            }
-        }, { colors: true, compact: false });
-    },
     Info: {
         Object: inspect({
             artist: {
@@ -27,11 +19,5 @@ export const ParsingError = {
                 }
             }
         }, { colors: true }),
-        Tuple: inspect({
-            information: {
-                type: "tuple",
-                elements: ["string", "number", { createdAt: "date", joinedAt: "date" }, "array"]
-            }
-        }, { colors: true, depth: null })
     }
 };

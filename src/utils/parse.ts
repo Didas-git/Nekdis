@@ -1,4 +1,4 @@
-import { ObjectField, Parsed, ParsedSchemaDefinition } from "../typings";
+import type { ObjectField, Parsed, ParsedSchemaDefinition } from "../typings";
 
 export function parse(schema: ParsedSchemaDefinition, k?: string) {
     const objs: Array<Parsed> = [];
@@ -9,7 +9,7 @@ export function parse(schema: ParsedSchemaDefinition, k?: string) {
             parsed.forEach((p) => objs.push(p));
         }
 
-        objs.push({ value: schema[key], pars: k ? `${k}.${key}` : key });
+        objs.push({ value: schema[key], path: k ? `${k}.${key}` : key });
     });
 
     return objs;

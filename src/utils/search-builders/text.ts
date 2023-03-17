@@ -11,16 +11,16 @@ export class TextField<T extends SchemaDefinition> extends SearchField<T> {
 
     eq(value: string): Search<T> {
         this.value.val = value
-        this.search.query.push(this);
+        this.search._query.push(this);
         return this.search;
-    }
-
-    equalsTo(value: string): Search<T> {
-        return this.eq(value);
     }
 
     equals(value: string): Search<T> {
         return this.eq(value)
+    }
+
+    equalsTo(value: string): Search<T> {
+        return this.eq(value);
     }
 
     get exactly(): Exclude<typeof this, "exact"> {
@@ -30,7 +30,7 @@ export class TextField<T extends SchemaDefinition> extends SearchField<T> {
 
     exact(value: string): Search<T> {
         this.value = { val: value, exact: true };
-        this.search.query.push(this);
+        this.search._query.push(this);
         return this.search;
     }
 

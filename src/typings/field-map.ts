@@ -3,9 +3,8 @@ import { SchemaDefinition } from "./schema-definition";
 
 /**
  * @typeParam T - The array and/or tuple type
- * @typeParam M - Is the tuple mutable
  */
-export interface FieldMap<T = string, M = false> {
+export interface FieldMap<T = string> {
     string: string;
     number: number;
     boolean: boolean;
@@ -13,6 +12,5 @@ export interface FieldMap<T = string, M = false> {
     date: Date | number;
     point: Point;
     array: Array<T>;
-    tuple: M extends true ? T : { readonly [K in keyof T]: T[K] };
     object: Record<string, SchemaDefinition>;
 }

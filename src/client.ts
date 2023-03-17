@@ -1,7 +1,7 @@
 import { createClient } from "redis";
 import { Model } from "./model";
 import { Schema } from "./schema";
-import {
+import type {
     ExtractSchemaMethods,
     MethodsDefinition,
     SchemaDefinition,

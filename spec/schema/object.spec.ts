@@ -14,11 +14,11 @@ describe("object field", () => {
                     nestedProperty5: "date",
                     nestedProperty6: "point",
                     nestedProperty7: "array",
-                    nestedProperty8: {
-                        type: "tuple",
-                        elements: ["number"],
-                        mutable: true
-                    },
+                    // nestedProperty8: {
+                    //     type: "tuple",
+                    //     elements: ["number"],
+                    //     mutable: true
+                    // },
                     nestedProperty9: {
                         type: "object",
                         properties: {
@@ -59,13 +59,13 @@ describe("object field", () => {
                     nestedProperty5: { type: "date", default: undefined, required: false },
                     nestedProperty6: { type: "point", default: undefined, required: false },
                     nestedProperty7: { type: "array", elements: "string", default: undefined, required: false },
-                    nestedProperty8: {
-                        type: "tuple",
-                        elements: [{ type: "number", default: undefined, required: false }],
-                        mutable: true,
-                        default: undefined,
-                        required: false
-                    },
+                    // nestedProperty8: {
+                    //     type: "tuple",
+                    //     elements: [{ type: "number", default: undefined, required: false }],
+                    //     mutable: true,
+                    //     default: undefined,
+                    //     required: false
+                    // },
                     nestedProperty9: {
                         type: "object",
                         properties: {

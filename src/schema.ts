@@ -1,8 +1,8 @@
 import { inspect } from "node:util";
 import { Color } from "colours.js/dst";
-import { SchemaDefinition, SchemaOptions, MethodsDefinition, TupleField, ParsedSchemaDefinition } from "./typings";
 import { methods, schemaData } from "./utils/symbols";
 import { ParsingError } from "./utils";
+import type { SchemaDefinition, SchemaOptions, MethodsDefinition, ParsedSchemaDefinition } from "./typings";
 
 export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
 
@@ -37,7 +37,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
 
             if (typeof value === "string") {
                 //@ts-expect-error Anti-JS
-                if (value === "object" || value === "tuple")
+                if (value === "object")
                     throw new PrettyError(`Type '${value}' needs to use its object definition`, {
                         ref: "redis-om",
                         lines: [
@@ -46,11 +46,11 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
                                 marker: { text: "Parsing:" }
                             },
                             {
-                                err: value === "object" ? ParsingError.Object(key) : ParsingError.Tuple(key),
+                                err: ParsingError.Object(key),
                                 marker: { text: "Possible Fix:", color: Color.fromHex("#00FF00"), nl: true }
                             },
                             {
-                                err: value === "object" ? ParsingError.Info.Object : ParsingError.Info.Tuple,
+                                err: ParsingError.Info.Object,
                                 marker: { text: "Information:", color: Color.fromHex("#009dff"), spaced: true, nl: true }
                             }
                         ]
@@ -62,7 +62,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
                     value = { type: value, default: undefined, required: false };
             } else {
                 if (!value.type) throw new PrettyError("Type not defined");
-                if (value.type !== "array" && value.type !== "object" && value.type !== "tuple" && value.type !== "date") {
+                if (value.type !== "array" && value.type !== "object" && value.type !== "date") {
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
                 } else if (value.type === "array") {
@@ -70,12 +70,6 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
                     if (typeof value.required === "undefined") value.required = false;
                     if (!value.elements) value.elements = "string";
                     if (typeof value.elements === "object" && !Array.isArray(value.elements)) value.elements = this.#parse(value.elements);
-                } else if (value.type === "tuple") {
-                    if (typeof value.default === "undefined") value.default = undefined;
-                    if (typeof value.required === "undefined") value.required = false;
-                    if (typeof value.mutable === "undefined") value.mutable = false;
-                    if (!value.elements || !Array.isArray(value.elements) || !value.elements.length) throw new PrettyError("A Tuple type needs to have its elements defined");
-                    else value.elements = <TupleField["elements"]><unknown>this.#parse(<SchemaDefinition><unknown>value.elements);
                 } else if (value.type === "date") {
                     if (value.default instanceof Date) value.default = value.default.getTime();
                     //@ts-expect-error using `new Date()` seems to return a string sometimes

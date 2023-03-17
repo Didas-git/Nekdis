@@ -2,8 +2,7 @@ import { FieldMap } from "./field-map";
 import { MapSchema } from "./map-schema";
 import { ParseBasicFields } from "./parse-basic-fields";
 import { ParseObjectField } from "./parse-object-field";
-import { ParseTupleField } from "./parse-tuple-field";
-import { ArrayField, FieldTypes, ObjectField, SchemaDefinition, TupleField } from "./schema-definition";
+import { ArrayField, FieldTypes, ObjectField, SchemaDefinition } from "./schema-definition";
 
 export type ParseArrayField<T extends ArrayField> = T["required"] extends true
     ? ParseArray<T>
@@ -18,9 +17,6 @@ export type ParseArray<T extends ArrayField> = T["elements"] extends ObjectField
 
     : T["elements"] extends ArrayField
     ? FieldMap<ParseArrayField<T["elements"]>>["array"]
-
-    : T["elements"] extends TupleField
-    ? FieldMap<ParseTupleField<T["elements"]>>["array"]
 
     : T["elements"] extends FieldTypes
     ? FieldMap<ParseBasicFields<T["elements"]>>["array"]

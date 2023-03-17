@@ -2,10 +2,9 @@ import { FieldMap } from "./field-map";
 import { Point } from "./point";
 
 export type ParsedSchemaDefinition = SchemaDefinition extends Record<string, infer T> ? Record<string, Exclude<T, keyof FieldMap>> : never;
-export type SchemaDefinition = Record<string, keyof Omit<FieldMap, "object" | "tuple"> | FieldTypes>;
-export type TupleDefinition = keyof Omit<FieldMap, "object" | "tuple" | "array"> | FieldTypes | SchemaDefinition;
+export type SchemaDefinition = Record<string, keyof Omit<FieldMap, "object"> | FieldTypes>;
 
-export type FieldTypes = StringField | NumberField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField;
+export type FieldTypes = StringField | NumberField | BooleanField | TextField | DateField | PointField | ArrayField | ObjectField;
 
 export interface BaseField {
     type: keyof FieldMap;
@@ -49,15 +48,8 @@ export interface ArrayField extends BaseField {
     default?: Array<unknown> | undefined;
 }
 
-export interface TupleField extends BaseField {
-    type: "tuple";
-    elements: [TupleDefinition, ...Array<TupleDefinition>];
-    mutable?: boolean | undefined;
-    default?: [unknown, ...Array<unknown>] | undefined;
-}
-
 export interface ObjectField extends BaseField {
     type: "object";
     properties?: SchemaDefinition | undefined;
-    default?: Record<string, unknown> | undefined;
+    default?: Record<string, any> | undefined;
 }
