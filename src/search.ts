@@ -1,5 +1,5 @@
 import { Document } from "./document";
-import { SearchField, StringField, NumberField, BooleanField, TextField, DateField } from "./utils/search-builders";
+import { type SearchField, StringField, NumberField, BooleanField, TextField, DateField } from "./utils/search-builders";
 import type { FieldTypes, Parsed, RedisClient, SchemaDefinition, MapSearchField, ParseSchema, MapSchema } from "./typings";
 
 export class Search<T extends SchemaDefinition, P extends ParseSchema<T> = ParseSchema<T>> {
@@ -8,8 +8,9 @@ export class Search<T extends SchemaDefinition, P extends ParseSchema<T> = Parse
     readonly #parsedSchema: Map<Parsed["path"], Parsed>;
     readonly #index: string;
     #workingType!: FieldTypes["type"];
+
     /** @internal */
-    _query: Array<SearchField<T>> = [];
+    public _query: Array<SearchField<T>> = [];
 
     public constructor(client: RedisClient, schema: T, parsedSchema: Map<Parsed["path"], Parsed>, searchIndex: string) {
         this.#client = client;
@@ -18,15 +19,15 @@ export class Search<T extends SchemaDefinition, P extends ParseSchema<T> = Parse
         this.#index = searchIndex;
     }
 
-    public where<F extends keyof P>(field: F) {
+    public where<F extends keyof P>(field: F): MapSearchField<F, T, P> {
         return this.#createWhere(field);
     }
 
-    public and<F extends keyof P>(field: F) {
+    public and<F extends keyof P>(field: F): MapSearchField<F, T, P> {
         return this.#createWhere(field);
     }
 
-    or(value: unknown) {
+    public or(value: unknown): this {
         if (this.#workingType === "string" || this.#workingType === "boolean" || this.#workingType === "text") {
             this._query.at(-1)?.or.push(value);
         }
@@ -34,27 +35,27 @@ export class Search<T extends SchemaDefinition, P extends ParseSchema<T> = Parse
         return this;
     }
 
-    else(_value: unknown) {
+    // else(_value: unknown) {
 
-    }
+    // }
 
-    async returnAll(): Promise<Array<Document<T> & MapSchema<T>>> {
+    public async returnAll(): Promise<Array<Document<T> & MapSchema<T>>> {
         const docs: Array<never> = [];
         const { documents } = await this.#client.ft.search(this.#index, this.#buildQuery());
 
         documents.forEach((doc) => {
-            docs.push(<never>new Document(this.#schema, /:(.+)/.exec(doc.id)![1], doc.value));
-        })
+            docs.push(<never>new Document(this.#schema, (/:(.+)/).exec(doc.id)?.[1] ?? doc.id, doc.value));
+        });
 
         return docs;
     }
 
-    get rawQuery(): string {
+    public get rawQuery(): string {
         return this.#buildQuery();
     }
 
     #buildQuery(): string {
-        return this._query.map((q) => q.toString()).join(" ")
+        return this._query.map((q) => q.toString()).join(" ");
     }
 
     #createWhere<F extends keyof P>(field: F): MapSearchField<F, T, P> {
@@ -63,7 +64,7 @@ export class Search<T extends SchemaDefinition, P extends ParseSchema<T> = Parse
 
         const parsedField = this.#parsedSchema.get(field);
 
-        if (!parsedField) throw new PrettyError(`'${field}' doesn't exist on the schema`)
+        if (!parsedField) throw new PrettyError(`'${field}' doesn't exist on the schema`);
 
         switch (parsedField.value.type) {
             case "string": {
@@ -86,8 +87,9 @@ export class Search<T extends SchemaDefinition, P extends ParseSchema<T> = Parse
                 this.#workingType = "date";
                 return <never>new DateField<T>(this, field);
             }
+            case "object": { throw new Error('Not implemented yet: "object" case'); }
+            case "point": { throw new Error('Not implemented yet: "point" case'); }
+            case "array": { throw new Error('Not implemented yet: "array" case'); }
         }
-
-        throw new PrettyError("Some error occurred creating the field");
     }
 }

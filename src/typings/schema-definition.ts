@@ -1,5 +1,5 @@
-import { FieldMap } from "./field-map";
-import { Point } from "./point";
+import type { FieldMap } from "./field-map";
+import type { Point } from "./point";
 
 export type ParsedSchemaDefinition = SchemaDefinition extends Record<string, infer T> ? Record<string, Exclude<T, keyof FieldMap>> : never;
 export type SchemaDefinition = Record<string, keyof Omit<FieldMap, "object"> | FieldTypes>;

@@ -6,8 +6,11 @@ import type { SchemaDefinition, SchemaOptions, MethodsDefinition, ParsedSchemaDe
 
 export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
 
-    [methods]: M;
-    [schemaData]: ParsedSchemaDefinition;
+    /** @internal */
+    public [methods]: M;
+
+    /** @internal */
+    public [schemaData]: ParsedSchemaDefinition;
 
     public constructor(public rawData: S, methodsData?: M, public readonly options: SchemaOptions = {}) {
         // R.I.P. Performance
@@ -61,6 +64,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
                 else
                     value = { type: value, default: undefined, required: false };
             } else {
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                 if (!value.type) throw new PrettyError("Type not defined");
                 if (value.type !== "array" && value.type !== "object" && value.type !== "date") {
                     if (typeof value.default === "undefined") value.default = undefined;
@@ -68,7 +72,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
                 } else if (value.type === "array") {
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
-                    if (!value.elements) value.elements = "string";
+                    if (typeof value.elements === "undefined") value.elements = "string";
                     if (typeof value.elements === "object" && !Array.isArray(value.elements)) value.elements = this.#parse(value.elements);
                 } else if (value.type === "date") {
                     if (value.default instanceof Date) value.default = value.default.getTime();

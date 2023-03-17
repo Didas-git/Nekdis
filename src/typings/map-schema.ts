@@ -1,8 +1,8 @@
-import { FieldMap } from "./field-map";
-import { ParseArrayField } from "./parse-array-field";
-import { ParseBasicFields } from "./parse-basic-fields";
-import { ParseObjectField } from "./parse-object-field";
-import { ArrayField, FieldTypes, ObjectField, SchemaDefinition } from "./schema-definition";
+import type { FieldMap } from "./field-map";
+import type { ParseArrayField } from "./parse-array-field";
+import type { ParseBasicFields } from "./parse-basic-fields";
+import type { ParseObjectField } from "./parse-object-field";
+import type { ArrayField, FieldTypes, ObjectField, SchemaDefinition } from "./schema-definition";
 
 export type MapSchema<T extends SchemaDefinition, CAS = false> = Pick<_MapSchema<T>, {
     [K in keyof T]: T[K] extends FieldTypes
@@ -16,6 +16,7 @@ export type MapSchema<T extends SchemaDefinition, CAS = false> = Pick<_MapSchema
     : never
 }[keyof T]> & Partial<_MapSchema<T>>;
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type _MapSchema<T extends SchemaDefinition> = {
     -readonly [K in keyof T]: T[K] extends ObjectField
     ? ParseObjectField<T[K]>

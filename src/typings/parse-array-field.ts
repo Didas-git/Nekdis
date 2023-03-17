@@ -1,8 +1,8 @@
-import { FieldMap } from "./field-map";
-import { MapSchema } from "./map-schema";
-import { ParseBasicFields } from "./parse-basic-fields";
-import { ParseObjectField } from "./parse-object-field";
-import { ArrayField, FieldTypes, ObjectField, SchemaDefinition } from "./schema-definition";
+import type { FieldMap } from "./field-map";
+import type { MapSchema } from "./map-schema";
+import type { ParseBasicFields } from "./parse-basic-fields";
+import type { ParseObjectField } from "./parse-object-field";
+import type { ArrayField, FieldTypes, ObjectField, SchemaDefinition } from "./schema-definition";
 
 export type ParseArrayField<T extends ArrayField> = T["required"] extends true
     ? ParseArray<T>

@@ -1,5 +1,5 @@
-import { StringField, NumberField, BooleanField, TextField, DateField } from "../utils/search-builders";
-import { FieldTypes, ObjectField, SchemaDefinition } from "./schema-definition";
+import type { StringField, NumberField, BooleanField, TextField, DateField } from "../utils/search-builders";
+import type { FieldTypes, ObjectField, SchemaDefinition } from "./schema-definition";
 
 export type MapSearchField<K extends keyof T, S extends SchemaDefinition, T extends ParseSchema<S>> = T[K] extends "string"
     ? StringField<S>
@@ -11,7 +11,7 @@ export type MapSearchField<K extends keyof T, S extends SchemaDefinition, T exte
     ? TextField<S>
     : T[K] extends "date"
     ? DateField<S>
-    : never
+    : never;
 
 export type SchemaToStrings<T extends SchemaDefinition, K extends keyof T = keyof T> = K extends string
     ? T[K] extends FieldTypes
@@ -19,12 +19,12 @@ export type SchemaToStrings<T extends SchemaDefinition, K extends keyof T = keyo
     ? `${K}.${SchemaToStrings<T[K]["properties"] & {}>}`
     : K
     : K
-    : never
+    : never;
 
 export type GetFinalProperty<T extends string, S extends SchemaDefinition> = T extends `${infer Head}.${infer Tail}`
     ? S[Head] extends ObjectField
-    ? GetFinalProperty<Tail, S[Head]["properties"] & {}> : never : S[T] extends FieldTypes ? S[T]["type"] : S[T]
+    ? GetFinalProperty<Tail, S[Head]["properties"] & {}> : never : S[T] extends FieldTypes ? S[T]["type"] : S[T];
 
 export type ParseSchema<T extends SchemaDefinition> = {
     [K in SchemaToStrings<T>]: GetFinalProperty<K, T>
-}
+};

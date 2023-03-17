@@ -18,6 +18,6 @@ export const ParsingError = {
                     hobbies: "array"
                 }
             }
-        }, { colors: true }),
+        }, { colors: true })
     }
 };

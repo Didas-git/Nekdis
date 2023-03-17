@@ -12,11 +12,11 @@ export class Document<S extends SchemaDefinition> {
 
     public constructor(schema: S, public $id: string | number, data?: {}) {
 
-        this.#schema = schema
+        this.#schema = schema;
 
         if (data) {
             Object.keys(data).forEach((key) => {
-                //@ts-expect-error
+                //@ts-expect-error Improvements on the types need to be done
                 this[key] = data[key];
             });
         }
@@ -27,9 +27,7 @@ export class Document<S extends SchemaDefinition> {
         });
     }
 
-    #validateData(dat?: Document<SchemaDefinition> | SchemaDefinition, schem?: ParsedSchemaDefinition, isField: boolean = false): void {
-        const schema = schem ?? <ParsedSchemaDefinition>this.#schema
-        const data = dat ?? this;
+    #validateData(data: Document<SchemaDefinition> | SchemaDefinition = this, schema: ParsedSchemaDefinition = <ParsedSchemaDefinition>this.#schema, isField: boolean = false): void {
         Object.keys(schema).forEach((val) => {
             if (isField && !data[val]) throw new Error();
 
@@ -42,10 +40,10 @@ export class Document<S extends SchemaDefinition> {
 
             if (value.type === "object") {
                 if (!value.properties) return;
-                this.#validateData(dataVal, <ParsedSchemaDefinition>value.properties, true);
+                this.#validateData(<SchemaDefinition>dataVal, <ParsedSchemaDefinition>value.properties, true);
             } else if (value.type === "array") {
                 if (typeof value.elements === "object")
-                    this.#validateData(dataVal, <ParsedSchemaDefinition>value.elements, true);
+                    this.#validateData(<SchemaDefinition>dataVal, <ParsedSchemaDefinition>value.elements, true);
                 else {
                     dataVal.every((vall: unknown) => {
                         if (typeof vall !== value.elements) throw new Error();
@@ -56,6 +54,7 @@ export class Document<S extends SchemaDefinition> {
             } else if (value.type === "point") {
                 if (typeof dataVal !== "object") throw new Error();
                 if (!dataVal.longitude || !dataVal.latitude) throw new Error();
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 if (Object.keys(dataVal).length > 2) throw new Error();
             } else if (value.type === "text") {
                 if (typeof dataVal !== "string") throw new Error();

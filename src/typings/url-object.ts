@@ -1,4 +1,4 @@
-export type URLObject = {
+export interface URLObject {
     username: string;
     password: string;
     entrypoint: string;

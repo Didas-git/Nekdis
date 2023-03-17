@@ -21,7 +21,6 @@ export class Client {
     #models: Map<string, Model<any>> = new Map();
     public isOpen: boolean = false;
 
-
     public async connect(url: string | URLObject = "redis://localhost:6379"): Promise<Client> {
         if (this.isOpen) return this;
 
@@ -32,9 +31,13 @@ export class Client {
         }
 
         this.#client = createClient({ url });
-        this.#client.connect();
         this.#raw = this.#client;
-        this.isOpen = true;
+        try {
+            await this.#client.connect();
+            this.isOpen = true;
+        } catch (e) {
+            Promise.reject(e);
+        }
 
         return this;
     }
@@ -67,18 +70,19 @@ export class Client {
     }
 
     public model<T extends Schema<SchemaDefinition, MethodsDefinition>>(name: string, schema?: T): Model<T> & ExtractSchemaMethods<T> {
-        if (this.#models.has(name)) return <never>this.#models.get(name)!;
+        let model = this.#models.get(name);
+        if (model) return <never>model;
 
         if (!schema) throw new Error("You have to pass a schema if it doesnt exist");
 
-        const model = new Model(this.#client, name, schema);
+        model = new Model(this.#client, name, schema);
         this.#models.set(name, model);
         return <never>model;
     }
 
     public addModel(name: string, model: Model<any>, override: boolean = false): void {
         if (this.#models.has(name) && !override) throw new Error("The model passed already exists, if you wish to override it pass in `true` as the third argument");
-        if (!(model instanceof Model)) throw new Error("The recieved model was of the wrong type");
+        if (!(model instanceof Model)) throw new Error("The received model was of the wrong type");
 
         this.#models.set(name, model);
     }

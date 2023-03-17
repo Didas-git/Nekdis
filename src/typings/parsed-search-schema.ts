@@ -1,6 +1,6 @@
-import { FieldTypes } from "./schema-definition";
+import type { FieldTypes } from "./schema-definition";
 
 export interface Parsed {
-    value: FieldTypes,
+    value: FieldTypes;
     path: string;
 }

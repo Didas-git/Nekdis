@@ -1,5 +1,5 @@
-import { MapSchema } from "./map-schema";
-import { ObjectField, SchemaDefinition } from "./schema-definition";
+import type { MapSchema } from "./map-schema";
+import type { ObjectField, SchemaDefinition } from "./schema-definition";
 
 export type ParseObjectField<T extends ObjectField> = T["required"] extends true
     ? ParseObject<T>
