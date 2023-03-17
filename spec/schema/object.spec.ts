@@ -14,11 +14,6 @@ describe("object field", () => {
                     nestedProperty5: "date",
                     nestedProperty6: "point",
                     nestedProperty7: "array",
-                    // nestedProperty8: {
-                    //     type: "tuple",
-                    //     elements: ["number"],
-                    //     mutable: true
-                    // },
                     nestedProperty9: {
                         type: "object",
                         properties: {

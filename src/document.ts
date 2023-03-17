@@ -56,7 +56,7 @@ export class Document<S extends SchemaDefinition> {
                 //         this.#validateData(<SchemaDefinition><unknown>{ ...[dataVal[i]] }, <ParsedSchemaDefinition><unknown>{ ...[element] }, true);
                 //     });
             } else if (value.type === "date") {
-                if (!(dataVal instanceof Date)) throw new Error();
+                if (!(dataVal instanceof Date) || typeof dataVal !== "number") throw new Error();
             } else if (value.type === "point") {
                 if (typeof dataVal !== "object") throw new Error();
                 if (!dataVal.longitude || !dataVal.latitude) throw new Error();

@@ -80,14 +80,14 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
                     throw new Error("Object definitions on `array` are not yet supported by the parser")
                 }
 
-                arrayPath = val.value.elements === "text" ? "[*]" : (val.value.elements === "number" || val.value.elements === "point") ? "" : "*";
+                arrayPath = val.value.elements === "text" ? "[*]" : (val.value.elements === "number" || val.value.elements === "date" || val.value.elements === "point") ? "" : "*";
             }
 
             this.#searchIndex.push(
                 `$.${key}${arrayPath}`,
                 "AS",
                 val.path,
-                val.value.type === "text" ? "TEXT" : val.value.type === "number" ? "NUMERIC" : val.value.type === "point" ? "GEO" : "TAG"
+                val.value.type === "text" ? "TEXT" : val.value.type === "number" || val.value.type === "date" ? "NUMERIC" : val.value.type === "point" ? "GEO" : "TAG"
             );
         });
 

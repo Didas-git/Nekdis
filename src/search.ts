@@ -1,5 +1,5 @@
 import { Document } from "./document";
-import { SearchField, StringField, NumberField, BooleanField } from "./utils/search-builders";
+import { SearchField, StringField, NumberField, BooleanField, TextField, DateField } from "./utils/search-builders";
 import type { FieldTypes, Parsed, RedisClient, SchemaDefinition, MapSearchField } from "./typings";
 
 export class Search<T extends SchemaDefinition> {
@@ -27,19 +27,8 @@ export class Search<T extends SchemaDefinition> {
     }
 
     or(value: unknown) {
-        switch (this.#workingType) {
-            case "string": {
-                this._query.at(-1)?.or.push(value);
-                break;
-            }
-            case "number": {
-                this._query.at(-1)?.or.push([value, value])
-                break;
-            }
-            case "boolean": {
-                this._query.at(-1)?.or.push(value);
-                break;
-            }
+        if (this.#workingType === "string" || this.#workingType === "boolean" || this.#workingType === "text") {
+            this._query.at(-1)?.or.push(value);
         }
 
         return this;
@@ -88,6 +77,14 @@ export class Search<T extends SchemaDefinition> {
             case "boolean": {
                 this.#workingType = "boolean";
                 return <never>new BooleanField<T>(this, field);
+            }
+            case "text": {
+                this.#workingType = "text";
+                return <never>new TextField<T>(this, field);
+            }
+            case "date": {
+                this.#workingType = "date";
+                return <never>new DateField<T>(this, field);
             }
         }
 
