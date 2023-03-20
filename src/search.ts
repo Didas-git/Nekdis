@@ -1,5 +1,6 @@
 import { Document } from "./document";
 import { type SearchField, StringField, NumberField, BooleanField, TextField, DateField } from "./utils/search-builders";
+import type { SearchOptions, SearchReply } from "redis";
 import type { FieldTypes, Parsed, RedisClient, SchemaDefinition, MapSearchField, ParseSchema, MapSchema, BaseField } from "./typings";
 
 export class Search<T extends SchemaDefinition, P extends ParseSchema<T> = ParseSchema<T>> {
@@ -8,6 +9,9 @@ export class Search<T extends SchemaDefinition, P extends ParseSchema<T> = Parse
     readonly #parsedSchema: Map<Parsed["path"], Parsed>;
     readonly #index: string;
     #workingType!: FieldTypes["type"];
+
+    /** LIMIT defaults to 0 10 */
+    #options: SearchOptions = {};
 
     /** @internal */
     public _query: Array<SearchField<T>> = [];
@@ -40,18 +44,22 @@ export class Search<T extends SchemaDefinition, P extends ParseSchema<T> = Parse
     // }
 
     public async returnAll(): Promise<Array<Document<T> & MapSchema<T>>> {
-        const docs: Array<never> = [];
         const { documents } = await this.#client.ft.search(this.#index, this.#buildQuery());
+        documents.map((doc) => <never>new Document(this.#schema, (/:(.+)/).exec(doc.id)?.[1] ?? doc.id, doc.value));
 
-        documents.forEach((doc) => {
-            docs.push(<never>new Document(this.#schema, (/:(.+)/).exec(doc.id)?.[1] ?? doc.id, doc.value));
-        });
-
-        return docs;
+        return <never>documents;
     }
 
-    public get rawQuery(): string {
-        return this.#buildQuery();
+    public async count(): Promise<number> {
+        this.#options.LIMIT = { from: 0, size: 0 };
+        return (await this.#search()).total;
+    }
+
+    // public async all(): Promise<Array<Document<T> & MapSchema<T>>> {
+    // }
+
+    async #search(): Promise<SearchReply> {
+        return await this.#client.ft.search(this.#index, this.#buildQuery(), this.#options);
     }
 
     #buildQuery(): string {
@@ -92,5 +100,9 @@ export class Search<T extends SchemaDefinition, P extends ParseSchema<T> = Parse
             case "point": { throw new Error('Not implemented yet: "point" case'); }
             case "object": { throw new Error('Not implemented yet: "object" case'); }
         }
+    }
+
+    public get rawQuery(): string {
+        return this.#buildQuery();
     }
 }
