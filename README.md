@@ -139,16 +139,17 @@ const usersNamedDidaS = await userModel.searchByName("DidaS");
 
 #### Client
 
-| Syntax                | Description                                                                          |
-| --------------------- | ------------------------------------------------------------------------------------ |
-| connect(url)          | connects to the redis database                                                       |
-| disconnect()          | closes the current connection after finishing the ongoing transactions               |
-| forceDisconnect()     | closses the current connection without finishing transactions.                       |
-| schema(data)          | ALIAS TO `new Schema()` (creates a new schema)                                       |
-| model(name, schema)   | creates a new model and adds it to the client collection of models                   |
-| addModel(name, model) | takes in an instance of a model class and adds it to the client collection of models |
-| isOpen                | returs a boolean depending reflecting the state of the client                        |
-| raw                   | Exposes the `node-redis` client                                                      |
+| Syntax                           | Description                                                                          |
+| -------------------------------- | ------------------------------------------------------------------------------------ |
+| connect(url)                     | connects to the redis database                                                       |
+| disconnect()                     | closes the current connection after finishing the ongoing transactions               |
+| forceDisconnect()                | closes the current connection without finishing transactions.                        |
+| schema(data, methods?, options?) | ALIAS TO `new Schema()` (creates a new schema)                                       |
+| model(name, schema?)             | creates a new model and adds it to the client collection of models                   |
+| addModel(name, model, override?) | takes in an instance of a model class and adds it to the client collection of models |
+| isOpen                           | returns a boolean depending reflecting the state of the client                       |
+| raw                              | Exposes the `node-redis` client                                                      |
+| withModules(modules)             |                                                                                      |
 
 #### Schema
 | Syntax        | Description                                                                                    |
@@ -157,35 +158,23 @@ const usersNamedDidaS = await userModel.searchByName("DidaS");
 | methods(data) | adds methods to the schema after it being created, also not recommended                        |
 
 #### Model
-| Syntax                        | Description                                                                                |
-| ----------------------------- | ------------------------------------------------------------------------------------------ |
-| create(id)                    | creates a new entry on the database.                                                       |
-| save(document)                | saves the current data to its corresponding entry on the the database if changes were made |
-| delete(documents)             | deletes the corresponding entry on the database                                            |
-| exists(documents)             | checks whether the current model has an entry or if the index passed already exists        |
-| search()                      | search for a specific entry                                                                |
-| createAndSave()               | ALIAS TO `const nModel = model.create(); save(nModel)`                                     |
-| ~~update(document, newData)~~ | updates the entry on the database                                                          |
-| ~~count()~~                   | returns the amount of existent entries corresponding to the model schema                   |
-| ~~searchOne()~~               | just like `search` but only returns the first entry                                        |
-| ~~searchAndUpdate()~~         | search for a specific entry(ies) and update its content                                    |
-| ~~searchAndDelete()~~         | search for a specific entry(ies) and delete it                                             |
-| ~~searchOneAndUpdate()~~      | just like `searchAndUpdate` but only updates the first entry                               |
-| ~~searchOneAndDelete()~~      | just like `searchAndDelete` but only deletes the first entry                               |
-| ~~searchByIndex()~~           | search for the the model id or a specific one                                              |
-| ~~searchByIndexAndUpdate()~~  | search for a specific index and update its content                                         |
-| ~~searchByIndexAndDelete()~~  | search for a specific index and delete it                                                  |
-| ~~updateOne()~~               | a more limited version of  `searchOneAndUpdate`                                            |
-| ~~watch()~~                   | creates an event emiter so you can listen to changes on data using that model              |
-| ~~aggregate()~~               | retrieves the entry and aggregates data to it                                              |
-| ~~rawSearch()~~               | raw redis search query                                                                     |
+| Syntax                           | Description                                                                    |
+| -------------------------------- | ------------------------------------------------------------------------------ |
+| get(id)                          | get a specific document using the record id                                    |
+| create(id?)                      | creates a new document.                                                        |
+| save(document)                   | saves the given document to the database                                       |
+| delete(documents)                | deletes the given documents or id(s) from the database                         |
+| exists(documents)                | checks whether the document or id(s) already exists                            |
+| expire(documents, seconds, mode) | calls the expire method on the documents with the given parameters             |
+| createAndSave(data)              | ALIAS TO `const nModel = model.create(); model.save(nModel)`                   |
+| search()                         | returns the search builder                                                     |
+| createIndex()                    | creates the redis search index                                                 |
+| deleteIndex()                    | deletes the redis search index                                                 |
+| rawSearch(args)                  | raw redis search query                                                         |
+| ~~update(id, data)~~             | updates the entry on the database                                              |
+| ~~count()~~                      | returns the amount of existent entries corresponding to the model schema       |
+| ~~watch()~~                      | creates an event emitter so you can listen to changes on data using that model |
+| ~~aggregate()~~                  | retrieves the entry and aggregates data to it                                  |
 
-#### Query
-Refer to the current redis-om version for now
-<br/>
-
-#### Missing description for client commands
-The commands on the client class not listed above are all official redis commands and you should read their documentation or go look at node-redis
-<br/>
-
-**DISCLAIMER:** `any` and PropertyKey are used in some type notations just for the sake of this proposal and T is refering to the Model return type, so if a Model represents a Guild T is Guild.
+#### Search
+Refer to the current [redis-om](https://github.com/redis/redis-om-node#searching) version for now
