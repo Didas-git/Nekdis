@@ -19,10 +19,10 @@ export class Client {
     #client!: RedisClient;
     #raw!: RedisClient;
     #models: Map<string, Model<any>> = new Map();
-    public isOpen: boolean = false;
+    #open: boolean = false;
 
     public async connect(url: string | URLObject = "redis://localhost:6379"): Promise<Client> {
-        if (this.isOpen) return this;
+        if (this.#open) return this;
 
         if (typeof url === "object") {
 
@@ -34,7 +34,7 @@ export class Client {
         this.#raw = this.#client;
         try {
             await this.#client.connect();
-            this.isOpen = true;
+            this.#open = true;
         } catch (e) {
             Promise.reject(e);
         }
@@ -45,14 +45,14 @@ export class Client {
     public async disconnect(): Promise<Client> {
         await this.#client.quit();
 
-        this.isOpen = false;
+        this.#open = false;
         return this;
     }
 
     public async forceDisconnect(): Promise<Client> {
         await this.#client.disconnect();
 
-        this.isOpen = false;
+        this.#open = false;
         return this;
     }
 
@@ -73,7 +73,7 @@ export class Client {
         let model = this.#models.get(name);
         if (model) return <never>model;
 
-        if (!schema) throw new Error("You have to pass a schema if it doesnt exist");
+        if (!schema) throw new Error("You have to pass a schema if it doesn't exist");
 
         model = new Model(this.#client, name, schema);
         this.#models.set(name, model);
@@ -89,6 +89,10 @@ export class Client {
 
     public get raw(): RedisClient {
         return this.#raw;
+    }
+
+    public get isOpen(): boolean {
+        return this.#open;
     }
 }
 
