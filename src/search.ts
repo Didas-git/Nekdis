@@ -1,6 +1,6 @@
 import { Document } from "./document";
 import { type SearchField, StringField, NumberField, BooleanField, TextField, DateField } from "./utils/search-builders";
-import type { FieldTypes, Parsed, RedisClient, SchemaDefinition, MapSearchField, ParseSchema, MapSchema } from "./typings";
+import type { FieldTypes, Parsed, RedisClient, SchemaDefinition, MapSearchField, ParseSchema, MapSchema, BaseField } from "./typings";
 
 export class Search<T extends SchemaDefinition, P extends ParseSchema<T> = ParseSchema<T>> {
     readonly #client: RedisClient;
@@ -59,14 +59,16 @@ export class Search<T extends SchemaDefinition, P extends ParseSchema<T> = Parse
     }
 
     #createWhere<F extends keyof P>(field: F): MapSearchField<F, T, P> {
-
         if (typeof field !== "string") throw new PrettyError();
 
         const parsedField = this.#parsedSchema.get(field);
-
         if (!parsedField) throw new PrettyError(`'${field}' doesn't exist on the schema`);
 
-        switch (parsedField.value.type) {
+        return <never>this.#defineReturn(field, parsedField.value.type === "array" ? parsedField.value.elements ?? "string" : parsedField.value.type);
+    }
+
+    #defineReturn(field: string, type: Exclude<FieldTypes["type"], "array">): BaseField {
+        switch (type) {
             case "string": {
                 this.#workingType = "string";
                 return <never>new StringField<T>(this, field);
@@ -87,9 +89,8 @@ export class Search<T extends SchemaDefinition, P extends ParseSchema<T> = Parse
                 this.#workingType = "date";
                 return <never>new DateField<T>(this, field);
             }
-            case "object": { throw new Error('Not implemented yet: "object" case'); }
             case "point": { throw new Error('Not implemented yet: "point" case'); }
-            case "array": { throw new Error('Not implemented yet: "array" case'); }
+            case "object": { throw new Error('Not implemented yet: "object" case'); }
         }
     }
 }

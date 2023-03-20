@@ -31,21 +31,19 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
     }
 
     #parse<T extends SchemaDefinition>(schema: T): ParsedSchemaDefinition {
-        Object.keys(schema).forEach((key) => {
+        Object.entries(schema).forEach(([key, value]) => {
             if (key.startsWith("$")) throw new PrettyError("Keys cannot start with '$'", {
                 ref: "redis-om"
             });
-
-            let value = schema[key];
 
             if (typeof value === "string") {
                 //@ts-expect-error Anti-JS
                 if (value === "object")
                     throw new PrettyError(`Type '${value}' needs to use its object definition`, {
-                        ref: "redis-om",
+                        ref: "nekdis",
                         lines: [
                             {
-                                err: inspect({ [key]: schema[key] }, { colors: true }),
+                                err: inspect({ [key]: value }, { colors: true }),
                                 marker: { text: "Parsing:" }
                             },
                             {
@@ -73,7 +71,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
                     if (typeof value.elements === "undefined") value.elements = "string";
-                    if (typeof value.elements === "object" && !Array.isArray(value.elements)) value.elements = this.#parse(value.elements);
+                    if (typeof value.elements === "object" && !Array.isArray(value.elements)) throw new Error();/* value.elements = this.#parse(value.elements); */
                 } else if (value.type === "date") {
                     if (value.default instanceof Date) value.default = value.default.getTime();
 
@@ -87,8 +85,6 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
                     else value.properties = this.#parse(value.properties);
                 }
             }
-            //@ts-expect-error More Shenanigans
-            schema[key] = value;
         });
         return <ParsedSchemaDefinition>schema;
     }

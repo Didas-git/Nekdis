@@ -17,7 +17,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
         this.#schema = data;
         this.#searchIndexName = `${name}:index`;
         parse(this.#schema[schemaData]).forEach((parsedVal) => {
-            this.#parsedSchema.set(parsedVal.path, { value: parsedVal.value, path: parsedVal.path.replace(/[.]/g, "_") });
+            this.#parsedSchema.set(parsedVal.path, { value: parsedVal.value, path: parsedVal.path.replaceAll(".", "_") });
         });
         this.#defineMethods();
     }
@@ -107,9 +107,9 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     }
 
     #defineMethods(): void {
-        Object.keys(this.#schema[methods]).forEach((key) => {
+        Object.entries(this.#schema[methods]).forEach(([key, value]) => {
             //@ts-expect-error Pending fix on type notations
-            this[key] = this.#schema[methods][key];
+            this[key] = value;
         });
     }
 }

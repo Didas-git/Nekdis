@@ -15,24 +15,22 @@ export class Document<S extends SchemaDefinition> {
         this.#schema = schema;
 
         if (data) {
-            Object.keys(data).forEach((key) => {
-                //@ts-expect-error Improvements on the types need to be done
-                this[key] = data[key];
+            Object.entries(data).forEach(([key, value]) => {
+                this[key] = value;
             });
         }
 
-        Object.keys(schema).forEach((key) => {
+        Object.entries(schema).forEach(([key, value]) => {
             if (typeof this[key] !== "undefined") return;
-            this[key] = (<ParsedSchemaDefinition><unknown>schema[key]).default;
+            this[key] = (<ParsedSchemaDefinition><unknown>value).default;
         });
     }
 
     #validateData(data: Document<SchemaDefinition> | SchemaDefinition = this, schema: ParsedSchemaDefinition = <ParsedSchemaDefinition>this.#schema, isField: boolean = false): void {
-        Object.keys(schema).forEach((val) => {
-            if (isField && !data[val]) throw new Error();
+        Object.entries(schema).forEach(([key, value]) => {
+            if (isField && !data[key]) throw new Error();
 
-            const value = schema[val];
-            const dataVal = data[val];
+            const dataVal = data[key];
 
             if (dataVal === null) throw new Error();
             if (typeof dataVal === "undefined" && !value.required) return;
@@ -45,8 +43,8 @@ export class Document<S extends SchemaDefinition> {
                 if (typeof value.elements === "object")
                     this.#validateData(<SchemaDefinition>dataVal, <ParsedSchemaDefinition>value.elements, true);
                 else {
-                    dataVal.every((vall: unknown) => {
-                        if (typeof vall !== value.elements) throw new Error();
+                    dataVal.every((val: unknown) => {
+                        if (typeof val !== value.elements) throw new Error();
                     });
                 }
             } else if (value.type === "date") {
