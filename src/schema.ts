@@ -12,7 +12,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
     /** @internal */
     public [schemaData]: ParsedSchemaDefinition;
 
-    public constructor(public rawData: S, methodsData?: M, public readonly options: SchemaOptions = {}) {
+    public constructor(rawData: S, methodsData?: M, public readonly options: SchemaOptions = {}) {
         // R.I.P. Performance
         this[schemaData] = this.#parse(JSON.parse(JSON.stringify(rawData)));
         this[methods] = methodsData ?? <M>{};
@@ -85,6 +85,8 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
                     else value.properties = this.#parse(value.properties);
                 }
             }
+            //@ts-expect-error More Shenanigans
+            schema[key] = value;
         });
         return <ParsedSchemaDefinition>schema;
     }
