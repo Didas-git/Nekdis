@@ -3,22 +3,20 @@ import { methods, parse, schemaData } from "./utils";
 import { randomUUID } from "node:crypto";
 import { Search } from "./search";
 import type { Schema } from "./schema";
-import type { ExtractSchemaDefinition, SchemaDefinition, MapSchema, MethodsDefinition, RedisClient, Parsed } from "./typings";
+import type { ExtractSchemaDefinition, SchemaDefinition, MapSchema, MethodsDefinition, RedisClient, ParsedMap } from "./typings";
 
 export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     readonly #schema: S;
     readonly #client: RedisClient;
     readonly #searchIndexName: string;
     readonly #searchIndex: Array<string> = ["FT.CREATE"];
-    readonly #parsedSchema = new Map<Parsed["path"], Parsed>();
+    readonly #parsedSchema: ParsedMap;
 
     public constructor(client: RedisClient, public readonly name: string, data: S) {
         this.#client = client;
         this.#schema = data;
         this.#searchIndexName = `${name}:index`;
-        parse(this.#schema[schemaData]).forEach((parsedVal) => {
-            this.#parsedSchema.set(parsedVal.path, { value: parsedVal.value, path: parsedVal.path.replaceAll(".", "_") });
-        });
+        this.#parsedSchema = parse(this.#schema[schemaData]);
         this.#defineMethods();
     }
 

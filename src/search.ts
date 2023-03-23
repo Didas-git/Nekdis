@@ -1,12 +1,12 @@
 import { Document } from "./document";
 import { type SearchField, StringField, NumberField, BooleanField, TextField, DateField } from "./utils/search-builders";
 import type { SearchOptions, SearchReply } from "redis";
-import type { FieldTypes, Parsed, RedisClient, SchemaDefinition, MapSearchField, ParseSchema, MapSchema, BaseField } from "./typings";
+import type { FieldTypes, RedisClient, SchemaDefinition, MapSearchField, ParseSchema, MapSchema, BaseField, ParsedMap } from "./typings";
 
 export class Search<T extends SchemaDefinition, P extends ParseSchema<T> = ParseSchema<T>> {
     readonly #client: RedisClient;
     readonly #schema: T;
-    readonly #parsedSchema: Map<Parsed["path"], Parsed>;
+    readonly #parsedSchema: ParsedMap;
     readonly #index: string;
     #workingType!: FieldTypes["type"];
 
@@ -16,7 +16,7 @@ export class Search<T extends SchemaDefinition, P extends ParseSchema<T> = Parse
     /** @internal */
     public _query: Array<SearchField<T>> = [];
 
-    public constructor(client: RedisClient, schema: T, parsedSchema: Map<Parsed["path"], Parsed>, searchIndex: string) {
+    public constructor(client: RedisClient, schema: T, parsedSchema: ParsedMap, searchIndex: string) {
         this.#client = client;
         this.#schema = schema;
         this.#parsedSchema = parsedSchema;

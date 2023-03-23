@@ -1,15 +1,15 @@
-import type { Parsed, ParsedSchemaDefinition } from "../typings";
+import type { ParsedMap, ParsedSchemaDefinition } from "../typings";
 
-export function parse(schema: ParsedSchemaDefinition, k?: string): Array<Parsed> {
-    const objs: Array<Parsed> = [];
+export function parse(schema: ParsedSchemaDefinition, k?: string): ParsedMap {
+    let objs: ParsedMap = new Map();
 
     Object.entries(schema).forEach(([key, value]) => {
         if (value.type === "object" && value.properties) {
             const parsed = parse(<ParsedSchemaDefinition>value.properties, k ? `${k}.${key}` : key);
-            parsed.forEach((p) => objs.push(p));
+            objs = new Map([...objs, ...parsed]);
         }
 
-        objs.push({ value: value, path: k ? `${k}.${key}` : key });
+        objs.set(k ? `${k}.${key}` : key, { value: value, path: k ? `${k}_${key}` : key });
     });
 
     return objs;
