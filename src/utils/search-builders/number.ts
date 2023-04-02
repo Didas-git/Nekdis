@@ -62,6 +62,6 @@ export class NumberField<T extends SchemaDefinition> extends SearchField<T> {
     }
 
     protected construct(): string {
-        return `[${this.value.join(" ")}]${this.or.length > 0 ? "" : ""}`;
+        return `[${this.value.join(" ")}]`;
     }
 }

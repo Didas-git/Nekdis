@@ -83,7 +83,7 @@ export class DateField<T extends SchemaDefinition> extends SearchField<T> {
     }
 
     protected construct(): string {
-        return `[${this.value.join(" ")}]${this.or.length > 0 ? "" : ""}`;
+        return `[${this.value.join(" ")}]`;
     }
 
     #getTime(value: Date | number | string): string {
