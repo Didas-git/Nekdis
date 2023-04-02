@@ -33,7 +33,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
     #parse<T extends SchemaDefinition>(schema: T): ParsedSchemaDefinition {
         Object.entries(schema).forEach(([key, value]) => {
             if (key.startsWith("$")) throw new PrettyError("Keys cannot start with '$'", {
-                ref: "redis-om"
+                ref: "nekdis"
             });
 
             if (typeof value === "string") {

@@ -1,5 +1,5 @@
 import { Document } from "./document";
-import { type SearchField, StringField, NumberField, BooleanField, TextField, DateField } from "./utils/search-builders";
+import { type SearchField, StringField, NumberField, BooleanField, TextField, DateField, PointField } from "./utils/search-builders";
 import type { SearchOptions, SearchReply } from "redis";
 import type { FieldTypes, RedisClient, SchemaDefinition, MapSearchField, ParseSchema, MapSchema, BaseField, ParsedMap } from "./typings";
 
@@ -10,7 +10,10 @@ export class Search<T extends SchemaDefinition, P extends ParseSchema<T> = Parse
     readonly #index: string;
     #workingType!: FieldTypes["type"];
 
-    /** LIMIT defaults to 0 10 */
+    /**
+     * LIMIT defaults to 0 10
+     * SORTBY DIRECTION defaults to ASC
+    */
     #options: SearchOptions = {};
 
     /** @internal */
@@ -97,7 +100,10 @@ export class Search<T extends SchemaDefinition, P extends ParseSchema<T> = Parse
                 this.#workingType = "date";
                 return <never>new DateField<T>(this, field);
             }
-            case "point": { throw new Error('Not implemented yet: "point" case'); }
+            case "point": {
+                this.#workingType = "point";
+                return <never>new PointField<T>(this, field);
+            }
             case "object": { throw new Error('Not implemented yet: "object" case'); }
         }
     }

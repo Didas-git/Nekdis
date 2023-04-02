@@ -1,4 +1,4 @@
-import type { StringField, NumberField, BooleanField, TextField, DateField } from "../utils/search-builders";
+import type { StringField, NumberField, BooleanField, TextField, DateField, PointField } from "../utils/search-builders";
 import type { ArrayField, FieldTypes, ObjectField, SchemaDefinition } from "./schema-definition";
 
 export type MapSearchField<K extends keyof T, S extends SchemaDefinition, T extends ParseSchema<S>> = T[K] extends "string"
@@ -11,6 +11,8 @@ export type MapSearchField<K extends keyof T, S extends SchemaDefinition, T exte
     ? TextField<S>
     : T[K] extends "date"
     ? DateField<S>
+    : T[K] extends "point"
+    ? PointField<S>
     : never;
 
 export type SchemaToStrings<T extends SchemaDefinition, K extends keyof T = keyof T> = K extends string

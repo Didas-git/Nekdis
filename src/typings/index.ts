@@ -13,3 +13,4 @@ export type * from "./url-object";
 export type * from "./redis-client";
 export type * from "./parsed-search-schema";
 export type * from "./map-search-fields";
+export type * from "./point-units";
