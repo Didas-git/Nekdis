@@ -9,52 +9,86 @@ export class TextField<T extends SchemaDefinition> extends SearchField<T> {
         exact: boolean
     } = { val: "", exact: false };
 
-    public eq(value: string): Search<T> {
-        this.value.val = value;
-        this.search._query.push(this);
-        return this.search;
+    public eq(...value: Array<string>): Search<T>;
+    public eq(value: Array<string>): Search<T>;
+    public eq(value: Array<string> | string): Search<T> {
+        return this.#handleMultipleFields(Array.isArray(value) ? value : arguments);
     }
 
-    public equals(value: string): Search<T> {
-        return this.eq(value);
+    public equals(...value: Array<string>): Search<T>;
+    public equals(value: Array<string>): Search<T>;
+    public equals(): Search<T> {
+        return this.eq(...arguments);
     }
 
-    public equalsTo(value: string): Search<T> {
-        return this.eq(value);
+    public equalsTo(...value: Array<string>): Search<T>;
+    public equalsTo(value: Array<string>): Search<T>;
+    public equalsTo(): Search<T> {
+        return this.eq(...arguments);
     }
 
-    public exact(value: string): Search<T> {
-        this.value = { val: value, exact: true };
-        this.search._query.push(this);
-        return this.search;
+    public exact(...value: Array<string>): Search<T>;
+    public exact(value: Array<string>): Search<T>;
+    public exact(value: Array<string> | string): Search<T> {
+        return this.#handleMultipleFields(Array.isArray(value) ? value : arguments, true);
     }
 
-    public match(value: string): Search<T> {
-        return this.eq(value);
+    public match(...value: Array<string>): Search<T>;
+    public match(value: Array<string>): Search<T>;
+    public match(): Search<T> {
+        return this.eq(...arguments);
     }
 
-    public matchExact(value: string): Search<T> {
-        return this.exact(value);
+    public matches(...value: Array<string>): Search<T>;
+    public matches(value: Array<string>): Search<T>;
+    public matches(): Search<T> {
+        return this.eq(...arguments);
     }
 
-    public matches(value: string): Search<T> {
-        return this.eq(value);
+    public matchExact(...value: Array<string>): Search<T>;
+    public matchExact(value: Array<string>): Search<T>;
+    public matchExact(): Search<T> {
+        return this.exact(...arguments);
     }
 
-    public matchExactly(value: string): Search<T> {
-        return this.exact(value);
+    public matchExactly(...value: Array<string>): Search<T>;
+    public matchExactly(value: Array<string>): Search<T>;
+    public matchExactly(): Search<T> {
+        return this.exact(...arguments);
     }
 
-    public matchesExactly(value: string): Search<T> {
-        return this.exact(value);
+    public matchesExactly(...value: Array<string>): Search<T>;
+    public matchesExactly(value: Array<string>): Search<T>;
+    public matchesExactly(): Search<T> {
+        return this.exact(...arguments);
     }
 
-    public get exactly(): Exclude<typeof this, "exact"> {
+    public get exactly(): Exclude<typeof this, "exact" | "matchExact" | "matchExactly" | "matchesExactly"> {
         this.value.exact = true;
         return <never>this;
     }
 
     protected construct(): string {
         return `(${this.value.exact ? `"${this.value.val}"` : this.value.val}${this.or.length > 0 ? ` | ${this.value.exact ? this.or.map((v) => `"${v}"`).join(" | ") : this.or.join(" | ")}` : ""})`;
+    }
+
+    /** @internal */
+    #handleMultipleFields(value: Array<any> | IArguments, exact: boolean = false): Search<T> {
+        const length = value.length;
+
+        if (length === 1) {
+            this.value = { val: value[0], exact };
+            this.search._query.push(this);
+            return this.search;
+        }
+
+        this.value = { val: value[0], exact };
+
+        for (let i = 1; i < length; i++) {
+            this.or.push(value[i]);
+        }
+
+        this.search._query.push(this);
+        return this.search;
     }
 }

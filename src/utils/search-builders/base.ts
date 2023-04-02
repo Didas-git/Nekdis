@@ -9,12 +9,14 @@ export abstract class SearchField<T extends SchemaDefinition> {
 
     public constructor(protected search: Search<T>, protected field: string) { }
 
-    /** Syntactic sugar, calls `eq` */
-    public abstract equalsTo(value: unknown): Search<T>;
+    // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+    public abstract eq(value: Array<unknown> | unknown): Search<T>;
 
     /** Syntactic sugar, calls `eq` */
     public abstract equals(value: unknown): Search<T>;
-    public abstract eq(value: unknown): Search<T>;
+
+    /** Syntactic sugar, calls `eq` */
+    public abstract equalsTo(value: unknown): Search<T>;
 
     /** Syntactic sugar, return self */
     public get does(): this {
