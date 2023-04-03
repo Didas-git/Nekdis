@@ -15,19 +15,19 @@ export class Document<S extends ParseSchema<any>> {
         this.#schema = schema;
 
         if (data) {
-            Object.entries(data).forEach(([key, value]) => {
+            for (let i = 0, entries = Object.entries(data), [key, value] = entries[i], len = entries.length; i < len; i++) {
                 this[key] = value;
-            });
+            }
         }
 
-        Object.entries(schema).forEach(([key, value]) => {
+        for (let i = 0, entries = Object.entries(schema), [key, value] = entries[i], len = entries.length; i < len; i++) {
             if (typeof this[key] !== "undefined") return;
             this[key] = value.default;
-        });
+        }
     }
 
-    #validateData(data: Document<ParseSchema<any>> | ParseSchema<any> = this, schema: ParseSchema<any> = <ParseSchema<any>>this.#schema, isField: boolean = false): void {
-        Object.entries(schema).forEach(([key, value]) => {
+    #validateData(data: Document<ParseSchema<any>> | ParseSchema<any> = this, schema: ParseSchema<any> = this.#schema, isField: boolean = false): void {
+        for (let i = 0, entries = Object.entries(schema), [key, value] = entries[i], len = entries.length; i < len; i++) {
             if (isField && !data[key]) throw new Error();
 
             const dataVal = data[key];
@@ -60,16 +60,16 @@ export class Document<S extends ParseSchema<any>> {
                 // This handles `number`, `boolean` and `string` types
                 if (typeof dataVal !== value.type) throw new Error();
             }
-        });
+        }
     }
 
     public toString(): string {
         this.#validateData();
         const obj: Record<string, FieldTypes> = {};
 
-        Object.keys(this.#schema).forEach((key) => {
+        for (let i = 0, keys = Object.keys(this.#schema), key = keys[i], len = keys.length; i < len; i++) {
             obj[key] = this[key];
-        });
+        }
 
         return JSON.stringify(obj, null);
     }

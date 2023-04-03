@@ -51,9 +51,12 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
 
     public expire(docs: Array<string | number | Document<ParseSchema<any>>>, seconds: number, mode?: "NX" | "XX" | "GT" | "LT"): void {
         if (!docs.length) throw new Error();
-        docs.map((el) => `${this.name}:${el instanceof Document ? el.$id : el.toString()}`).forEach((doc) => {
+        docs.map((el) => `${this.name}:${el instanceof Document ? el.$id : el.toString()}`);
+
+        for (let i = 0, doc = docs[i], len = docs.length; i < len; i++) {
+            //@ts-expect-error TS is not catching the `.map` changes
             this.#client.expire(doc, seconds, mode);
-        });
+        }
     }
 
     public async createAndSave(data: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>>): Promise<void> {
@@ -70,7 +73,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
         await this.deleteIndex();
 
         this.#searchIndex.push(this.#searchIndexName, "ON", "JSON", "PREFIX", "1", `${this.name}:`, "SCHEMA");
-        this.#parsedSchema.forEach((val, key) => {
+        for (let i = 0, len = this.#parsedSchema.size, entries = [...this.#parsedSchema.entries()], [key, val] = entries[i]; i < len; i++) {
             let arrayPath = "";
 
             if (val.value.type === "array") {
@@ -87,7 +90,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
                 val.path,
                 val.value.type === "text" ? "TEXT" : val.value.type === "number" || val.value.type === "date" ? "NUMERIC" : val.value.type === "point" ? "GEO" : "TAG"
             );
-        });
+        }
 
         await this.#client.sendCommand(this.#searchIndex);
     }
@@ -105,9 +108,9 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     }
 
     #defineMethods(): void {
-        Object.entries(this.#schema[methods]).forEach(([key, value]) => {
+        for (let i = 0, entries = Object.entries(this.#schema[methods]), [key, value] = entries[i], len = entries.length; i < len; i++) {
             //@ts-expect-error Pending fix on type notations
             this[key] = value;
-        });
+        }
     }
 }

@@ -14,7 +14,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
 
     public constructor(rawData: S, methodsData?: M, public readonly options: SchemaOptions = {}) {
         // R.I.P. Performance
-        this[schemaData] = this.#parse(JSON.parse(JSON.stringify(rawData)));
+        this[schemaData] = this.#parse(rawData);
         this[methods] = methodsData ?? <M>{};
         this.options.dataStructure = options.dataStructure ?? "JSON";
 
@@ -31,7 +31,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
     }
 
     #parse<T extends SchemaDefinition>(schema: T): P {
-        Object.entries(schema).forEach(([key, value]) => {
+        for (let i = 0, entries = Object.entries(schema), [key, value] = entries[i], len = entries.length; i < len; i++) {
             if (key.startsWith("$")) throw new PrettyError("Keys cannot start with '$'", {
                 ref: "nekdis"
             });
@@ -87,7 +87,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
             }
             //@ts-expect-error More Shenanigans
             schema[key] = value;
-        });
+        }
         return <never>schema;
     }
 }

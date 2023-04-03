@@ -62,10 +62,10 @@ export class Client {
     }
 
     public withModules<T extends Array<Module>>(modules: ExtractName<T>): this & WithModules<T> {
-        modules.forEach((module) => {
+        for (let i = 0, len = modules.length, module = modules[i]; i < len; i++) {
             //@ts-expect-error shenanigans
             this[module.name] = new module.ctor();
-        });
+        }
 
         return <never>this;
     }
