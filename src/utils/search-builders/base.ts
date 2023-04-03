@@ -1,7 +1,7 @@
 import type { Search } from "../../search";
-import type { SchemaDefinition } from "../../typings";
+import type { ParseSchema } from "../../typings";
 
-export abstract class SearchField<T extends SchemaDefinition> {
+export abstract class SearchField<T extends ParseSchema<any>> {
 
     protected negated: boolean = false;
     protected value: unknown;

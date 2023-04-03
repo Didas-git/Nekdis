@@ -1,9 +1,9 @@
 import { Document } from "./document";
 import { type SearchField, StringField, NumberField, BooleanField, TextField, DateField, PointField } from "./utils/search-builders";
 import type { SearchOptions, SearchReply } from "redis";
-import type { FieldTypes, RedisClient, SchemaDefinition, MapSearchField, ParseSchema, MapSchema, BaseField, ParsedMap } from "./typings";
+import type { FieldTypes, RedisClient, MapSearchField, ParseSchema, ParseSearchSchema, BaseField, ParsedMap, MapSchema } from "./typings";
 
-export class Search<T extends SchemaDefinition, P extends ParseSchema<T> = ParseSchema<T>> {
+export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> = ParseSearchSchema<T>> {
     readonly #client: RedisClient;
     readonly #schema: T;
     readonly #parsedSchema: ParsedMap;

@@ -2,15 +2,15 @@ import { inspect } from "node:util";
 import { Color } from "colours.js/dst";
 import { methods, schemaData } from "./utils/symbols";
 import { ParsingError } from "./utils";
-import type { SchemaDefinition, SchemaOptions, MethodsDefinition, ParsedSchemaDefinition } from "./typings";
+import type { SchemaDefinition, SchemaOptions, MethodsDefinition, ParseSchema } from "./typings";
 
-export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
+export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P extends ParseSchema<S> = ParseSchema<S>> {
 
     /** @internal */
     public [methods]: M;
 
     /** @internal */
-    public [schemaData]: ParsedSchemaDefinition;
+    public [schemaData]: P;
 
     public constructor(rawData: S, methodsData?: M, public readonly options: SchemaOptions = {}) {
         // R.I.P. Performance
@@ -30,7 +30,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
         return this;
     }
 
-    #parse<T extends SchemaDefinition>(schema: T): ParsedSchemaDefinition {
+    #parse<T extends SchemaDefinition>(schema: T): P {
         Object.entries(schema).forEach(([key, value]) => {
             if (key.startsWith("$")) throw new PrettyError("Keys cannot start with '$'", {
                 ref: "nekdis"
@@ -64,10 +64,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
             } else {
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                 if (!value.type) throw new PrettyError("Type not defined");
-                if (value.type !== "array" && value.type !== "object" && value.type !== "date") {
-                    if (typeof value.default === "undefined") value.default = undefined;
-                    if (typeof value.required === "undefined") value.required = false;
-                } else if (value.type === "array") {
+                if (value.type === "array") {
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
                     if (typeof value.elements === "undefined") value.elements = "string";
@@ -78,16 +75,19 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition> {
                     if (typeof value.default === "string") value.default = new Date(value.default).getTime();
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
-                } else {
+                } else if (value.type === "object") {
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
                     if (!value.properties) value.properties = undefined;
-                    else value.properties = this.#parse(value.properties);
+                    else value.properties = <never>this.#parse(value.properties);
+                } else {
+                    if (typeof value.default === "undefined") value.default = undefined;
+                    if (typeof value.required === "undefined") value.required = false;
                 }
             }
             //@ts-expect-error More Shenanigans
             schema[key] = value;
         });
-        return <ParsedSchemaDefinition>schema;
+        return <never>schema;
     }
 }

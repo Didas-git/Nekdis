@@ -1,6 +1,6 @@
-import type { FieldTypes, ParsedSchemaDefinition, SchemaDefinition } from "./typings";
+import type { FieldTypes, ObjectField, ParseSchema } from "./typings";
 
-export class Document<S extends SchemaDefinition> {
+export class Document<S extends ParseSchema<any>> {
 
     readonly #schema: S;
 
@@ -22,11 +22,11 @@ export class Document<S extends SchemaDefinition> {
 
         Object.entries(schema).forEach(([key, value]) => {
             if (typeof this[key] !== "undefined") return;
-            this[key] = (<ParsedSchemaDefinition><unknown>value).default;
+            this[key] = value.default;
         });
     }
 
-    #validateData(data: Document<SchemaDefinition> | SchemaDefinition = this, schema: ParsedSchemaDefinition = <ParsedSchemaDefinition>this.#schema, isField: boolean = false): void {
+    #validateData(data: Document<ParseSchema<any>> | ParseSchema<any> = this, schema: ParseSchema<any> = <ParseSchema<any>>this.#schema, isField: boolean = false): void {
         Object.entries(schema).forEach(([key, value]) => {
             if (isField && !data[key]) throw new Error();
 
@@ -37,16 +37,16 @@ export class Document<S extends SchemaDefinition> {
             if (typeof dataVal === "undefined" && value.required && typeof value.default === "undefined") throw new Error();
 
             if (value.type === "object") {
-                if (!value.properties) return;
-                this.#validateData(<SchemaDefinition>dataVal, <ParsedSchemaDefinition>value.properties, true);
+                if (!(<ObjectField>value).properties) return;
+                //@ts-expect-error Typescript is getting confused due to the union of array and object
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                this.#validateData(dataVal, value.properties, true);
             } else if (value.type === "array") {
-                if (typeof value.elements === "object")
-                    this.#validateData(<SchemaDefinition>dataVal, <ParsedSchemaDefinition>value.elements, true);
-                else {
-                    dataVal.every((val: unknown) => {
-                        if (typeof val !== value.elements) throw new Error();
-                    });
-                }
+                dataVal.every((val: unknown) => {
+                    //@ts-expect-error Typescript is getting confused due to the union of array and object
+                    if (typeof val !== value.elements) throw new Error();
+                });
+
             } else if (value.type === "date") {
                 if (!(dataVal instanceof Date) || typeof dataVal !== "number") throw new Error();
             } else if (value.type === "point") {

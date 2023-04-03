@@ -1,8 +1,8 @@
 import { SearchField } from "./base";
 import type { Search } from "../../search";
-import type { SchemaDefinition } from "../../typings";
+import type { ParseSchema } from "../../typings";
 
-export class BooleanField<T extends SchemaDefinition> extends SearchField<T> {
+export class BooleanField<T extends ParseSchema<any>> extends SearchField<T> {
 
     public eq(value: boolean): Search<T> {
         this.value = value;

@@ -10,7 +10,8 @@ import type {
     WithModules,
     URLObject,
     RedisClient,
-    ExtractName
+    ExtractName,
+    ParseSchema
 } from "./typings";
 
 import "@infinite-fansub/logger";
@@ -69,7 +70,7 @@ export class Client {
         return <never>this;
     }
 
-    public model<T extends Schema<SchemaDefinition, MethodsDefinition>>(name: string, schema?: T): Model<T> & ExtractSchemaMethods<T> {
+    public model<T extends Schema<SchemaDefinition, MethodsDefinition, ParseSchema<any>>>(name: string, schema?: T): Model<T> & ExtractSchemaMethods<T> {
         let model = this.#models.get(name);
         if (model) return <never>model;
 

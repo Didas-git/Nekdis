@@ -1,5 +1,5 @@
 import type { Search } from "../../search";
-import type { Point, SchemaDefinition, Units } from "../../typings";
+import type { Point, ParseSchema, Units } from "../../typings";
 import { SearchField } from "./base";
 
 export type CircleFunction = (circle: Circle) => Circle;
@@ -102,7 +102,7 @@ export class Circle {
 
 }
 
-export class PointField<T extends SchemaDefinition> extends SearchField<T> {
+export class PointField<T extends ParseSchema<any>> extends SearchField<T> {
     #circle: Circle = new Circle();
 
     public override eq(fn: CircleFunction | Circle): Search<T> {

@@ -1,8 +1,8 @@
 import type { Search } from "../../search";
-import type { SchemaDefinition } from "../../typings";
+import type { ParseSchema } from "../../typings";
 import { SearchField } from "./base";
 
-export class StringField<T extends SchemaDefinition> extends SearchField<T> {
+export class StringField<T extends ParseSchema<any>> extends SearchField<T> {
 
     public eq(...value: Array<string>): Search<T>;
     public eq(value: Array<string>): Search<T>;

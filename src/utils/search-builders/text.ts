@@ -1,8 +1,8 @@
 import type { Search } from "../../search";
-import type { SchemaDefinition } from "../../typings";
+import type { ParseSchema } from "../../typings";
 import { SearchField } from "./base";
 
-export class TextField<T extends SchemaDefinition> extends SearchField<T> {
+export class TextField<T extends ParseSchema<any>> extends SearchField<T> {
 
     protected override value: {
         val: string,

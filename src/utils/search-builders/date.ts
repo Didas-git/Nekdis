@@ -1,8 +1,8 @@
 import { SearchField } from "./base";
 import type { Search } from "../../search";
-import type { SchemaDefinition } from "../../typings";
+import type { ParseSchema } from "../../typings";
 
-export class DateField<T extends SchemaDefinition> extends SearchField<T> {
+export class DateField<T extends ParseSchema<any>> extends SearchField<T> {
 
     declare protected value: [string, string];
 
