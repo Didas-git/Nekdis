@@ -15,19 +15,22 @@ export class Document<S extends ParseSchema<any>> {
         this.#schema = schema;
 
         if (data) {
-            for (let i = 0, entries = Object.entries(data), [key, value] = entries[i], len = entries.length; i < len; i++) {
+            for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
+                const [key, value] = entries[i];
                 this[key] = value;
             }
         }
 
-        for (let i = 0, entries = Object.entries(schema), [key, value] = entries[i], len = entries.length; i < len; i++) {
+        for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
+            const [key, value] = entries[i];
             if (typeof this[key] !== "undefined") return;
             this[key] = value.default;
         }
     }
 
     #validateData(data: Document<ParseSchema<any>> | ParseSchema<any> = this, schema: ParseSchema<any> = this.#schema, isField: boolean = false): void {
-        for (let i = 0, entries = Object.entries(schema), [key, value] = entries[i], len = entries.length; i < len; i++) {
+        for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
+            const [key, value] = entries[i];
             if (isField && !data[key]) throw new Error();
 
             const dataVal = data[key];
@@ -67,7 +70,8 @@ export class Document<S extends ParseSchema<any>> {
         this.#validateData();
         const obj: Record<string, FieldTypes> = {};
 
-        for (let i = 0, keys = Object.keys(this.#schema), key = keys[i], len = keys.length; i < len; i++) {
+        for (let i = 0, keys = Object.keys(this.#schema), len = keys.length; i < len; i++) {
+            const key = keys[i];
             obj[key] = this[key];
         }
 

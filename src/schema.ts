@@ -31,13 +31,14 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
     }
 
     #parse<T extends SchemaDefinition>(schema: T): P {
-        for (let i = 0, entries = Object.entries(schema), [key, value] = entries[i], len = entries.length; i < len; i++) {
+        for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
+            let [key, value] = entries[i];
             if (key.startsWith("$")) throw new PrettyError("Keys cannot start with '$'", {
                 ref: "nekdis"
             });
 
             if (typeof value === "string") {
-                //@ts-expect-error Anti-JS
+                //@ts-expect-error Some people do not read docs
                 if (value === "object")
                     throw new PrettyError(`Type '${value}' needs to use its object definition`, {
                         ref: "nekdis",

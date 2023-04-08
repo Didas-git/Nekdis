@@ -62,7 +62,8 @@ export class Client {
     }
 
     public withModules<T extends Array<Module>>(modules: ExtractName<T>): this & WithModules<T> {
-        for (let i = 0, len = modules.length, module = modules[i]; i < len; i++) {
+        for (let i = 0, len = modules.length; i < len; i++) {
+            const module = modules[i];
             //@ts-expect-error shenanigans
             this[module.name] = new module.ctor();
         }

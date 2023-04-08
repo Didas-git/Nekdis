@@ -53,7 +53,8 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
         if (!docs.length) throw new Error();
         docs.map((el) => `${this.name}:${el instanceof Document ? el.$id : el.toString()}`);
 
-        for (let i = 0, doc = docs[i], len = docs.length; i < len; i++) {
+        for (let i = 0, len = docs.length; i < len; i++) {
+            const doc = docs[i];
             //@ts-expect-error TS is not catching the `.map` changes
             this.#client.expire(doc, seconds, mode);
         }
@@ -73,7 +74,8 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
         await this.deleteIndex();
 
         this.#searchIndex.push(this.#searchIndexName, "ON", "JSON", "PREFIX", "1", `${this.name}:`, "SCHEMA");
-        for (let i = 0, len = this.#parsedSchema.size, entries = [...this.#parsedSchema.entries()], [key, val] = entries[i]; i < len; i++) {
+        for (let i = 0, len = this.#parsedSchema.size, entries = [...this.#parsedSchema.entries()]; i < len; i++) {
+            const [key, val] = entries[i];
             let arrayPath = "";
 
             if (val.value.type === "array") {
@@ -108,7 +110,8 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     }
 
     #defineMethods(): void {
-        for (let i = 0, entries = Object.entries(this.#schema[methods]), [key, value] = entries[i], len = entries.length; i < len; i++) {
+        for (let i = 0, entries = Object.entries(this.#schema[methods]), len = entries.length; i < len; i++) {
+            const [key, value] = entries[i];
             //@ts-expect-error Pending fix on type notations
             this[key] = value;
         }

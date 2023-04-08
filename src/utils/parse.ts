@@ -3,7 +3,8 @@ import type { ParsedMap, ParseSchema } from "../typings";
 export function parse(schema: ParseSchema<any>, k?: string): ParsedMap {
     let objs: ParsedMap = new Map();
 
-    for (let i = 0, entries = Object.entries(schema), [key, value] = entries[i], len = entries.length; i < len; i++) {
+    for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
+        const [key, value] = entries[i];
         //@ts-expect-error Typescript is getting confused due to the union of array and object
         if (value.type === "object" && value.properties) {
             //@ts-expect-error Typescript is getting confused due to the union of array and object
