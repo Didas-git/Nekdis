@@ -47,10 +47,11 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
     // }
 
     public async returnAll(): Promise<Array<Document<T> & MapSchema<T>>> {
-        const { documents } = await this.#client.ft.search(this.#index, this.#buildQuery());
-        documents.map((doc) => <never>new Document(this.#schema, (/:(.+)/).exec(doc.id)?.[1] ?? doc.id, doc.value));
+        return this.all();
+    }
 
-        return <never>documents;
+    public async returnCount(): Promise<number> {
+        return this.count();
     }
 
     public async count(): Promise<number> {
@@ -58,11 +59,26 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
         return (await this.#search()).total;
     }
 
-    // public async all(): Promise<Array<Document<T> & MapSchema<T>>> {
-    // }
+    public async all(): Promise<Array<Document<T> & MapSchema<T>>> {
+        const things = [];
+        const { size, idx } = this.#parseNum((await this.#search({ LIMIT: { from: 0, size: 0 } })).total);
 
-    async #search(): Promise<SearchReply> {
-        return await this.#client.ft.search(this.#index, this.#buildQuery(), this.#options);
+        for (let i = 0, from = 0; i < idx; i++) {
+            const { documents } = await this.#search({ LIMIT: { from, size } });
+
+            for (let j = 0, len = documents.length; j < len; j++) {
+                const doc = documents[j];
+                things.push(new Document(this.#schema, (/:(.+)/).exec(doc.id)?.[1] ?? doc.id, doc.value));
+            }
+
+            from += size;
+        }
+
+        return <never>things;
+    }
+
+    async #search(options = this.#options): Promise<SearchReply> {
+        return await this.#client.ft.search(this.#index, this.#buildQuery(), options);
     }
 
     #buildQuery(): string {
@@ -106,6 +122,19 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
             }
             case "object": { throw new Error('Not implemented yet: "object" case'); }
         }
+    }
+
+    #parseNum(num: number): {
+        size: number,
+        idx: number
+    } {
+        let size = 100;
+        if (num < 100) return { size, idx: 1 };
+        if (num > 1000) size = 300;
+        return {
+            size,
+            idx: Math.ceil(num / size)
+        };
     }
 
     public get rawQuery(): string {
