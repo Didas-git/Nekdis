@@ -3,6 +3,9 @@ import { type SearchField, StringField, NumberField, BooleanField, TextField, Da
 import type { SearchOptions, SearchReply } from "redis";
 import type { FieldTypes, RedisClient, MapSearchField, ParseSchema, ParseSearchSchema, BaseField, ParsedMap, MapSchema } from "./typings";
 
+export type SearchReturn = Omit<Search<ParseSchema<any>>, "where" | "and" | "or" | "rawQuery" | `sort${string}` | `return${string}`>;
+export type SearchSortReturn = Omit<Search<ParseSchema<any>>, `sort${string}`>;
+
 export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> = ParseSearchSchema<T>> {
     readonly #client: RedisClient;
     readonly #schema: T;
@@ -46,17 +49,42 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
 
     // }
 
-    public async returnAll(): Promise<Array<Document<T> & MapSchema<T>>> {
-        return this.all();
+    public sortBy(field: string, order: "ASC" | "DESC" = "ASC"): SearchSortReturn {
+        this.#options.SORTBY = { BY: field, DIRECTION: order };
+        return <never>this;
+    }
+
+    public sortAsc(field: string): SearchSortReturn {
+        return this.sortBy(field);
+    }
+
+    public sortAscending(field: string): SearchSortReturn {
+        return this.sortBy(field);
+    }
+
+    public sortDesc(field: string): SearchSortReturn {
+        return this.sortBy(field, "DESC");
+    }
+
+    public sortDescending(field: string): SearchSortReturn {
+        return this.sortBy(field, "DESC");
+    }
+
+    public async count(): Promise<number> {
+        this.#options.LIMIT = { from: 0, size: 0 };
+        return (await this.#search()).total;
     }
 
     public async returnCount(): Promise<number> {
         return this.count();
     }
 
-    public async count(): Promise<number> {
-        this.#options.LIMIT = { from: 0, size: 0 };
-        return (await this.#search()).total;
+    public async page(offset: number, count: number): Promise<Array<Document<T> & MapSchema<T>>> {
+        return <never>await this.#search({ LIMIT: { from: offset, size: count } });
+    }
+
+    public async returnPage(offset: number, count: number): Promise<Array<Document<T> & MapSchema<T>>> {
+        return <never>await this.page(offset, count);
     }
 
     public async all(): Promise<Array<Document<T> & MapSchema<T>>> {
@@ -77,12 +105,23 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
         return <never>things;
     }
 
-    async #search(options = this.#options): Promise<SearchReply> {
+    public async returnAll(): Promise<Array<Document<T> & MapSchema<T>>> {
+        return this.all();
+    }
+
+    async #search(options?: SearchOptions, keysOnly = true): Promise<SearchReply> {
+        options = { ...this.#options, ...options };
+        if (keysOnly) options.RETURN = [];
         return await this.#client.ft.search(this.#index, this.#buildQuery(), options);
     }
 
     #buildQuery(): string {
-        return this._query.map((q) => q.toString()).join(" ");
+        let query = "";
+        for (let i = 0, len = this._query.length; i < len; i++) {
+            const queryPart = this._query[i];
+            query += `${queryPart} `;
+        }
+        return query;
     }
 
     #createWhere<F extends keyof P>(field: F): MapSearchField<F, T, P> {
@@ -139,5 +178,9 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
 
     public get rawQuery(): string {
         return this.#buildQuery();
+    }
+
+    public get return(): SearchReturn {
+        return <never>this;
     }
 }
