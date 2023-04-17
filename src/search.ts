@@ -3,8 +3,8 @@ import { type SearchField, StringField, NumberField, BooleanField, TextField, Da
 import type { SearchOptions, SearchReply } from "redis";
 import type { FieldTypes, RedisClient, MapSearchField, ParseSchema, ParseSearchSchema, BaseField, ParsedMap, MapSchema } from "./typings";
 
-export type SearchReturn = Omit<Search<ParseSchema<any>>, "where" | "and" | "or" | "rawQuery" | `sort${string}` | `return${string}`>;
-export type SearchSortReturn = Omit<Search<ParseSchema<any>>, `sort${string}`>;
+export type SearchReturn<T extends Search<ParseSchema<any>>> = Omit<T, "where" | "and" | "or" | "rawQuery" | `sort${string}` | `return${string}`>;
+export type SearchSortReturn<T extends Search<ParseSchema<any>>> = Omit<T, `sort${string}`>;
 
 export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> = ParseSearchSchema<T>> {
     readonly #client: RedisClient;
@@ -49,24 +49,24 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
 
     // }
 
-    public sortBy(field: string, order: "ASC" | "DESC" = "ASC"): SearchSortReturn {
+    public sortBy(field: string, order: "ASC" | "DESC" = "ASC"): SearchSortReturn<this> {
         this.#options.SORTBY = { BY: field, DIRECTION: order };
         return <never>this;
     }
 
-    public sortAsc(field: string): SearchSortReturn {
+    public sortAsc(field: string): SearchSortReturn<this> {
         return this.sortBy(field);
     }
 
-    public sortAscending(field: string): SearchSortReturn {
+    public sortAscending(field: string): SearchSortReturn<this> {
         return this.sortBy(field);
     }
 
-    public sortDesc(field: string): SearchSortReturn {
+    public sortDesc(field: string): SearchSortReturn<this> {
         return this.sortBy(field, "DESC");
     }
 
-    public sortDescending(field: string): SearchSortReturn {
+    public sortDescending(field: string): SearchSortReturn<this> {
         return this.sortBy(field, "DESC");
     }
 
@@ -80,15 +80,47 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
     }
 
     public async page(offset: number, count: number): Promise<Array<Document<T> & MapSchema<T>>> {
-        return <never>await this.#search({ LIMIT: { from: offset, size: count } });
+        const docs = [];
+        const { documents } = await this.#search({ LIMIT: { from: offset, size: count } });
+
+        for (let j = 0, len = documents.length; j < len; j++) {
+            const doc = documents[j];
+            docs.push(new Document(this.#schema, (/:(.+)/).exec(doc.id)?.[1] ?? doc.id, doc.value));
+        }
+
+        return <never>docs;
     }
 
     public async returnPage(offset: number, count: number): Promise<Array<Document<T> & MapSchema<T>>> {
         return <never>await this.page(offset, count);
     }
 
+    public async pageOfIds(offset: number, count: number): Promise<Array<string>> {
+        const docs: Array<string> = [];
+        const { documents } = await this.#search({ LIMIT: { from: offset, size: count } }, true);
+
+        for (let j = 0, len = documents.length; j < len; j++) {
+            const doc = documents[j];
+            docs.push(doc.id);
+        }
+
+        return docs;
+    }
+
+    public async returnPageOfIds(offset: number, count: number): Promise<Array<string>> {
+        return await this.pageOfIds(offset, count);
+    }
+
+    public async first(): Promise<Document<T> & MapSchema<T>> {
+        return (await this.page(0, 1))[0];
+    }
+
+    public async returnFirst(): Promise<Document<T> & MapSchema<T>> {
+        return await this.first();
+    }
+
     public async all(): Promise<Array<Document<T> & MapSchema<T>>> {
-        const things = [];
+        const docs = [];
         const { size, idx } = this.#parseNum((await this.#search({ LIMIT: { from: 0, size: 0 } })).total);
 
         for (let i = 0, from = 0; i < idx; i++) {
@@ -96,20 +128,42 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
 
             for (let j = 0, len = documents.length; j < len; j++) {
                 const doc = documents[j];
-                things.push(new Document(this.#schema, (/:(.+)/).exec(doc.id)?.[1] ?? doc.id, doc.value));
+                docs.push(new Document(this.#schema, (/:(.+)/).exec(doc.id)?.[1] ?? doc.id, doc.value));
             }
 
             from += size;
         }
 
-        return <never>things;
+        return <never>docs;
     }
 
     public async returnAll(): Promise<Array<Document<T> & MapSchema<T>>> {
-        return this.all();
+        return await this.all();
     }
 
-    async #search(options?: SearchOptions, keysOnly = true): Promise<SearchReply> {
+    public async allIds(): Promise<Array<string>> {
+        const docs: Array<string> = [];
+        const { size, idx } = this.#parseNum((await this.#search({ LIMIT: { from: 0, size: 0 } })).total);
+
+        for (let i = 0, from = 0; i < idx; i++) {
+            const { documents } = await this.#search({ LIMIT: { from, size } }, true);
+
+            for (let j = 0, len = documents.length; j < len; j++) {
+                const doc = documents[j];
+                docs.push(doc.id);
+            }
+
+            from += size;
+        }
+
+        return docs;
+    }
+
+    public async returnAllIds(): Promise<Array<string>> {
+        return await this.allIds();
+    }
+
+    async #search(options?: SearchOptions, keysOnly: boolean = false): Promise<SearchReply> {
         options = { ...this.#options, ...options };
         if (keysOnly) options.RETURN = [];
         return await this.#client.ft.search(this.#index, this.#buildQuery(), options);
@@ -180,7 +234,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
         return this.#buildQuery();
     }
 
-    public get return(): SearchReturn {
+    public get return(): SearchReturn<this> {
         return <never>this;
     }
 }
