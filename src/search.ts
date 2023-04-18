@@ -2,6 +2,7 @@ import { Document } from "./document";
 import { type SearchField, StringField, NumberField, BooleanField, TextField, DateField, PointField } from "./utils/search-builders";
 import type { SearchOptions, SearchReply } from "redis";
 import type { FieldTypes, RedisClient, MapSearchField, ParseSchema, ParseSearchSchema, BaseField, ParsedMap, MapSchema } from "./typings";
+import { extractIdFromRecord } from "./utils/extract-id";
 
 export type SearchReturn<T extends Search<ParseSchema<any>>> = Omit<T, "where" | "and" | "or" | "rawQuery" | `sort${string}` | `return${string}`>;
 export type SearchSortReturn<T extends Search<ParseSchema<any>>> = Omit<T, `sort${string}`>;
@@ -49,24 +50,24 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
 
     // }
 
-    public sortBy(field: string, order: "ASC" | "DESC" = "ASC"): SearchSortReturn<this> {
-        this.#options.SORTBY = { BY: field, DIRECTION: order };
+    public sortBy<F extends keyof P>(field: F, order: "ASC" | "DESC" = "ASC"): SearchSortReturn<this> {
+        this.#options.SORTBY = { BY: <string>field, DIRECTION: order };
         return <never>this;
     }
 
-    public sortAsc(field: string): SearchSortReturn<this> {
+    public sortAsc<F extends keyof P>(field: F): SearchSortReturn<this> {
         return this.sortBy(field);
     }
 
-    public sortAscending(field: string): SearchSortReturn<this> {
+    public sortAscending<F extends keyof P>(field: F): SearchSortReturn<this> {
         return this.sortBy(field);
     }
 
-    public sortDesc(field: string): SearchSortReturn<this> {
+    public sortDesc<F extends keyof P>(field: F): SearchSortReturn<this> {
         return this.sortBy(field, "DESC");
     }
 
-    public sortDescending(field: string): SearchSortReturn<this> {
+    public sortDescending<F extends keyof P>(field: F): SearchSortReturn<this> {
         return this.sortBy(field, "DESC");
     }
 
@@ -75,48 +76,52 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
         return (await this.#search()).total;
     }
 
-    public async returnCount(): Promise<number> {
-        return this.count();
-    }
-
     public async page(offset: number, count: number): Promise<Array<Document<T> & MapSchema<T>>> {
         const docs = [];
         const { documents } = await this.#search({ LIMIT: { from: offset, size: count } });
 
         for (let j = 0, len = documents.length; j < len; j++) {
             const doc = documents[j];
-            docs.push(new Document(this.#schema, (/:(.+)/).exec(doc.id)?.[1] ?? doc.id, doc.value));
+            docs.push(new Document(this.#schema, extractIdFromRecord(doc.id), doc.value));
         }
 
         return <never>docs;
     }
 
-    public async returnPage(offset: number, count: number): Promise<Array<Document<T> & MapSchema<T>>> {
-        return <never>await this.page(offset, count);
-    }
-
-    public async pageOfIds(offset: number, count: number): Promise<Array<string>> {
+    public async pageOfIds(offset: number, count: number, withRecord: boolean = false): Promise<Array<string>> {
         const docs: Array<string> = [];
         const { documents } = await this.#search({ LIMIT: { from: offset, size: count } }, true);
 
         for (let j = 0, len = documents.length; j < len; j++) {
             const doc = documents[j];
-            docs.push(doc.id);
+            docs.push(withRecord ? doc.id : extractIdFromRecord(doc.id));
         }
 
         return docs;
-    }
-
-    public async returnPageOfIds(offset: number, count: number): Promise<Array<string>> {
-        return await this.pageOfIds(offset, count);
     }
 
     public async first(): Promise<Document<T> & MapSchema<T>> {
         return (await this.page(0, 1))[0];
     }
 
-    public async returnFirst(): Promise<Document<T> & MapSchema<T>> {
-        return await this.first();
+    public async firstId(withRecord: boolean = false): Promise<string> {
+        return (await this.pageOfIds(0, 1, withRecord))[0];
+    }
+
+    public async min<F extends keyof P>(field: F): Promise<Document<T> & MapSchema<T>> {
+        return await this.sortBy(field, "ASC").first();
+    }
+
+    public async minId<F extends keyof P>(field: F): Promise<string> {
+        return await this.sortBy(field, "ASC").firstId();
+    }
+
+    public async max<F extends keyof P>(field: F): Promise<Document<T> & MapSchema<T>> {
+        return await this.sortBy(field, "DESC").first();
+    }
+
+    public async maxId<F extends keyof P>(field: F): Promise<string> {
+        return await this.sortBy(field, "DESC").firstId();
     }
 
     public async all(): Promise<Array<Document<T> & MapSchema<T>>> {
@@ -128,7 +133,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
 
             for (let j = 0, len = documents.length; j < len; j++) {
                 const doc = documents[j];
-                docs.push(new Document(this.#schema, (/:(.+)/).exec(doc.id)?.[1] ?? doc.id, doc.value));
+                docs.push(new Document(this.#schema, extractIdFromRecord(doc.id), doc.value));
             }
 
             from += size;
@@ -137,11 +142,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
         return <never>docs;
     }
 
-    public async returnAll(): Promise<Array<Document<T> & MapSchema<T>>> {
-        return await this.all();
-    }
-
-    public async allIds(): Promise<Array<string>> {
+    public async allIds(withRecord: boolean = false): Promise<Array<string>> {
         const docs: Array<string> = [];
         const { size, idx } = this.#parseNum((await this.#search({ LIMIT: { from: 0, size: 0 } })).total);
 
@@ -150,7 +151,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
 
             for (let j = 0, len = documents.length; j < len; j++) {
                 const doc = documents[j];
-                docs.push(doc.id);
+                docs.push(withRecord ? doc.id : extractIdFromRecord(doc.id));
             }
 
             from += size;
@@ -159,8 +160,48 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
         return docs;
     }
 
-    public async returnAllIds(): Promise<Array<string>> {
-        return await this.allIds();
+    public async returnCount(): Promise<number> {
+        return this.count();
+    }
+
+    public async returnAll(): Promise<Array<Document<T> & MapSchema<T>>> {
+        return await this.all();
+    }
+
+    public async returnAllIds(withRecord: boolean = false): Promise<Array<string>> {
+        return await this.allIds(withRecord);
+    }
+
+    public async returnPage(offset: number, count: number): Promise<Array<Document<T> & MapSchema<T>>> {
+        return <never>await this.page(offset, count);
+    }
+
+    public async returnPageOfIds(offset: number, count: number, withRecord: boolean = false): Promise<Array<string>> {
+        return await this.pageOfIds(offset, count, withRecord);
+    }
+
+    public async returnFirst(): Promise<Document<T> & MapSchema<T>> {
+        return await this.first();
+    }
+
+    public async returnFirstId(withRecord: boolean = false): Promise<string> {
+        return await this.firstId(withRecord);
+    }
+
+    public async returnMin<F extends keyof P>(field: F): Promise<Document<T> & MapSchema<T>> {
+        return await this.min(field);
+    }
+
+    public async returnMinId<F extends keyof P>(field: F): Promise<string> {
+        return await this.minId(field);
+    }
+
+    public async returnMax<F extends keyof P>(field: F): Promise<Document<T> & MapSchema<T>> {
+        return await this.max(field);
+    }
+
+    public async returnMaxId<F extends keyof P>(field: F): Promise<string> {
+        return await this.maxId(field);
     }
 
     async #search(options?: SearchOptions, keysOnly: boolean = false): Promise<SearchReply> {
