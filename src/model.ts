@@ -76,29 +76,32 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
         this.#searchIndex.push(this.#searchIndexName, "ON", "JSON", "PREFIX", "1", `${this.name}:`, "SCHEMA");
         for (let i = 0, len = this.#parsedSchema.size, entries = [...this.#parsedSchema.entries()]; i < len; i++) {
             const [key, val] = entries[i];
+            const { path, value } = val;
             let arrayPath = "";
 
-            if (val.value.type === "array") {
-                if (typeof val.value.elements !== "string") {
+            if (value.type === "array") {
+                if (typeof value.elements !== "string") {
                     throw new Error("Object definitions on `array` are not yet supported by the parser");
                 }
 
-                arrayPath = val.value.elements === "text" ? "[*]" : val.value.elements === "number" || val.value.elements === "date" || val.value.elements === "point" ? "" : "*";
+                arrayPath = value.elements === "text" ? "[*]" : value.elements === "number" || value.elements === "date" || value.elements === "point" ? "" : "*";
             }
 
             this.#searchIndex.push(
                 `$.${key}${arrayPath}`,
                 "AS",
-                val.path,
-                val.value.type === "text" ? "TEXT" : val.value.type === "number" || val.value.type === "date" ? "NUMERIC" : val.value.type === "point" ? "GEO" : "TAG"
+                path,
+                value.type === "text" ? "TEXT" : value.type === "number" || value.type === "date" ? "NUMERIC" : value.type === "point" ? "GEO" : "TAG"
             );
+
+            if (value.sortable) this.#searchIndex.push("SORTABLE");
         }
 
         await this.#client.sendCommand(this.#searchIndex);
     }
 
-    public async deleteIndex(DD: boolean = false): Promise<void> {
-        await this.#client.sendCommand(["FT.DROPINDEX", this.#searchIndexName, DD ? "DD" : ""]).catch((e) => {
+    public async deleteIndex(): Promise<void> {
+        await this.#client.sendCommand(["FT.DROPINDEX", this.#searchIndexName]).catch((e) => {
             if (e instanceof Error && e.message === "Unknown Index name") {
                 Promise.resolve();
             } else throw e;

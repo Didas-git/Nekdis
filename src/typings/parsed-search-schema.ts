@@ -1,7 +1,7 @@
-import type { FieldTypes } from "./schema-definition";
+import type { FieldTypes, ObjectField } from "./schema-definition";
 
 export interface Parsed {
-    value: FieldTypes;
+    value: Exclude<FieldTypes, ObjectField>;
     path: string;
 }
 

@@ -59,9 +59,9 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
                     });
 
                 if (value === "array")
-                    value = { type: value, elements: "string", default: undefined, required: false };
+                    value = { type: value, elements: "string", default: undefined, required: false, sortable: false };
                 else
-                    value = { type: value, default: undefined, required: false };
+                    value = { type: value, default: undefined, required: false, sortable: false };
             } else {
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                 if (!value.type) throw new PrettyError("Type not defined");
@@ -69,13 +69,14 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
                     if (typeof value.elements === "undefined") value.elements = "string";
+                    if (typeof value.sortable === "undefined") value.sortable = false;
                     if (typeof value.elements === "object" && !Array.isArray(value.elements)) throw new Error();/* value.elements = this.#parse(value.elements); */
                 } else if (value.type === "date") {
                     if (value.default instanceof Date) value.default = value.default.getTime();
-
                     if (typeof value.default === "string") value.default = new Date(value.default).getTime();
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
+                    if (typeof value.sortable === "undefined") value.sortable = false;
                 } else if (value.type === "object") {
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
@@ -84,6 +85,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
                 } else {
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
+                    if (typeof value.sortable === "undefined") value.sortable = false;
                 }
             }
             //@ts-expect-error More Shenanigans
