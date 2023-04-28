@@ -16,7 +16,11 @@ export type MapSearchField<K extends keyof T, S extends ParseSchema<any>, T exte
     : never;
 
 export type SchemaToStrings<T extends ParseSchema<any>, K extends keyof T = keyof T> = K extends string
-    ? T[K] extends { properties: any }
+    ? T[K] extends { schema: any }
+    ? never
+    : T[K] extends { index: false }
+    ? never
+    : T[K] extends { properties: any }
     ? `${K}.${SchemaToStrings<T[K]["properties"]>}`
     : K
     : never;

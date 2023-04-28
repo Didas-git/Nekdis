@@ -3,6 +3,7 @@ import type { FieldTypes, ObjectField, ParseSchema } from "./typings";
 export class Document<S extends ParseSchema<any>> {
 
     readonly #schema: S;
+    readonly #validate: boolean;
 
     /*
     * Using any so everything works as intended
@@ -10,21 +11,26 @@ export class Document<S extends ParseSchema<any>> {
     */
     [key: string]: any;
 
-    public constructor(schema: S, public $id: string | number, data?: {}) {
+    public constructor(schema: S, public $id: string | number, data?: {}, validate: boolean = true) {
 
         this.#schema = schema;
+        this.#validate = validate;
+
+        for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
+            const [key, value] = entries[i];
+            if (value.type === "reference") {
+                this[key] = [];
+                continue;
+            }
+            //@ts-expect-error Due to the complexity of the types ts is not catching the if check above
+            this[key] = value.default;
+        }
 
         if (data) {
             for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
                 const [key, value] = entries[i];
                 this[key] = value;
             }
-        }
-
-        for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
-            const [key, value] = entries[i];
-            if (typeof this[key] !== "undefined") return;
-            this[key] = value.default;
         }
     }
 
@@ -36,11 +42,22 @@ export class Document<S extends ParseSchema<any>> {
             const dataVal = data[key];
 
             if (dataVal === null) throw new Error();
-            if (typeof dataVal === "undefined" && !value.required) return;
+
+            if (value.type === "reference") {
+                if (typeof dataVal === "undefined") throw new Error();
+                dataVal.every((val: unknown) => {
+                    if (typeof val !== "string") throw new Error();
+                });
+                continue;
+            }
+
+            //@ts-expect-error Due to the complexity of the types ts is not catching the if check on references
+            if (typeof dataVal === "undefined" && !value.required) continue;
+            //@ts-expect-error Due to the complexity of the types ts is not catching the if check on references
             if (typeof dataVal === "undefined" && value.required && typeof value.default === "undefined") throw new Error();
 
             if (value.type === "object") {
-                if (!(<ObjectField>value).properties) return;
+                if (!(<ObjectField>value).properties) continue;
                 //@ts-expect-error Typescript is getting confused due to the union of array and object
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 this.#validateData(dataVal, value.properties, true);
@@ -67,7 +84,7 @@ export class Document<S extends ParseSchema<any>> {
     }
 
     public toString(): string {
-        this.#validateData();
+        this.#validate && this.#validateData();
         const obj: Record<string, FieldTypes> = {};
 
         for (let i = 0, keys = Object.keys(this.#schema), len = keys.length; i < len; i++) {

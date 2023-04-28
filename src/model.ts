@@ -11,6 +11,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     readonly #searchIndexName: string;
     readonly #searchIndex: Array<string> = ["FT.CREATE"];
     readonly #parsedSchema: ParsedMap;
+    readonly #validate: boolean;
 
     public constructor(client: RedisClient, public readonly name: string, data: S) {
         this.#client = client;
@@ -18,6 +19,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
         this.#searchIndexName = `${name}:index`;
         this.#parsedSchema = parse(this.#schema[schemaData]);
         this.#defineMethods();
+        this.#validate = !this.#schema.options.skipDocumentValidation;
     }
 
     public async get(id: string | number): Promise<Document<ExtractParsedSchemaDefinition<S>> & MapSchema<ExtractParsedSchemaDefinition<S>> | null> {
@@ -26,11 +28,11 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
 
         if (data === null) return null;
 
-        return <never>new Document(this.#schema[schemaData], id.toString(), data);
+        return <never>new Document(this.#schema[schemaData], id.toString(), data, this.#validate);
     }
 
     public create(id?: string | number): Document<ExtractParsedSchemaDefinition<S>> & MapSchema<ExtractParsedSchemaDefinition<S>> {
-        return <never>new Document(this.#schema[schemaData], id?.toString() ?? randomUUID());
+        return <never>new Document(this.#schema[schemaData], id?.toString() ?? randomUUID(), void 0, this.#validate);
     }
 
     public async save(doc: Document<ParseSchema<any>>): Promise<void> {
@@ -61,12 +63,12 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     }
 
     public async createAndSave(data: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>>): Promise<void> {
-        const doc = new Document(this.#schema[schemaData], data.$id?.toString() ?? randomUUID(), data);
+        const doc = new Document(this.#schema[schemaData], data.$id?.toString() ?? randomUUID(), data, this.#validate);
         await this.save(doc);
     }
 
     public search(): Search<ExtractParsedSchemaDefinition<S>> {
-        return new Search<ExtractParsedSchemaDefinition<S>>(this.#client, <never>this.#schema[schemaData], this.#parsedSchema, this.#searchIndexName);
+        return new Search<ExtractParsedSchemaDefinition<S>>(this.#client, <never>this.#schema[schemaData], this.#parsedSchema, this.#searchIndexName, this.#validate);
     }
 
     public async createIndex(): Promise<void> {

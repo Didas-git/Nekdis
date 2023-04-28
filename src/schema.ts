@@ -39,7 +39,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
 
             if (typeof value === "string") {
                 //@ts-expect-error Some people do not read docs
-                if (value === "object")
+                if (value === "object" || value === "reference")
                     throw new PrettyError(`Type '${value}' needs to use its object definition`, {
                         ref: "nekdis",
                         lines: [
@@ -59,9 +59,9 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
                     });
 
                 if (value === "array")
-                    value = { type: value, elements: "string", default: undefined, required: false, sortable: false };
+                    value = { type: value, elements: "string", default: undefined, required: false, sortable: false, index: true };
                 else
-                    value = { type: value, default: undefined, required: false, sortable: false };
+                    value = { type: value, default: undefined, required: false, sortable: false, index: true };
             } else {
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                 if (!value.type) throw new PrettyError("Type not defined");
@@ -70,6 +70,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
                     if (typeof value.required === "undefined") value.required = false;
                     if (typeof value.elements === "undefined") value.elements = "string";
                     if (typeof value.sortable === "undefined") value.sortable = false;
+                    if (typeof value.index === "undefined") value.index = true;
                     if (typeof value.elements === "object" && !Array.isArray(value.elements)) throw new Error();/* value.elements = this.#parse(value.elements); */
                 } else if (value.type === "date") {
                     if (value.default instanceof Date) value.default = value.default.getTime();
@@ -77,15 +78,20 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
                     if (typeof value.sortable === "undefined") value.sortable = false;
+                    if (typeof value.index === "undefined") value.index = true;
                 } else if (value.type === "object") {
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
                     if (!value.properties) value.properties = undefined;
                     else value.properties = <never>this.#parse(value.properties);
+                } else if (value.type === "reference") {
+                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
+                    if (!value.schema) throw new Error();
                 } else {
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
                     if (typeof value.sortable === "undefined") value.sortable = false;
+                    if (typeof value.index === "undefined") value.index = true;
                 }
             }
             //@ts-expect-error More Shenanigans

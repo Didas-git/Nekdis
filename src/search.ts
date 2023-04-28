@@ -12,6 +12,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
     readonly #schema: T;
     readonly #parsedSchema: ParsedMap;
     readonly #index: string;
+    readonly #validate: boolean;
     #workingType!: FieldTypes["type"];
 
     /**
@@ -23,11 +24,12 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
     /** @internal */
     public _query: Array<SearchField<T>> = [];
 
-    public constructor(client: RedisClient, schema: T, parsedSchema: ParsedMap, searchIndex: string) {
+    public constructor(client: RedisClient, schema: T, parsedSchema: ParsedMap, searchIndex: string, validate: boolean = true) {
         this.#client = client;
         this.#schema = schema;
         this.#parsedSchema = parsedSchema;
         this.#index = searchIndex;
+        this.#validate = validate;
     }
 
     public where<F extends keyof P>(field: F): MapSearchField<F, T, P> {
@@ -82,7 +84,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
 
         for (let j = 0, len = documents.length; j < len; j++) {
             const doc = documents[j];
-            docs.push(new Document(this.#schema, extractIdFromRecord(doc.id), doc.value));
+            docs.push(new Document(this.#schema, extractIdFromRecord(doc.id), doc.value, this.#validate));
         }
 
         return <never>docs;
@@ -133,7 +135,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
 
             for (let j = 0, len = documents.length; j < len; j++) {
                 const doc = documents[j];
-                docs.push(new Document(this.#schema, extractIdFromRecord(doc.id), doc.value));
+                docs.push(new Document(this.#schema, extractIdFromRecord(doc.id), doc.value, this.#validate));
             }
 
             from += size;
@@ -225,10 +227,12 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
         const parsedField = this.#parsedSchema.get(field);
         if (!parsedField) throw new PrettyError(`'${field}' doesn't exist on the schema`);
 
-        return <never>this.#defineReturn(parsedField.path, parsedField.value.type === "array" ? parsedField.value.elements ?? "string" : parsedField.value.type);
+        const { path, value } = parsedField;
+
+        return <never>this.#defineReturn(path, value.type === "array" ? value.elements ?? "string" : value.type);
     }
 
-    #defineReturn(field: string, type: Exclude<FieldTypes["type"], "array">): BaseField {
+    #defineReturn(field: string, type: Exclude<FieldTypes["type"], "array" | "reference">): BaseField {
         switch (type) {
             case "string": {
                 this.#workingType = "string";

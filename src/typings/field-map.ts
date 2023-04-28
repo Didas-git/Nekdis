@@ -13,4 +13,5 @@ export interface FieldMap<T = string> {
     point: Point;
     array: Array<T>;
     object: Record<string, SchemaDefinition>;
+    reference: Array<Record<string, SchemaDefinition>>;
 }
