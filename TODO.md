@@ -3,9 +3,8 @@ TODO
 
 - [ ] Rewrite README
 - [ ] Add array of objects support
-- [ ] Embed Mapped Types Into Docs
-- [ ] Add references
-- [ ] Add Sortable fields
-- [ ] Add the ability to remove a field from being indexed
+- [ ] Helper type for Doc & Map
+- [ ] Add reference parsing
+- [ ] Add autofetch for references & a better way to interact with references (right now is primitive and will crash if directly saving)
 - [ ] Add Hash support
 - [ ] Add graph relations
