@@ -1,12 +1,10 @@
 import type { ParsedMap, ParseSchema } from "../typings";
 
-export function parse(schema: ParseSchema<any>, k?: string): ParsedMap {
+export function parse(schema: ParseSchema<any>["data"], k?: string): ParsedMap {
     let objs: ParsedMap = new Map();
 
     for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
         const [key, value] = entries[i];
-        if (value.type === "reference") continue;
-        //@ts-expect-error Due to the complexity of the types ts is not catching the if check on references
         if (!value.index) continue;
         //@ts-expect-error Typescript is getting confused due to the union of array and object
         if (value.type === "object" && value.properties) {

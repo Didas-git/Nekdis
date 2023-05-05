@@ -7,10 +7,11 @@ import { extractIdFromRecord } from "./utils/extract-id";
 export type SearchReturn<T extends Search<ParseSchema<any>>> = Omit<T, "where" | "and" | "or" | "rawQuery" | `sort${string}` | `return${string}`>;
 export type SearchSortReturn<T extends Search<ParseSchema<any>>> = Omit<T, `sort${string}`>;
 
-export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> = ParseSearchSchema<T>> {
+export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["data"]> = ParseSearchSchema<T["data"]>> {
     readonly #client: RedisClient;
     readonly #schema: T;
     readonly #parsedSchema: ParsedMap;
+    readonly #keyName: string;
     readonly #index: string;
     readonly #validate: boolean;
     #workingType!: FieldTypes["type"];
@@ -24,10 +25,11 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
     /** @internal */
     public _query: Array<SearchField<T>> = [];
 
-    public constructor(client: RedisClient, schema: T, parsedSchema: ParsedMap, searchIndex: string, validate: boolean = true) {
+    public constructor(client: RedisClient, schema: T, parsedSchema: ParsedMap, keyName: string, searchIndex: string, validate: boolean = true) {
         this.#client = client;
         this.#schema = schema;
         this.#parsedSchema = parsedSchema;
+        this.#keyName = keyName;
         this.#index = searchIndex;
         this.#validate = validate;
     }
@@ -84,7 +86,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
 
         for (let j = 0, len = documents.length; j < len; j++) {
             const doc = documents[j];
-            docs.push(new Document(this.#schema, extractIdFromRecord(doc.id), doc.value, this.#validate));
+            docs.push(new Document(this.#schema, this.#keyName, extractIdFromRecord(doc.id), doc.value, this.#validate));
         }
 
         return <never>docs;
@@ -135,7 +137,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T> =
 
             for (let j = 0, len = documents.length; j < len; j++) {
                 const doc = documents[j];
-                docs.push(new Document(this.#schema, extractIdFromRecord(doc.id), doc.value, this.#validate));
+                docs.push(new Document(this.#schema, this.#keyName, extractIdFromRecord(doc.id), doc.value, this.#validate));
             }
 
             from += size;

@@ -31,6 +31,9 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
     }
 
     #parse<T extends SchemaDefinition>(schema: T): P {
+        const data: Record<string, unknown> = {};
+        const references: Record<string, unknown> = {};
+
         for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
             let [key, value] = entries[i];
             if (key.startsWith("$")) throw new PrettyError("Keys cannot start with '$'", {
@@ -87,6 +90,8 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
                 } else if (value.type === "reference") {
                     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
                     if (!value.schema) throw new Error();
+                    references[key] = null;
+                    continue;
                 } else {
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
@@ -94,9 +99,8 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
                     if (typeof value.index === "undefined") value.index = true;
                 }
             }
-            //@ts-expect-error More Shenanigans
-            schema[key] = value;
+            data[key] = value;
         }
-        return <never>schema;
+        return <never>{ data, references };
     }
 }

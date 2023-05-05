@@ -16,8 +16,8 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     public constructor(client: RedisClient, public readonly name: string, data: S) {
         this.#client = client;
         this.#schema = data;
-        this.#searchIndexName = `${name}:index`;
-        this.#parsedSchema = parse(this.#schema[schemaData]);
+        this.#searchIndexName = `${name}:nekdis:index`;
+        this.#parsedSchema = parse(this.#schema[schemaData].data);
         this.#defineMethods();
         this.#validate = !this.#schema.options.skipDocumentValidation;
     }
@@ -28,11 +28,11 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
 
         if (data === null) return null;
 
-        return <never>new Document(this.#schema[schemaData], id.toString(), data, this.#validate);
+        return <never>new Document(this.#schema[schemaData], this.name, id.toString(), data, this.#validate);
     }
 
     public create(id?: string | number): Document<ExtractParsedSchemaDefinition<S>> & MapSchema<ExtractParsedSchemaDefinition<S>> {
-        return <never>new Document(this.#schema[schemaData], id?.toString() ?? randomUUID(), void 0, this.#validate);
+        return <never>new Document(this.#schema[schemaData], this.name, id?.toString() ?? randomUUID(), void 0, this.#validate);
     }
 
     public async save(doc: Document<ParseSchema<any>>): Promise<void> {
@@ -63,12 +63,12 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     }
 
     public async createAndSave(data: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>>): Promise<void> {
-        const doc = new Document(this.#schema[schemaData], data.$id?.toString() ?? randomUUID(), data, this.#validate);
+        const doc = new Document(this.#schema[schemaData], this.name, data.$id?.toString() ?? randomUUID(), data, this.#validate);
         await this.save(doc);
     }
 
     public search(): Search<ExtractParsedSchemaDefinition<S>> {
-        return new Search<ExtractParsedSchemaDefinition<S>>(this.#client, <never>this.#schema[schemaData], this.#parsedSchema, this.#searchIndexName, this.#validate);
+        return new Search<ExtractParsedSchemaDefinition<S>>(this.#client, <never>this.#schema[schemaData], this.#parsedSchema, this.name, this.#searchIndexName, this.#validate);
     }
 
     public async createIndex(): Promise<void> {

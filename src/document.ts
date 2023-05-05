@@ -4,6 +4,7 @@ export class Document<S extends ParseSchema<any>> {
 
     readonly #schema: S;
     readonly #validate: boolean;
+    readonly #autoFetch: boolean;
 
     /*
     * Using any so everything works as intended
@@ -11,20 +12,14 @@ export class Document<S extends ParseSchema<any>> {
     */
     [key: string]: any;
 
-    public constructor(schema: S, public $id: string | number, data?: {}, validate: boolean = true) {
+    public constructor(schema: S, public $key_name: string, public $id: string | number, data?: {}, validate: boolean = true, wasAutoFetched: boolean = false) {
 
+        this.$record_id = `${$key_name}:${$id}`;
         this.#schema = schema;
         this.#validate = validate;
+        this.#autoFetch = wasAutoFetched;
 
-        for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
-            const [key, value] = entries[i];
-            if (value.type === "reference") {
-                this[key] = [];
-                continue;
-            }
-            //@ts-expect-error Due to the complexity of the types ts is not catching the if check above
-            this[key] = value.default;
-        }
+        this.#populate();
 
         if (data) {
             for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
@@ -34,7 +29,36 @@ export class Document<S extends ParseSchema<any>> {
         }
     }
 
-    #validateData(data: Document<ParseSchema<any>> | ParseSchema<any> = this, schema: ParseSchema<any> = this.#schema, isField: boolean = false): void {
+    #populate(): void {
+        for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
+            const [key, value] = entries[i];
+            this[key] = value.default;
+        }
+
+        for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
+            const key = keys[i];
+            this[key] = [];
+        }
+    }
+
+    #validateSchemaReferences(data: Document<ParseSchema<any>> | ParseSchema<any>["references"] = this, schema: ParseSchema<any>["references"] = this.#schema.references, isField: boolean = false): void {
+        for (let i = 0, keys = Object.keys(schema), len = keys.length; i < len; i++) {
+            const key = keys[i];
+            if (isField && !data[key]) throw new Error();
+
+            const dataVal = data[key];
+
+            if (typeof dataVal === "undefined") throw new Error();
+
+            for (let j = 0, le = dataVal.length; j < le; j++) {
+                const val = dataVal[i];
+                if (typeof val !== "string") throw new Error();
+            }
+        }
+
+    }
+
+    #validateSchemaData(data: Document<ParseSchema<any>> | ParseSchema<any>["data"] = this, schema: ParseSchema<any>["data"] = this.#schema.data, isField: boolean = false): void {
         for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
             const [key, value] = entries[i];
             if (isField && !data[key]) throw new Error();
@@ -43,24 +67,14 @@ export class Document<S extends ParseSchema<any>> {
 
             if (dataVal === null) throw new Error();
 
-            if (value.type === "reference") {
-                if (typeof dataVal === "undefined") throw new Error();
-                dataVal.every((val: unknown) => {
-                    if (typeof val !== "string") throw new Error();
-                });
-                continue;
-            }
-
-            //@ts-expect-error Due to the complexity of the types ts is not catching the if check on references
             if (typeof dataVal === "undefined" && !value.required) continue;
-            //@ts-expect-error Due to the complexity of the types ts is not catching the if check on references
             if (typeof dataVal === "undefined" && value.required && typeof value.default === "undefined") throw new Error();
 
             if (value.type === "object") {
                 if (!(<ObjectField>value).properties) continue;
                 //@ts-expect-error Typescript is getting confused due to the union of array and object
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                this.#validateData(dataVal, value.properties, true);
+                this.#validateSchemaData(dataVal, value.properties, true);
             } else if (value.type === "array") {
                 dataVal.every((val: unknown) => {
                     //@ts-expect-error Typescript is getting confused due to the union of array and object
@@ -84,12 +98,23 @@ export class Document<S extends ParseSchema<any>> {
     }
 
     public toString(): string {
-        this.#validate && this.#validateData();
+        if (this.#validate) {
+            this.#validateSchemaData();
+        }
+
         const obj: Record<string, FieldTypes> = {};
 
-        for (let i = 0, keys = Object.keys(this.#schema), len = keys.length; i < len; i++) {
+        for (let i = 0, keys = Object.keys(this.#schema.data), len = keys.length; i < len; i++) {
             const key = keys[i];
             obj[key] = this[key];
+        }
+
+        if (!this.#autoFetch) {
+            this.#validateSchemaReferences();
+            for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
+                const key = keys[i];
+                obj[key] = this[key];
+            }
         }
 
         return JSON.stringify(obj, null);
