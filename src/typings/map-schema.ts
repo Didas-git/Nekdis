@@ -1,3 +1,4 @@
+import type { ReferenceArray } from "../utils";
 import type { FieldMap } from "./field-map";
 import type { ParseSchema } from "./parse-schema";
 
@@ -14,5 +15,5 @@ type MapSchemaData<T extends ParseSchema<any>["data"]> = {
 type MapSchemaReferences<T extends ParseSchema<any>["references"], AF extends boolean> = {
     [K in keyof T]: AF extends true
     ? Array<MapSchema<T[K]["schema"]>>
-    : Array<string>
+    : ReferenceArray
 };

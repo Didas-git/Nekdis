@@ -8,4 +8,3 @@ TODO
 - [ ] Add autofetch for references
 - [ ] Add Hash support
 - [ ] Add graph relations
-- [ ] Possibly add a helper for references

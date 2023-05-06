@@ -1,10 +1,13 @@
 import type { FieldTypes, ObjectField, ParseSchema } from "./typings";
+import { ReferenceArray } from "./utils";
 
 export class Document<S extends ParseSchema<any>> {
 
     readonly #schema: S;
     readonly #validate: boolean;
     readonly #autoFetch: boolean;
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    public readonly $record_id: string;
 
     /*
     * Using any so everything works as intended
@@ -24,6 +27,10 @@ export class Document<S extends ParseSchema<any>> {
         if (data) {
             for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
                 const [key, value] = entries[i];
+                if (typeof schema.references[key] !== "undefined" && !this.#autoFetch) {
+                    this[key] = new ReferenceArray(...<Array<string>>value);
+                    continue;
+                }
                 this[key] = value;
             }
         }
@@ -37,7 +44,7 @@ export class Document<S extends ParseSchema<any>> {
 
         for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
             const key = keys[i];
-            this[key] = [];
+            this[key] = new ReferenceArray();
         }
     }
 
