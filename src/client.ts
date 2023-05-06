@@ -18,7 +18,6 @@ import "@infinite-fansub/logger";
 
 export class Client {
     #client!: RedisClient;
-    #raw!: RedisClient;
     #models: Map<string, Model<any>> = new Map();
     #open: boolean = false;
 
@@ -31,8 +30,8 @@ export class Client {
             url = `${username}:${password}@${(/:\d$/).exec(entrypoint) ? entrypoint : `${entrypoint}:${port}`}`;
         }
 
-        this.#client = createClient({ url });
-        this.#raw = this.#client;
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        this.#client ??= createClient({ url });
         try {
             await this.#client.connect();
             this.#open = true;
@@ -90,11 +89,17 @@ export class Client {
     }
 
     public get raw(): RedisClient {
-        return this.#raw;
+        return this.#client;
     }
 
     public get isOpen(): boolean {
         return this.#open;
+    }
+
+    public set redisClient(client: RedisClient) {
+        if (!this.#open) {
+            this.#client = client;
+        }
     }
 }
 

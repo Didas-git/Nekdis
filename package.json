@@ -32,21 +32,21 @@
   "devDependencies": {
     "@microsoft/tsdoc": "^0.14.2",
     "@microsoft/tsdoc-config": "^0.16.2",
-    "@types/node": "^18.15.3",
-    "@typescript-eslint/eslint-plugin": "^5.55.0",
-    "@typescript-eslint/parser": "^5.55.0",
-    "@vitest/coverage-c8": "^0.29.3",
+    "@types/node": "^20.1.0",
+    "@typescript-eslint/eslint-plugin": "^5.59.2",
+    "@typescript-eslint/parser": "^5.59.2",
+    "@vitest/coverage-c8": "^0.31.0",
     "c8": "^7.13.0",
-    "eslint": "^8.36.0",
+    "eslint": "^8.40.0",
     "eslint-plugin-tsdoc": "^0.2.17",
     "ts-node": "^10.9.1",
     "tslib": "^2.5.0",
-    "typescript": "^5.0.2",
-    "vitest": "^0.29.3"
+    "typescript": "^5.0.4",
+    "vitest": "^0.31.0"
   },
   "dependencies": {
     "@infinite-fansub/logger": "^2.1.0",
     "colours.js": "^3.1.2",
-    "redis": "^4.6.5"
+    "redis": "^4.6.6"
   }
 }

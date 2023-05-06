@@ -3,7 +3,7 @@ import { methods, parse, schemaData } from "./utils";
 import { randomUUID } from "node:crypto";
 import { Search } from "./search";
 import type { Schema } from "./schema";
-import type { ExtractParsedSchemaDefinition, SchemaDefinition, MapSchema, MethodsDefinition, RedisClient, ParsedMap, ParseSchema } from "./typings";
+import type { ExtractParsedSchemaDefinition, SchemaDefinition, MapSchema, MethodsDefinition, RedisClient, ParsedMap, ParseSchema, ReturnDocument } from "./typings";
 
 export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     readonly #schema: S;
@@ -22,7 +22,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
         this.#validate = !this.#schema.options.skipDocumentValidation;
     }
 
-    public async get(id: string | number): Promise<Document<ExtractParsedSchemaDefinition<S>> & MapSchema<ExtractParsedSchemaDefinition<S>> | null> {
+    public async get(id: string | number): Promise<ReturnDocument<S> | null> {
         if (typeof id === "undefined") throw new Error();
         const data = await this.#client.json.get(`${this.name}:${id}`);
 
@@ -31,7 +31,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
         return <never>new Document(this.#schema[schemaData], this.name, id.toString(), data, this.#validate);
     }
 
-    public create(id?: string | number): Document<ExtractParsedSchemaDefinition<S>> & MapSchema<ExtractParsedSchemaDefinition<S>> {
+    public create(id?: string | number): ReturnDocument<S> {
         return <never>new Document(this.#schema[schemaData], this.name, id?.toString() ?? randomUUID(), void 0, this.#validate);
     }
 
@@ -57,7 +57,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
 
         for (let i = 0, len = docs.length; i < len; i++) {
             const doc = docs[i];
-            //@ts-expect-error TS is not catching the `.map` changes
+            //@ts-expect-error TS is not catching the `map` changes
             this.#client.expire(doc, seconds, mode);
         }
     }

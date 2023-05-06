@@ -1,7 +1,7 @@
 import { Document } from "./document";
 import { type SearchField, StringField, NumberField, BooleanField, TextField, DateField, PointField } from "./utils/search-builders";
 import type { SearchOptions, SearchReply } from "redis";
-import type { FieldTypes, RedisClient, MapSearchField, ParseSchema, ParseSearchSchema, BaseField, ParsedMap, MapSchema } from "./typings";
+import type { FieldTypes, RedisClient, MapSearchField, ParseSchema, ParseSearchSchema, BaseField, ParsedMap, ReturnDocument } from "./typings";
 import { extractIdFromRecord } from "./utils/extract-id";
 
 export type SearchReturn<T extends Search<ParseSchema<any>>> = Omit<T, "where" | "and" | "or" | "rawQuery" | `sort${string}` | `return${string}`>;
@@ -80,7 +80,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return (await this.#search()).total;
     }
 
-    public async page(offset: number, count: number): Promise<Array<Document<T> & MapSchema<T>>> {
+    public async page(offset: number, count: number): Promise<Array<ReturnDocument<T>>> {
         const docs = [];
         const { documents } = await this.#search({ LIMIT: { from: offset, size: count } });
 
@@ -104,7 +104,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return docs;
     }
 
-    public async first(): Promise<Document<T> & MapSchema<T>> {
+    public async first(): Promise<ReturnDocument<T>> {
         return (await this.page(0, 1))[0];
     }
 
@@ -112,7 +112,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return (await this.pageOfIds(0, 1, withRecord))[0];
     }
 
-    public async min<F extends keyof P>(field: F): Promise<Document<T> & MapSchema<T>> {
+    public async min<F extends keyof P>(field: F): Promise<ReturnDocument<T>> {
         return await this.sortBy(field, "ASC").first();
     }
 
@@ -120,7 +120,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return await this.sortBy(field, "ASC").firstId();
     }
 
-    public async max<F extends keyof P>(field: F): Promise<Document<T> & MapSchema<T>> {
+    public async max<F extends keyof P>(field: F): Promise<ReturnDocument<T>> {
         return await this.sortBy(field, "DESC").first();
     }
 
@@ -128,7 +128,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return await this.sortBy(field, "DESC").firstId();
     }
 
-    public async all(): Promise<Array<Document<T> & MapSchema<T>>> {
+    public async all(): Promise<Array<ReturnDocument<T>>> {
         const docs = [];
         const { size, idx } = this.#parseNum((await this.#search({ LIMIT: { from: 0, size: 0 } })).total);
 
@@ -168,7 +168,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return this.count();
     }
 
-    public async returnAll(): Promise<Array<Document<T> & MapSchema<T>>> {
+    public async returnAll(): Promise<Array<ReturnDocument<T>>> {
         return await this.all();
     }
 
@@ -176,7 +176,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return await this.allIds(withRecord);
     }
 
-    public async returnPage(offset: number, count: number): Promise<Array<Document<T> & MapSchema<T>>> {
+    public async returnPage(offset: number, count: number): Promise<Array<ReturnDocument<T>>> {
         return <never>await this.page(offset, count);
     }
 
@@ -184,7 +184,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return await this.pageOfIds(offset, count, withRecord);
     }
 
-    public async returnFirst(): Promise<Document<T> & MapSchema<T>> {
+    public async returnFirst(): Promise<ReturnDocument<T>> {
         return await this.first();
     }
 
@@ -192,7 +192,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return await this.firstId(withRecord);
     }
 
-    public async returnMin<F extends keyof P>(field: F): Promise<Document<T> & MapSchema<T>> {
+    public async returnMin<F extends keyof P>(field: F): Promise<ReturnDocument<T>> {
         return await this.min(field);
     }
 
@@ -200,7 +200,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return await this.minId(field);
     }
 
-    public async returnMax<F extends keyof P>(field: F): Promise<Document<T> & MapSchema<T>> {
+    public async returnMax<F extends keyof P>(field: F): Promise<ReturnDocument<T>> {
         return await this.max(field);
     }
 
