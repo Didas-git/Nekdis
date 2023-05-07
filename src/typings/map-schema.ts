@@ -6,7 +6,7 @@ export type MapSchema<
     T extends ParseSchema<any>,
     AF extends boolean = false,
     CAS extends boolean = false
-> = MapSchemaData<T["data"], CAS> & (CAS extends true ? Partial<MapSchemaReferences<T["references"], AF, CAS>> : MapSchemaReferences<T["references"], AF, CAS>);
+> = MapSchemaData<T["data"], CAS> & MapSchemaReferences<T["references"], AF, CAS>;
 
 type MapSchemaData<T extends ParseSchema<any>["data"], CAS extends boolean = false> = {
     [K in keyof T as T[K]["required"] extends true ? K : T[K]["default"] extends {} ? CAS extends true ? never : K : never]: _MapSchemaData<T[K]>
