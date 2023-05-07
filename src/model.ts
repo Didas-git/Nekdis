@@ -71,7 +71,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
             }
         }
 
-        return <never>new Document(this.#schema[schemaData], this.name, extractIdFromRecord(id.toString()), data, this.#validate);
+        return <never>new Document(this.#schema[schemaData], this.name, extractIdFromRecord(id.toString()), data, this.#validate, autoFetch);
     }
 
     public create(id?: string | number): ReturnDocument<S> {
@@ -108,7 +108,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     }
 
     public async createAndSave(data: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true>): Promise<void> {
-        const doc = new Document(this.#schema[schemaData], this.name, data.$id?.toString() ?? randomUUID(), data, this.#validate);
+        const doc = new Document(this.#schema[schemaData], this.name, data.$id?.toString() ?? randomUUID(), data, this.#validate, true);
         await this.save(doc);
     }
 
