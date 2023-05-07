@@ -1,7 +1,11 @@
-import { Document } from "./document";
+import { randomUUID, createHash } from "node:crypto";
+
+import { stringOrDocToString } from "./utils/string-or-document-to-string";
+import { extractIdFromRecord } from "./utils/extract-id";
 import { methods, parse, schemaData } from "./utils";
-import { randomUUID } from "node:crypto";
+import { Document } from "./document";
 import { Search } from "./search";
+
 import type { Schema } from "./schema";
 import type {
     ExtractParsedSchemaDefinition,
@@ -13,26 +17,33 @@ import type {
     ParseSchema,
     ReturnDocument
 } from "./typings";
-import { stringOrDocToString } from "./utils/string-or-document-to-string";
-import { extractIdFromRecord } from "./utils/extract-id";
 
 export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     readonly #schema: S;
     readonly #client: RedisClient;
     readonly #searchIndexName: string;
+    readonly #searchIndexHashName: string;
     readonly #searchIndex: Array<string>;
+    readonly #searchIndexHash: string;
     readonly #parsedSchema: ParsedMap;
     readonly #validate: boolean;
 
     public constructor(client: RedisClient, public readonly name: string, data: S) {
         this.#client = client;
         this.#schema = data;
+        this.#validate = !this.#schema.options.skipDocumentValidation;
+        this.#parsedSchema = parse(this.#schema[schemaData].data);
         this.#searchIndexName = `${name}:nekdis:index`;
+        this.#searchIndexHashName = `${name}:nekdis:index:hash`;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.#searchIndex = ["FT.CREATE", this.#searchIndexName, "ON", data.options.dataStructure!, "PREFIX", "1", `${this.name}:`, "SCHEMA"];
-        this.#parsedSchema = parse(this.#schema[schemaData].data);
+        this.#searchIndexHash = createHash("sha1").update(JSON.stringify({
+            name,
+            structure: this.#schema.options.dataStructure,
+            definition: this.#schema[schemaData].data
+        })).digest("base64");
+
         this.#defineMethods();
-        this.#validate = !this.#schema.options.skipDocumentValidation;
     }
 
     public async get<F extends boolean = false>(id: string | number, autoFetch?: F): Promise<ReturnDocument<S, F> | null> {
@@ -102,6 +113,8 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     }
 
     public async createIndex(): Promise<void> {
+        const currentIndexHash = await this.#client.get(this.#searchIndexHashName);
+        if (currentIndexHash === this.#searchIndexHash) return;
 
         await this.deleteIndex();
 
@@ -132,11 +145,16 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     }
 
     public async deleteIndex(): Promise<void> {
-        await this.#client.sendCommand(["FT.DROPINDEX", this.#searchIndexName]).catch((e) => {
+        try {
+            await Promise.all([
+                this.#client.unlink(this.#searchIndexHashName),
+                this.#client.ft.dropIndex(this.#searchIndexName)
+            ]);
+        } catch (e) {
             if (e instanceof Error && e.message === "Unknown Index name") {
                 Promise.resolve();
             } else throw e;
-        });
+        }
     }
 
     public async rawSearch(...args: Array<string>): Promise<ReturnType<RedisClient["ft"]["search"]>> {
