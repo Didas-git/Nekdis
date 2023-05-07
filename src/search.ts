@@ -54,24 +54,24 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
 
     // }
 
-    public sortBy<F extends keyof P>(field: F, order: "ASC" | "DESC" = "ASC"): SearchSortReturn<this> {
+    public sortBy<F extends keyof P>(field: F, order: "ASC" | "DESC" = "ASC"): SearchSortReturn<Search<T>> {
         this.#options.SORTBY = { BY: <string>field, DIRECTION: order };
         return <never>this;
     }
 
-    public sortAsc<F extends keyof P>(field: F): SearchSortReturn<this> {
+    public sortAsc<F extends keyof P>(field: F): SearchSortReturn<Search<T>> {
         return this.sortBy(field);
     }
 
-    public sortAscending<F extends keyof P>(field: F): SearchSortReturn<this> {
+    public sortAscending<F extends keyof P>(field: F): SearchSortReturn<Search<T>> {
         return this.sortBy(field);
     }
 
-    public sortDesc<F extends keyof P>(field: F): SearchSortReturn<this> {
+    public sortDesc<F extends keyof P>(field: F): SearchSortReturn<Search<T>> {
         return this.sortBy(field, "DESC");
     }
 
-    public sortDescending<F extends keyof P>(field: F): SearchSortReturn<this> {
+    public sortDescending<F extends keyof P>(field: F): SearchSortReturn<Search<T>> {
         return this.sortBy(field, "DESC");
     }
 
@@ -281,7 +281,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return this.#buildQuery();
     }
 
-    public get return(): SearchReturn<this> {
+    public get return(): SearchReturn<Search<T>> {
         return <never>this;
     }
 }
