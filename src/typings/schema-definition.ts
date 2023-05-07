@@ -1,5 +1,5 @@
-import type { Schema } from "../schema";
 import type { FieldMap } from "./field-map";
+import type { Schema } from "../schema";
 import type { Point } from "./point";
 
 export type SchemaDefinition = Record<string, keyof Omit<FieldMap, "object" | "reference"> | FieldTypes>;

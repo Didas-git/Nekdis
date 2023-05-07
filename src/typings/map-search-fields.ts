@@ -1,5 +1,12 @@
-import type { BooleanField, DateField, NumberField, PointField, StringField, TextField } from "../utils/search-builders";
 import type { ParseSchema } from "./parse-schema";
+import type {
+    BooleanField,
+    DateField,
+    NumberField,
+    PointField,
+    StringField,
+    TextField
+} from "../utils/search-builders";
 
 export type MapSearchField<K extends keyof T, S extends ParseSchema<any>, T extends ParseSearchSchema<S["data"]>> = T[K] extends "string"
     ? StringField<S>

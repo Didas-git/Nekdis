@@ -1,8 +1,27 @@
-import { Document } from "./document";
-import { type SearchField, StringField, NumberField, BooleanField, TextField, DateField, PointField } from "./utils/search-builders";
 import type { SearchOptions, SearchReply } from "redis";
-import type { FieldTypes, RedisClient, MapSearchField, ParseSchema, ParseSearchSchema, BaseField, ParsedMap, ReturnDocument } from "./typings";
+
 import { extractIdFromRecord } from "./utils/extract-id";
+import { Document } from "./document";
+import {
+    type SearchField,
+    StringField,
+    NumberField,
+    BooleanField,
+    TextField,
+    DateField,
+    PointField
+} from "./utils/search-builders";
+
+import type {
+    FieldTypes,
+    RedisClient,
+    MapSearchField,
+    ParseSchema,
+    ParseSearchSchema,
+    BaseField,
+    ParsedMap,
+    ReturnDocument
+} from "./typings";
 
 export type SearchReturn<T extends Search<ParseSchema<any>>> = Omit<T, "where" | "and" | "or" | "rawQuery" | `sort${string}` | `return${string}`>;
 export type SearchSortReturn<T extends Search<ParseSchema<any>>> = Omit<T, `sort${string}`>;

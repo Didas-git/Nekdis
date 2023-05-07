@@ -1,6 +1,6 @@
+import type { ParseSchema } from "./parse-schema";
 import type { ReferenceArray } from "../utils";
 import type { FieldMap } from "./field-map";
-import type { ParseSchema } from "./parse-schema";
 
 export type MapSchema<
     T extends ParseSchema<any>,

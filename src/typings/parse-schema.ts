@@ -1,5 +1,11 @@
 import type { ExtractParsedSchemaDefinition } from "./extract-generic";
-import type { ArrayField, BaseField, ObjectField, ReferenceField, SchemaDefinition } from "./schema-definition";
+import type {
+    ArrayField,
+    BaseField,
+    ObjectField,
+    ReferenceField,
+    SchemaDefinition
+} from "./schema-definition";
 
 export type ParseSchema<T extends SchemaDefinition> = {
     data: {

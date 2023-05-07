@@ -1,5 +1,6 @@
-import type { ParseSchema } from "../typings";
 import { Document } from "../document";
+
+import type { ParseSchema } from "../typings";
 
 export function stringOrDocToString(stringOrNumOrDoc: Array<string | number | Document<ParseSchema<any>>>, name: string): Array<string> {
     const temp = [];

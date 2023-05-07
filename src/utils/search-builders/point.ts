@@ -1,6 +1,7 @@
-import type { Search } from "../../search";
-import type { Point, ParseSchema, Units } from "../../typings";
 import { SearchField } from "./base";
+
+import type { Point, ParseSchema, Units } from "../../typings";
+import type { Search } from "../../search";
 
 export type CircleFunction = (circle: Circle) => Circle;
 

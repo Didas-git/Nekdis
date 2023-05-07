@@ -1,5 +1,6 @@
-import type { FieldTypes, ObjectField, ParseSchema } from "./typings";
 import { ReferenceArray } from "./utils";
+
+import type { FieldTypes, ObjectField, ParseSchema } from "./typings";
 
 export class Document<S extends ParseSchema<any>> {
 

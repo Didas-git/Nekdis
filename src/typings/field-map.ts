@@ -1,5 +1,5 @@
-import type { Point } from "./point";
 import type { SchemaDefinition } from "./schema-definition";
+import type { Point } from "./point";
 
 /**
  * @typeParam T - The array and/or tuple type

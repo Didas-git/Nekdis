@@ -1,5 +1,6 @@
-import type { ParseSchema } from "../typings";
 import { Document } from "../document";
+
+import type { ParseSchema } from "../typings";
 
 export class ReferenceArray extends Array<string> {
     public reference(...recordOrDoc: Array<string | Document<ParseSchema<any>>>): this {

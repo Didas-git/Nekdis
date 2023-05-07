@@ -1,7 +1,10 @@
 import { inspect } from "node:util";
+
 import { Color } from "colours.js/dst";
+
 import { methods, schemaData } from "./utils/symbols";
 import { ParsingError } from "./utils";
+
 import type { SchemaDefinition, SchemaOptions, MethodsDefinition, ParseSchema } from "./typings";
 
 export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P extends ParseSchema<S> = ParseSchema<S>> {
