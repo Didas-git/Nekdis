@@ -145,7 +145,10 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
             if (value.sortable) this.#searchIndex.push("SORTABLE");
         }
 
-        await this.#client.sendCommand(this.#searchIndex);
+        await Promise.all([
+            this.#client.sendCommand(this.#searchIndex),
+            this.#client.set(this.#searchIndexHashName, this.#searchIndexHash)
+        ]);
     }
 
     public async deleteIndex(): Promise<void> {
