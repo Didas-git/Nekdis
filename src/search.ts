@@ -80,12 +80,26 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return (await this.#search()).total;
     }
 
-    public async page(offset: number, count: number): Promise<Array<ReturnDocument<T>>> {
+    public async page<F extends boolean = false>(offset: number, count: number, autoFetch?: F): Promise<Array<ReturnDocument<T, F>>> {
         const docs = [];
         const { documents } = await this.#search({ LIMIT: { from: offset, size: count } });
 
-        for (let j = 0, len = documents.length; j < len; j++) {
-            const doc = documents[j];
+        for (let i = 0, len = documents.length; i < len; i++) {
+            const doc = documents[i];
+            if (autoFetch) {
+                for (let j = 0, keys = Object.keys(this.#schema.references), le = keys.length; j < le; j++) {
+                    const key = keys[j];
+                    const val = <Array<string>><unknown>doc.value[key];
+                    const temp = [];
+
+                    for (let k = 0, l = val.length; k < l; k++) {
+                        temp.push(this.#client.json.get(val[k]));
+                    }
+
+                    doc.value[key] = <never>await Promise.all(temp);
+                }
+            }
+
             docs.push(new Document(this.#schema, this.#keyName, extractIdFromRecord(doc.id), doc.value, this.#validate));
         }
 
@@ -128,19 +142,27 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return await this.sortBy(field, "DESC").firstId();
     }
 
-    public async all(): Promise<Array<ReturnDocument<T>>> {
+    public async all<F extends boolean = false>(autoFetch?: F): Promise<Array<ReturnDocument<T, F>>> {
         const docs = [];
-        const { size, idx } = this.#parseNum((await this.#search({ LIMIT: { from: 0, size: 0 } })).total);
+        const { documents } = await this.#search({ LIMIT: { from: 0, size: (await this.#search({ LIMIT: { from: 0, size: 0 } })).total } });
 
-        for (let i = 0, from = 0; i < idx; i++) {
-            const { documents } = await this.#search({ LIMIT: { from, size } });
+        for (let i = 0, len = documents.length; i < len; i++) {
+            const doc = documents[i];
 
-            for (let j = 0, len = documents.length; j < len; j++) {
-                const doc = documents[j];
-                docs.push(new Document(this.#schema, this.#keyName, extractIdFromRecord(doc.id), doc.value, this.#validate));
+            if (autoFetch) {
+                for (let j = 0, keys = Object.keys(this.#schema.references), le = keys.length; j < le; j++) {
+                    const key = keys[j];
+                    const val = <Array<string>><unknown>doc.value[key];
+                    const temp = [];
+
+                    for (let k = 0, l = val.length; k < l; k++) {
+                        temp.push(this.#client.json.get(val[k]));
+                    }
+
+                    doc.value[key] = <never>await Promise.all(temp);
+                }
             }
-
-            from += size;
+            docs.push(new Document(this.#schema, this.#keyName, extractIdFromRecord(doc.id), doc.value, this.#validate));
         }
 
         return <never>docs;
@@ -148,17 +170,12 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
 
     public async allIds(withRecord: boolean = false): Promise<Array<string>> {
         const docs: Array<string> = [];
-        const { size, idx } = this.#parseNum((await this.#search({ LIMIT: { from: 0, size: 0 } })).total);
 
-        for (let i = 0, from = 0; i < idx; i++) {
-            const { documents } = await this.#search({ LIMIT: { from, size } }, true);
+        const { documents } = await this.#search({ LIMIT: { from: 0, size: (await this.#search({ LIMIT: { from: 0, size: 0 } })).total } });
 
-            for (let j = 0, len = documents.length; j < len; j++) {
-                const doc = documents[j];
-                docs.push(withRecord ? doc.id : extractIdFromRecord(doc.id));
-            }
-
-            from += size;
+        for (let i = 0, len = documents.length; i < len; i++) {
+            const doc = documents[i];
+            docs.push(withRecord ? doc.id : extractIdFromRecord(doc.id));
         }
 
         return docs;
@@ -262,19 +279,6 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
             }
             case "object": { throw new Error('Not implemented yet: "object" case'); }
         }
-    }
-
-    #parseNum(num: number): {
-        size: number,
-        idx: number
-    } {
-        let size = 100;
-        if (num < 100) return { size, idx: 1 };
-        if (num > 1000) size = 300;
-        return {
-            size,
-            idx: Math.ceil(num / size)
-        };
     }
 
     public get rawQuery(): string {
