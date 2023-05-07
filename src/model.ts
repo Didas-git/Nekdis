@@ -1,7 +1,7 @@
 import { randomUUID, createHash } from "node:crypto";
 
 import { stringOrDocToString } from "./utils/string-or-document-to-string";
-import { extractIdFromRecord } from "./utils/extract-id";
+import { RecordRegex, extractIdFromRecord } from "./utils/extract-id";
 import { methods, parse, schemaData } from "./utils";
 import { Document } from "./document";
 import { Search } from "./search";
@@ -48,7 +48,11 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
 
     public async get<F extends boolean = false>(id: string | number, autoFetch?: F): Promise<ReturnDocument<S, F> | null> {
         if (typeof id === "undefined") throw new Error();
-        const data = await this.#client.json.get(extractIdFromRecord(id.toString()));
+        if (RecordRegex.exec(id.toString()) === null) {
+            console.log(id);
+            id = `${this.name}:${id}`;
+        }
+        const data = await this.#client.json.get(id.toString());
 
         if (data === null) return null;
         if (autoFetch) {
@@ -67,7 +71,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
             }
         }
 
-        return <never>new Document(this.#schema[schemaData], this.name, id.toString(), data, this.#validate);
+        return <never>new Document(this.#schema[schemaData], this.name, extractIdFromRecord(id.toString()), data, this.#validate);
     }
 
     public create(id?: string | number): ReturnDocument<S> {
