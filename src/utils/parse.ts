@@ -1,6 +1,6 @@
 import type { ParsedMap, ParseSchema } from "../typings";
 
-export function parse(schema: ParseSchema<any>["data"], k?: string): ParsedMap {
+export function JSONParse(schema: ParseSchema<any>["data"], k?: string): ParsedMap {
     let objs: ParsedMap = new Map();
 
     for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
@@ -9,8 +9,7 @@ export function parse(schema: ParseSchema<any>["data"], k?: string): ParsedMap {
         //@ts-expect-error Typescript is getting confused due to the union of array and object
         if (value.type === "object" && value.properties) {
             //@ts-expect-error Typescript is getting confused due to the union of array and object
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-            const parsed = parse(value.properties, k ? `${k}.${key}` : key);
+            const parsed = JSONParse(value.properties, k ? `${k}.${key}` : key);
             objs = new Map([...objs, ...parsed]);
         }
 
@@ -19,3 +18,5 @@ export function parse(schema: ParseSchema<any>["data"], k?: string): ParsedMap {
 
     return objs;
 }
+
+// export function HASHParse(schema: ParseSchema<any>["data"]): ParsedMap { }

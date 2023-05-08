@@ -55,6 +55,7 @@ export interface ArrayField extends BaseField {
     type: "array";
     elements?: Exclude<keyof FieldMap, "array" | "reference" | "object"> | undefined /*SchemaDefinition*/;
     default?: Array<unknown> | undefined;
+    separator?: string;
 }
 
 // FALLBACK

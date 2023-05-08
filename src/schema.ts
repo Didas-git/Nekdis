@@ -75,6 +75,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
                     if (typeof value.elements === "undefined") value.elements = "string";
+                    if (typeof value.separator === "undefined") value.separator = ",";
                     if (typeof value.sortable === "undefined") value.sortable = false;
                     if (typeof value.index === "undefined") value.index = true;
                     if (typeof value.elements === "object" && !Array.isArray(value.elements)) throw new Error();/* value.elements = this.#parse(value.elements); */

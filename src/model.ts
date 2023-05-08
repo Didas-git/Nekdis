@@ -2,9 +2,14 @@ import { randomUUID, createHash } from "node:crypto";
 
 import { stringOrDocToString } from "./utils/string-or-document-to-string";
 import { RecordRegex, extractIdFromRecord } from "./utils/extract-id";
-import { methods, parse, schemaData } from "./utils";
 import { Document } from "./document";
 import { Search } from "./search";
+import {
+    methods,
+    schemaData,
+    JSONParse,
+    HASHParse
+} from "./utils";
 
 import type { Schema } from "./schema";
 import type {
@@ -32,7 +37,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
         this.#client = client;
         this.#schema = data;
         this.#validate = !this.#schema.options.skipDocumentValidation;
-        this.#parsedSchema = parse(this.#schema[schemaData].data);
+        this.#parsedSchema = data.options.dataStructure === "HASH" ? HASHParse(this.#schema[schemaData].data) : JSONParse(this.#schema[schemaData].data);
         this.#searchIndexName = `${name}:nekdis:index`;
         this.#searchIndexHashName = `${name}:nekdis:index:hash`;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -52,7 +57,8 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
             console.log(id);
             id = `${this.name}:${id}`;
         }
-        const data = await this.#client.json.get(id.toString());
+
+        const data = this.#schema.options.dataStructure === "JSON" ? await this.#client.json.get(id.toString()) : await this.#client.hGetAll(id.toString());
 
         if (data === null) return null;
         if (autoFetch) {
@@ -71,17 +77,18 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
             }
         }
 
-        return <never>new Document(this.#schema[schemaData], this.name, extractIdFromRecord(id.toString()), data, this.#validate, autoFetch);
+        return <never>new Document(this.#schema[schemaData], this.name, extractIdFromRecord(id.toString()), data, this.#validate, autoFetch, this.#schema.options.dataStructure);
     }
 
     public create(id?: string | number): ReturnDocument<S> {
-        return <never>new Document(this.#schema[schemaData], this.name, id?.toString() ?? randomUUID(), void 0, this.#validate);
+        return <never>new Document(this.#schema[schemaData], this.name, id?.toString() ?? randomUUID(), void 0, this.#validate, false, this.#schema.options.dataStructure);
     }
 
     public async save(doc: Document<ParseSchema<any>>): Promise<void> {
         if (typeof doc === "undefined") throw new Error();
 
-        await this.#client.sendCommand(["JSON.SET", `${this.name}:${doc.$id}`, "$", doc.toString()]);
+        if (this.#schema.options.dataStructure === "JSON") await this.#client.sendCommand(["JSON.SET", `${this.name}:${doc.$id}`, "$", doc.toJSONString()]);
+        else await this.#client.sendCommand(["HSET", `${this.name}:${doc.$id}`, doc.toHASHString()]);
     }
 
     public async delete(...docs: Array<string | number | Document<ParseSchema<any>>>): Promise<void> {
@@ -108,12 +115,13 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     }
 
     public async createAndSave(data: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true>): Promise<void> {
-        const doc = new Document(this.#schema[schemaData], this.name, data.$id?.toString() ?? randomUUID(), data, this.#validate, true);
+        const doc = new Document(this.#schema[schemaData], this.name, data.$id?.toString() ?? randomUUID(), data, this.#validate, false, this.#schema.options.dataStructure);
         await this.save(doc);
     }
 
     public search(): Search<ExtractParsedSchemaDefinition<S>> {
-        return new Search<ExtractParsedSchemaDefinition<S>>(this.#client, <never>this.#schema[schemaData], this.#parsedSchema, this.name, this.#searchIndexName, this.#validate);
+        // eslint-disable-next-line max-len
+        return new Search<ExtractParsedSchemaDefinition<S>>(this.#client, <never>this.#schema[schemaData], this.#parsedSchema, this.name, this.#searchIndexName, this.#validate, this.#schema.options.dataStructure);
     }
 
     public async createIndex(): Promise<void> {
@@ -127,12 +135,14 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
             const { path, value } = val;
             let arrayPath = "";
 
-            if (value.type === "array") {
-                if (typeof value.elements !== "string") {
-                    throw new Error("Object definitions on `array` are not yet supported by the parser");
-                }
+            if (this.#schema.options.dataStructure === "JSON") {
+                if (value.type === "array") {
+                    if (typeof value.elements !== "string") {
+                        throw new Error("Object definitions on `array` are not yet supported by the parser");
+                    }
 
-                arrayPath = value.elements === "text" ? "[*]" : value.elements === "number" || value.elements === "date" || value.elements === "point" ? "" : "*";
+                    arrayPath = value.elements === "text" ? "[*]" : value.elements === "number" || value.elements === "date" || value.elements === "point" ? "" : "*";
+                }
             }
 
             this.#searchIndex.push(

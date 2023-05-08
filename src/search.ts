@@ -33,6 +33,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     readonly #keyName: string;
     readonly #index: string;
     readonly #validate: boolean;
+    readonly #structure: "JSON" | "HASH";
     #workingType!: FieldTypes["type"];
 
     /**
@@ -44,13 +45,14 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     /** @internal */
     public _query: Array<SearchField<T>> = [];
 
-    public constructor(client: RedisClient, schema: T, parsedSchema: ParsedMap, keyName: string, searchIndex: string, validate: boolean = true) {
+    public constructor(client: RedisClient, schema: T, parsedSchema: ParsedMap, keyName: string, searchIndex: string, validate: boolean = true, structure: "JSON" | "HASH" = "JSON") {
         this.#client = client;
         this.#schema = schema;
         this.#parsedSchema = parsedSchema;
         this.#keyName = keyName;
         this.#index = searchIndex;
         this.#validate = validate;
+        this.#structure = structure;
     }
 
     public where<F extends keyof P>(field: F): MapSearchField<F, T, P> {
@@ -119,7 +121,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                 }
             }
 
-            docs.push(new Document(this.#schema, this.#keyName, extractIdFromRecord(doc.id), doc.value, this.#validate, autoFetch));
+            docs.push(new Document(this.#schema, this.#keyName, extractIdFromRecord(doc.id), doc.value, this.#validate, autoFetch, this.#structure));
         }
 
         return <never>docs;
@@ -181,7 +183,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                     doc.value[key] = <never>await Promise.all(temp);
                 }
             }
-            docs.push(new Document(this.#schema, this.#keyName, extractIdFromRecord(doc.id), doc.value, this.#validate, autoFetch));
+            docs.push(new Document(this.#schema, this.#keyName, extractIdFromRecord(doc.id), doc.value, this.#validate, autoFetch, this.#structure));
         }
 
         return <never>docs;
@@ -257,7 +259,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
 
         if (data === null) return null;
 
-        return <never>new Document(this.#schema, this.#keyName, extractIdFromRecord(id.toString()), data, this.#validate);
+        return <never>new Document(this.#schema, this.#keyName, extractIdFromRecord(id.toString()), data, this.#validate, false, this.#structure);
     }
 
     #buildQuery(): string {

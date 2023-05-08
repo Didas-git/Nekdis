@@ -1,6 +1,6 @@
-import { ReferenceArray } from "./utils";
+import { ReferenceArray, dateToNumber, hashFieldToString, objectToString, pointToString } from "./utils";
 
-import type { FieldTypes, ObjectField, ParseSchema } from "./typings";
+import type { ObjectField, ParseSchema } from "./typings";
 
 export class Document<S extends ParseSchema<any>> {
 
@@ -18,7 +18,7 @@ export class Document<S extends ParseSchema<any>> {
     */
     [key: string]: any;
 
-    public constructor(schema: S, public $key_name: string, public $id: string | number, data?: {}, validate: boolean = true, wasAutoFetched: boolean = false) {
+    public constructor(schema: S, public $key_name: string, public $id: string | number, data?: {}, validate: boolean = true, wasAutoFetched: boolean = false, structure: "JSON" | "HASH" = "JSON") {
 
         this.$record_id = `${$key_name}:${$id}`;
         this.#schema = schema;
@@ -28,20 +28,35 @@ export class Document<S extends ParseSchema<any>> {
         this.#populate();
 
         if (data) {
-            for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
-                const [key, value] = entries[i];
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                if (schema.references[key] === null && !this.#autoFetch) {
-                    this[key] = new ReferenceArray(...<Array<string>>value);
-                    continue;
-                }
+            if (structure === "HASH") {
+                // for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
+                //     const [key, value] = entries[i];
 
-                if (schema.data[key].type === "date") {
-                    this[key] = new Date(<number>value);
-                    continue;
-                }
+                // }
+            } else /* JSON */ {
+                for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
+                    const [key, value] = entries[i];
+                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                    if (schema.references[key] === null && !this.#autoFetch) {
+                        this[key] = new ReferenceArray(...<Array<string>>value);
+                        continue;
+                    }
 
-                this[key] = value;
+                    if (schema.data[key].type === "date") {
+                        this[key] = new Date(<number>value);
+                        continue;
+                        //@ts-expect-error elements exists but again ts is confused
+                    } else if (schema.data[key].type === "array" && schema.data[key].elements === "date") {
+                        for (let j = 0, le = (<Array<number>>value).length; j < le; j++) {
+                            //@ts-expect-error Im not going to fill this with castings
+                            value[j] = new Date(value[j]);
+                        }
+                        this[key] = value;
+                        continue;
+                    }
+
+                    this[key] = value;
+                }
             }
         }
     }
@@ -90,7 +105,6 @@ export class Document<S extends ParseSchema<any>> {
             if (value.type === "object") {
                 if (!(<ObjectField>value).properties) continue;
                 //@ts-expect-error Typescript is getting confused due to the union of array and object
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 this.#validateSchemaData(dataVal, value.properties, true);
             } else if (value.type === "array") {
                 dataVal.every((val: unknown) => {
@@ -103,7 +117,6 @@ export class Document<S extends ParseSchema<any>> {
             } else if (value.type === "point") {
                 if (typeof dataVal !== "object") throw new Error();
                 if (!dataVal.longitude || !dataVal.latitude) throw new Error();
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 if (Object.keys(dataVal).length > 2) throw new Error();
             } else if (value.type === "text") {
                 if (typeof dataVal !== "string") throw new Error();
@@ -116,18 +129,25 @@ export class Document<S extends ParseSchema<any>> {
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
     public toJSONString(): string {
-        if (this.#validate) {
-            this.#validateSchemaData();
-        }
+        if (this.#validate) this.#validateSchemaData();
 
-        const obj: Record<string, FieldTypes> = {};
+        const obj: Record<string, unknown> = {};
 
         for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
             const [key, val] = entries[i];
 
             if (val.type === "date") {
-                if (this[key] instanceof Date) this[key] = this[key].getTime();
-                if (typeof this[key] === "string" || typeof this[key] === "number") this[key] = new Date(<string | number>this[key]).getTime();
+                obj[key] = dateToNumber(this[key]);
+                continue;
+            }
+
+            //@ts-expect-error elements exists but again ts is confused
+            if (val.type === "array" && val.elements === "date") {
+                const temp = this[key];
+                for (let j = 0, le = temp.length; j < le; j++) {
+                    temp[j] = dateToNumber(temp[j]);
+                }
+                obj[key] = temp;
                 continue;
             }
 
@@ -135,7 +155,7 @@ export class Document<S extends ParseSchema<any>> {
         }
 
         if (!this.#autoFetch) {
-            this.#validateSchemaReferences();
+            if (this.#validate) this.#validateSchemaReferences();
             for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
                 const key = keys[i];
                 obj[key] = this[key];
@@ -146,20 +166,22 @@ export class Document<S extends ParseSchema<any>> {
     }
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    public toHASHString(): Record<string, string> {
-        const obj: Record<string, string> = {};
+    public toHASHString(): string {
+        if (this.#validate) this.#validateSchemaData();
+
+        let str = "";
 
         for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
-            const [key, val] = entries[i];
+            let [key, val] = entries[i];
 
-            if (val.type === "boolean") {
-                if (typeof this[key] !== "undefined") obj[key] = (+this[key]).toString();
+            if (val.type === "object") {
+                //@ts-expect-error Typescript is getting confused due to the union of array and object
+                str += ` ${objectToString(val.properties, key)}`;
             } else {
-                obj[key] = this[key].toString();
+                str += ` ${key} ${hashFieldToString(val, this[key])}`;
             }
-
         }
 
-        return obj;
+        return str;
     }
 }
