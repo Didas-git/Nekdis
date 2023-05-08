@@ -80,7 +80,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
                     if (typeof value.elements === "object" && !Array.isArray(value.elements)) throw new Error();/* value.elements = this.#parse(value.elements); */
                 } else if (value.type === "date") {
                     if (value.default instanceof Date) value.default = value.default.getTime();
-                    if (typeof value.default === "string") value.default = new Date(value.default).getTime();
+                    if (typeof value.default === "string" || typeof value.default === "number") value.default = new Date(value.default).getTime();
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
                     if (typeof value.sortable === "undefined") value.sortable = false;

@@ -14,7 +14,7 @@ export class Document<S extends ParseSchema<any>> {
 
     /*
     * Using any so everything works as intended
-    * I couldn't find any other way to do this or implement the MapSchema type directly in th class
+    * I couldn't find any other way to do this or implement the MapSchema type directly in the class
     */
     [key: string]: any;
 
@@ -35,6 +35,12 @@ export class Document<S extends ParseSchema<any>> {
                     this[key] = new ReferenceArray(...<Array<string>>value);
                     continue;
                 }
+
+                if (schema.data[key].type === "date") {
+                    this[key] = new Date(<number>value);
+                    continue;
+                }
+
                 this[key] = value;
             }
         }
@@ -108,15 +114,23 @@ export class Document<S extends ParseSchema<any>> {
         }
     }
 
-    public toString(): string {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    public toJSONString(): string {
         if (this.#validate) {
             this.#validateSchemaData();
         }
 
         const obj: Record<string, FieldTypes> = {};
 
-        for (let i = 0, keys = Object.keys(this.#schema.data), len = keys.length; i < len; i++) {
-            const key = keys[i];
+        for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
+            const [key, val] = entries[i];
+
+            if (val.type === "date") {
+                if (this[key] instanceof Date) this[key] = this[key].getTime();
+                if (typeof this[key] === "string" || typeof this[key] === "number") this[key] = new Date(<string | number>this[key]).getTime();
+                continue;
+            }
+
             obj[key] = this[key];
         }
 
@@ -129,5 +143,23 @@ export class Document<S extends ParseSchema<any>> {
         }
 
         return JSON.stringify(obj, null);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    public toHASHString(): Record<string, string> {
+        const obj: Record<string, string> = {};
+
+        for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
+            const [key, val] = entries[i];
+
+            if (val.type === "boolean") {
+                if (typeof this[key] !== "undefined") obj[key] = (+this[key]).toString();
+            } else {
+                obj[key] = this[key].toString();
+            }
+
+        }
+
+        return obj;
     }
 }
