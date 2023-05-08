@@ -112,7 +112,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                     const temp = [];
 
                     for (let k = 0, l = val.length; k < l; k++) {
-                        temp.push(this.#client.json.get(val[k]));
+                        temp.push(this.#get(val[k]));
                     }
 
                     doc.value[key] = <never>await Promise.all(temp);
@@ -125,36 +125,36 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return <never>docs;
     }
 
-    public async pageOfIds(offset: number, count: number, withRecord: boolean = false): Promise<Array<string>> {
+    public async pageOfIds(offset: number, count: number, withKey: boolean = false): Promise<Array<string>> {
         const docs: Array<string> = [];
         const { documents } = await this.#search({ LIMIT: { from: offset, size: count } }, true);
 
         for (let j = 0, len = documents.length; j < len; j++) {
             const doc = documents[j];
-            docs.push(withRecord ? doc.id : extractIdFromRecord(doc.id));
+            docs.push(withKey ? doc.id : extractIdFromRecord(doc.id));
         }
 
         return docs;
     }
 
-    public async first(): Promise<ReturnDocument<T>> {
-        return (await this.page(0, 1))[0];
+    public async first<F extends boolean = false>(autoFetch?: F): Promise<ReturnDocument<T, F>> {
+        return (await this.page(0, 1, autoFetch))[0];
     }
 
-    public async firstId(withRecord: boolean = false): Promise<string> {
-        return (await this.pageOfIds(0, 1, withRecord))[0];
+    public async firstId(withKey: boolean = false): Promise<string> {
+        return (await this.pageOfIds(0, 1, withKey))[0];
     }
 
-    public async min<F extends keyof P>(field: F): Promise<ReturnDocument<T>> {
-        return await this.sortBy(field, "ASC").first();
+    public async min<F extends keyof P, AF extends boolean = false>(field: F, autoFetch?: AF): Promise<ReturnDocument<T, AF>> {
+        return await this.sortBy(field, "ASC").first(autoFetch);
     }
 
     public async minId<F extends keyof P>(field: F): Promise<string> {
         return await this.sortBy(field, "ASC").firstId();
     }
 
-    public async max<F extends keyof P>(field: F): Promise<ReturnDocument<T>> {
-        return await this.sortBy(field, "DESC").first();
+    public async max<F extends keyof P, AF extends boolean = false>(field: F, autoFetch?: AF): Promise<ReturnDocument<T, AF>> {
+        return await this.sortBy(field, "DESC").first(autoFetch);
     }
 
     public async maxId<F extends keyof P>(field: F): Promise<string> {
@@ -175,7 +175,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                     const temp = [];
 
                     for (let k = 0, l = val.length; k < l; k++) {
-                        temp.push(this.#client.json.get(val[k]));
+                        temp.push(this.#get(val[k]));
                     }
 
                     doc.value[key] = <never>await Promise.all(temp);
@@ -187,14 +187,14 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return <never>docs;
     }
 
-    public async allIds(withRecord: boolean = false): Promise<Array<string>> {
+    public async allIds(withKey: boolean = false): Promise<Array<string>> {
         const docs: Array<string> = [];
 
         const { documents } = await this.#search({ LIMIT: { from: 0, size: (await this.#search({ LIMIT: { from: 0, size: 0 } })).total } });
 
         for (let i = 0, len = documents.length; i < len; i++) {
             const doc = documents[i];
-            docs.push(withRecord ? doc.id : extractIdFromRecord(doc.id));
+            docs.push(withKey ? doc.id : extractIdFromRecord(doc.id));
         }
 
         return docs;
@@ -204,40 +204,40 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return this.count();
     }
 
-    public async returnAll(): Promise<Array<ReturnDocument<T>>> {
-        return await this.all();
+    public async returnAll<F extends boolean = false>(autoFetch?: F): Promise<Array<ReturnDocument<T, F>>> {
+        return await this.all(autoFetch);
     }
 
-    public async returnAllIds(withRecord: boolean = false): Promise<Array<string>> {
-        return await this.allIds(withRecord);
+    public async returnAllIds(withKey: boolean = false): Promise<Array<string>> {
+        return await this.allIds(withKey);
     }
 
-    public async returnPage(offset: number, count: number): Promise<Array<ReturnDocument<T>>> {
-        return <never>await this.page(offset, count);
+    public async returnPage<F extends boolean = false>(offset: number, count: number, autoFetch?: F): Promise<Array<ReturnDocument<T, F>>> {
+        return <never>await this.page(offset, count, autoFetch);
     }
 
-    public async returnPageOfIds(offset: number, count: number, withRecord: boolean = false): Promise<Array<string>> {
-        return await this.pageOfIds(offset, count, withRecord);
+    public async returnPageOfIds(offset: number, count: number, withKey: boolean = false): Promise<Array<string>> {
+        return await this.pageOfIds(offset, count, withKey);
     }
 
-    public async returnFirst(): Promise<ReturnDocument<T>> {
-        return await this.first();
+    public async returnFirst<F extends boolean = false>(autoFetch?: F): Promise<ReturnDocument<T, F>> {
+        return await this.first(autoFetch);
     }
 
-    public async returnFirstId(withRecord: boolean = false): Promise<string> {
-        return await this.firstId(withRecord);
+    public async returnFirstId(withKey: boolean = false): Promise<string> {
+        return await this.firstId(withKey);
     }
 
-    public async returnMin<F extends keyof P>(field: F): Promise<ReturnDocument<T>> {
-        return await this.min(field);
+    public async returnMin<F extends keyof P, AF extends boolean = false>(field: F, autoFetch?: AF): Promise<ReturnDocument<T, AF>> {
+        return await this.min(field, autoFetch);
     }
 
     public async returnMinId<F extends keyof P>(field: F): Promise<string> {
         return await this.minId(field);
     }
 
-    public async returnMax<F extends keyof P>(field: F): Promise<ReturnDocument<T>> {
-        return await this.max(field);
+    public async returnMax<F extends keyof P, AF extends boolean = false>(field: F, autoFetch?: AF): Promise<ReturnDocument<T, AF>> {
+        return await this.max(field, autoFetch);
     }
 
     public async returnMaxId<F extends keyof P>(field: F): Promise<string> {
@@ -248,6 +248,16 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         options = { ...this.#options, ...options };
         if (keysOnly) options.RETURN = [];
         return await this.#client.ft.search(this.#index, this.#buildQuery(), options);
+    }
+
+    async #get(id: string): Promise<ReturnDocument<T> | null> {
+        if (typeof id === "undefined") throw new Error();
+
+        const data = await this.#client.json.get(id);
+
+        if (data === null) return null;
+
+        return <never>new Document(this.#schema, this.#keyName, extractIdFromRecord(id.toString()), data, this.#validate);
     }
 
     #buildQuery(): string {

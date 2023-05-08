@@ -7,6 +7,8 @@ export class Document<S extends ParseSchema<any>> {
     readonly #schema: S;
     readonly #validate: boolean;
     readonly #autoFetch: boolean;
+
+    /** @internal */
     // eslint-disable-next-line @typescript-eslint/naming-convention
     public readonly $record_id: string;
 
@@ -28,7 +30,8 @@ export class Document<S extends ParseSchema<any>> {
         if (data) {
             for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
                 const [key, value] = entries[i];
-                if (typeof schema.references[key] !== "undefined" && !this.#autoFetch) {
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                if (schema.references[key] === null && !this.#autoFetch) {
                     this[key] = new ReferenceArray(...<Array<string>>value);
                     continue;
                 }

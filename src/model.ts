@@ -146,8 +146,8 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
         }
 
         await Promise.all([
-            this.#client.sendCommand(this.#searchIndex),
-            this.#client.set(this.#searchIndexHashName, this.#searchIndexHash)
+            this.#client.set(this.#searchIndexHashName, this.#searchIndexHash),
+            this.#client.sendCommand(this.#searchIndex)
         ]);
     }
 
