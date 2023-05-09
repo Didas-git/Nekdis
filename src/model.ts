@@ -8,7 +8,7 @@ import {
     methods,
     schemaData,
     JSONParse,
-    HASHParse
+    // HASHParse
 } from "./utils";
 
 import type { Schema } from "./schema";
@@ -37,7 +37,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
         this.#client = client;
         this.#schema = data;
         this.#validate = !this.#schema.options.skipDocumentValidation;
-        this.#parsedSchema = data.options.dataStructure === "HASH" ? HASHParse(this.#schema[schemaData].data) : JSONParse(this.#schema[schemaData].data);
+        this.#parsedSchema = JSONParse(this.#schema[schemaData].data);
         this.#searchIndexName = `${name}:nekdis:index`;
         this.#searchIndexHashName = `${name}:nekdis:index:hash`;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

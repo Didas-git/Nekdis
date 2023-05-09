@@ -90,7 +90,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
                     if (!value.properties) value.properties = undefined;
-                    else value.properties = <never>this.#parse(value.properties);
+                    else value.properties = <never>this.#parse(value.properties).data;
                 } else if (value.type === "reference") {
                     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
                     if (!value.schema) throw new Error();

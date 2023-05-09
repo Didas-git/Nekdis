@@ -6,8 +6,9 @@ export function JSONParse(schema: ParseSchema<any>["data"], k?: string): ParsedM
     for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
         const [key, value] = entries[i];
         if (!value.index) continue;
-        //@ts-expect-error Typescript is getting confused due to the union of array and object
-        if (value.type === "object" && value.properties) {
+        if (value.type === "object") {
+            //@ts-expect-error Typescript is getting confused due to the union of array and object
+            if (typeof value.properties === "undefined") continue;
             //@ts-expect-error Typescript is getting confused due to the union of array and object
             const parsed = JSONParse(value.properties, k ? `${k}.${key}` : key);
             objs = new Map([...objs, ...parsed]);

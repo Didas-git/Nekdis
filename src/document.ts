@@ -1,4 +1,4 @@
-import { ReferenceArray, dateToNumber, hashFieldToString, objectToString, pointToString } from "./utils";
+import { ReferenceArray, dateToNumber, deepMerge, getLastKeyInSchema, hashFieldToString, objectToString, stringToHashField, stringToObject } from "./utils";
 
 import type { ObjectField, ParseSchema } from "./typings";
 
@@ -29,10 +29,24 @@ export class Document<S extends ParseSchema<any>> {
 
         if (data) {
             if (structure === "HASH") {
-                // for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
-                //     const [key, value] = entries[i];
+                for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
+                    const [key, value] = entries[i];
+                    const arr = key.split(".");
 
-                // }
+                    if (arr.length > 1) /* This is an object */ {
+                        this[arr[0]] = deepMerge(this[arr[0]], stringToObject(arr, stringToHashField(getLastKeyInSchema(<Required<ObjectField>>schema.data[arr[0]]), <string>value)));
+                        continue;
+                    }
+
+                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                    if (schema.references[key] === null && !this.#autoFetch) {
+                        this[key] = new ReferenceArray(...<Array<string>>stringToHashField({ type: "array" }, <string>value));
+                        continue;
+                    }
+
+                    this[key] = stringToHashField(schema.data[key], <string>value);
+
+                }
             } else /* JSON */ {
                 for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
                     const [key, value] = entries[i];
@@ -45,8 +59,10 @@ export class Document<S extends ParseSchema<any>> {
                     if (schema.data[key].type === "date") {
                         this[key] = new Date(<number>value);
                         continue;
-                        //@ts-expect-error elements exists but again ts is confused
-                    } else if (schema.data[key].type === "array" && schema.data[key].elements === "date") {
+                    }
+
+                    //@ts-expect-error elements exists but again ts is confused
+                    if (schema.data[key].type === "array" && schema.data[key].elements === "date") {
                         for (let j = 0, le = (<Array<number>>value).length; j < le; j++) {
                             //@ts-expect-error Im not going to fill this with castings
                             value[j] = new Date(value[j]);
@@ -64,7 +80,7 @@ export class Document<S extends ParseSchema<any>> {
     #populate(): void {
         for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
             const [key, value] = entries[i];
-            this[key] = value.default;
+            this[key] = value.default ?? value.type === "object" ? {} : void 0;
         }
 
         for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
@@ -93,6 +109,7 @@ export class Document<S extends ParseSchema<any>> {
     #validateSchemaData(data: Document<ParseSchema<any>> | ParseSchema<any>["data"] = this, schema: ParseSchema<any>["data"] = this.#schema.data, isField: boolean = false): void {
         for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
             const [key, value] = entries[i];
+
             if (isField && !data[key]) throw new Error();
 
             const dataVal = data[key];
@@ -176,9 +193,18 @@ export class Document<S extends ParseSchema<any>> {
 
             if (val.type === "object") {
                 //@ts-expect-error Typescript is getting confused due to the union of array and object
-                str += ` ${objectToString(val.properties, key)}`;
+                str += ` ${objectToString(this[key], key, val.properties)}`;
             } else {
-                str += ` ${key} ${hashFieldToString(val, this[key])}`;
+                str += ` "${key}" "${hashFieldToString(val, this[key])}"`;
+            }
+        }
+
+        if (!this.#autoFetch) {
+            if (this.#validate) this.#validateSchemaReferences();
+            for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
+                const key = keys[i];
+
+                str += ` "${key}" "${hashFieldToString({ type: "array" }, this[key])}"`;
             }
         }
 
