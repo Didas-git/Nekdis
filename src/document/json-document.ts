@@ -1,10 +1,10 @@
-import { ReferenceArray } from "./utils";
+import { ReferenceArray, dateToNumber, jsonFieldToDoc } from "../utils";
 
-import type { FieldTypes, ObjectField, ParseSchema } from "./typings";
+import type { DocumentShared, ObjectField, ParseSchema } from "../typings";
 
-export class Document<S extends ParseSchema<any>> {
+export class JSONDocument implements DocumentShared {
 
-    readonly #schema: S;
+    readonly #schema: ParseSchema<any>;
     readonly #validate: boolean;
     readonly #autoFetch: boolean;
 
@@ -14,11 +14,11 @@ export class Document<S extends ParseSchema<any>> {
 
     /*
     * Using any so everything works as intended
-    * I couldn't find any other way to do this or implement the MapSchema type directly in th class
+    * I couldn't find any other way to do this or implement the MapSchema type directly in the class
     */
     [key: string]: any;
 
-    public constructor(schema: S, public $key_name: string, public $id: string | number, data?: {}, validate: boolean = true, wasAutoFetched: boolean = false) {
+    public constructor(schema: ParseSchema<any>, public $key_name: string, public $id: string | number, data?: {}, isFetchedData: boolean = false, validate: boolean = true, wasAutoFetched: boolean = false) {
 
         this.$record_id = `${$key_name}:${$id}`;
         this.#schema = schema;
@@ -28,14 +28,28 @@ export class Document<S extends ParseSchema<any>> {
         this.#populate();
 
         if (data) {
-            for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
-                const [key, value] = entries[i];
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                if (schema.references[key] === null && !this.#autoFetch) {
-                    this[key] = new ReferenceArray(...<Array<string>>value);
-                    continue;
+            if (isFetchedData) {
+                for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
+                    const [key, value] = entries[i];
+
+                    if (typeof schema.data[key] !== "undefined") {
+                        this[key] = jsonFieldToDoc(schema.data[key], value);
+                        continue;
+                    }
+
+                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                    if (schema.references[key] === null && !this.#autoFetch) {
+                        this[key] = new ReferenceArray(...<Array<string>>value);
+                        continue;
+                    }
+
+                    this[key] = value;
                 }
-                this[key] = value;
+            } else {
+                for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
+                    const [key, value] = entries[i];
+                    this[key] = value;
+                }
             }
         }
     }
@@ -43,7 +57,7 @@ export class Document<S extends ParseSchema<any>> {
     #populate(): void {
         for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
             const [key, value] = entries[i];
-            this[key] = value.default;
+            this[key] = value.default ?? value.type === "object" ? {} : void 0;
         }
 
         for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
@@ -52,7 +66,7 @@ export class Document<S extends ParseSchema<any>> {
         }
     }
 
-    #validateSchemaReferences(data: Document<ParseSchema<any>> | ParseSchema<any>["references"] = this, schema: ParseSchema<any>["references"] = this.#schema.references, isField: boolean = false): void {
+    #validateSchemaReferences(data: JSONDocument | ParseSchema<any>["references"] = this, schema: ParseSchema<any>["references"] = this.#schema.references, isField: boolean = false): void {
         for (let i = 0, keys = Object.keys(schema), len = keys.length; i < len; i++) {
             const key = keys[i];
             if (isField && !data[key]) throw new Error();
@@ -69,9 +83,10 @@ export class Document<S extends ParseSchema<any>> {
 
     }
 
-    #validateSchemaData(data: Document<ParseSchema<any>> | ParseSchema<any>["data"] = this, schema: ParseSchema<any>["data"] = this.#schema.data, isField: boolean = false): void {
+    #validateSchemaData(data: JSONDocument | ParseSchema<any>["data"] = this, schema: ParseSchema<any>["data"] = this.#schema.data, isField: boolean = false): void {
         for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
             const [key, value] = entries[i];
+
             if (isField && !data[key]) throw new Error();
 
             const dataVal = data[key];
@@ -84,7 +99,6 @@ export class Document<S extends ParseSchema<any>> {
             if (value.type === "object") {
                 if (!(<ObjectField>value).properties) continue;
                 //@ts-expect-error Typescript is getting confused due to the union of array and object
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 this.#validateSchemaData(dataVal, value.properties, true);
             } else if (value.type === "array") {
                 dataVal.every((val: unknown) => {
@@ -93,11 +107,10 @@ export class Document<S extends ParseSchema<any>> {
                 });
 
             } else if (value.type === "date") {
-                if (!(dataVal instanceof Date) || typeof dataVal !== "number") throw new Error();
+                if (!(dataVal instanceof Date) && typeof dataVal !== "number") throw new Error();
             } else if (value.type === "point") {
                 if (typeof dataVal !== "object") throw new Error();
                 if (!dataVal.longitude || !dataVal.latitude) throw new Error();
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 if (Object.keys(dataVal).length > 2) throw new Error();
             } else if (value.type === "text") {
                 if (typeof dataVal !== "string") throw new Error();
@@ -109,19 +122,33 @@ export class Document<S extends ParseSchema<any>> {
     }
 
     public toString(): string {
-        if (this.#validate) {
-            this.#validateSchemaData();
-        }
+        if (this.#validate) this.#validateSchemaData();
 
-        const obj: Record<string, FieldTypes> = {};
+        const obj: Record<string, unknown> = {};
 
-        for (let i = 0, keys = Object.keys(this.#schema.data), len = keys.length; i < len; i++) {
-            const key = keys[i];
+        for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
+            const [key, val] = entries[i];
+
+            if (val.type === "date") {
+                obj[key] = dateToNumber(this[key]);
+                continue;
+            }
+
+            //@ts-expect-error elements exists but again ts is confused
+            if (val.type === "array" && val.elements === "date") {
+                const temp = this[key];
+                for (let j = 0, le = temp.length; j < le; j++) {
+                    temp[j] = dateToNumber(temp[j]);
+                }
+                obj[key] = temp;
+                continue;
+            }
+
             obj[key] = this[key];
         }
 
         if (!this.#autoFetch) {
-            this.#validateSchemaReferences();
+            if (this.#validate) this.#validateSchemaReferences();
             for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
                 const key = keys[i];
                 obj[key] = this[key];

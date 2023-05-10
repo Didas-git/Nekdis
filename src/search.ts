@@ -1,7 +1,6 @@
 import type { SearchOptions, SearchReply } from "redis";
 
-import { extractIdFromRecord } from "./utils/extract-id";
-import { Document } from "./document";
+import { JSONDocument, HASHDocument } from "./document";
 import {
     type SearchField,
     StringField,
@@ -9,8 +8,9 @@ import {
     BooleanField,
     TextField,
     DateField,
-    PointField
-} from "./utils/search-builders";
+    PointField,
+    extractIdFromRecord
+} from "./utils";
 
 import type {
     FieldTypes,
@@ -33,6 +33,8 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     readonly #keyName: string;
     readonly #index: string;
     readonly #validate: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+    readonly #docType: typeof JSONDocument | typeof HASHDocument;
     #workingType!: FieldTypes["type"];
 
     /**
@@ -44,13 +46,16 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     /** @internal */
     public _query: Array<SearchField<T>> = [];
 
-    public constructor(client: RedisClient, schema: T, parsedSchema: ParsedMap, keyName: string, searchIndex: string, validate: boolean = true) {
+    public constructor(client: RedisClient, schema: T, parsedSchema: ParsedMap, keyName: string, searchIndex: string, validate: boolean = true, structure: "JSON" | "HASH" = "JSON") {
         this.#client = client;
         this.#schema = schema;
         this.#parsedSchema = parsedSchema;
         this.#keyName = keyName;
         this.#index = searchIndex;
         this.#validate = validate;
+
+        if (structure === "HASH") this.#docType = HASHDocument;
+        else this.#docType = JSONDocument;
     }
 
     public where<F extends keyof P>(field: F): MapSearchField<F, T, P> {
@@ -119,7 +124,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                 }
             }
 
-            docs.push(new Document(this.#schema, this.#keyName, extractIdFromRecord(doc.id), doc.value, this.#validate, autoFetch));
+            docs.push(new this.#docType(this.#schema, this.#keyName, extractIdFromRecord(doc.id), doc.value, true, this.#validate, autoFetch));
         }
 
         return <never>docs;
@@ -181,7 +186,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                     doc.value[key] = <never>await Promise.all(temp);
                 }
             }
-            docs.push(new Document(this.#schema, this.#keyName, extractIdFromRecord(doc.id), doc.value, this.#validate, autoFetch));
+            docs.push(new this.#docType(this.#schema, this.#keyName, extractIdFromRecord(doc.id), doc.value, true, this.#validate, autoFetch));
         }
 
         return <never>docs;
@@ -257,7 +262,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
 
         if (data === null) return null;
 
-        return <never>new Document(this.#schema, this.#keyName, extractIdFromRecord(id.toString()), data, this.#validate);
+        return <never>new this.#docType(this.#schema, this.#keyName, extractIdFromRecord(id.toString()), data, true, this.#validate, false);
     }
 
     #buildQuery(): string {

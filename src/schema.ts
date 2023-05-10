@@ -2,8 +2,7 @@ import { inspect } from "node:util";
 
 import { Color } from "colours.js/dst";
 
-import { methods, schemaData } from "./utils/symbols";
-import { ParsingError } from "./utils";
+import { methods, schemaData, ParsingError } from "./utils";
 
 import type { SchemaDefinition, SchemaOptions, MethodsDefinition, ParseSchema } from "./typings";
 
@@ -75,12 +74,13 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
                     if (typeof value.elements === "undefined") value.elements = "string";
+                    if (typeof value.separator === "undefined") value.separator = ",";
                     if (typeof value.sortable === "undefined") value.sortable = false;
                     if (typeof value.index === "undefined") value.index = true;
                     if (typeof value.elements === "object" && !Array.isArray(value.elements)) throw new Error();/* value.elements = this.#parse(value.elements); */
                 } else if (value.type === "date") {
                     if (value.default instanceof Date) value.default = value.default.getTime();
-                    if (typeof value.default === "string") value.default = new Date(value.default).getTime();
+                    if (typeof value.default === "string" || typeof value.default === "number") value.default = new Date(value.default).getTime();
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
                     if (typeof value.sortable === "undefined") value.sortable = false;
@@ -89,7 +89,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
                     if (!value.properties) value.properties = undefined;
-                    else value.properties = <never>this.#parse(value.properties);
+                    else value.properties = <never>this.#parse(value.properties).data;
                 } else if (value.type === "reference") {
                     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
                     if (!value.schema) throw new Error();

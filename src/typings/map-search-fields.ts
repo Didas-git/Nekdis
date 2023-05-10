@@ -6,7 +6,7 @@ import type {
     PointField,
     StringField,
     TextField
-} from "../utils/search-builders";
+} from "../utils";
 
 export type MapSearchField<K extends keyof T, S extends ParseSchema<any>, T extends ParseSearchSchema<S["data"]>> = T[K] extends "string"
     ? StringField<S>
