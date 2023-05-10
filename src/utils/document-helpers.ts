@@ -1,4 +1,4 @@
-import type { ArrayField, BaseField, ObjectField, ParseSchema, Point } from "../typings";
+import type { ArrayField, BaseField, ObjectField, Point } from "../typings";
 
 export function dateToNumber(val: Date | string | number): number {
     if (val instanceof Date) return val.getTime();
@@ -45,25 +45,25 @@ export function hashFieldToString(schema: BaseField, val: any, separator?: strin
 }
 
 export function stringToHashField(schema: BaseField, val: string): unknown {
-
+    return schema + val
 }
 
-export function objectToString(data: Record<string, any>, k: string, schema?: Record<string, any>): string {
-    let init = "";
+export function objectToString(data: Record<string, any>, k: string, schema?: Record<string, any>): Array<string> {
+    let init: Array<string> = [];
     for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
         const [key, val] = entries[i];
 
         if (typeof val === "object" && !Array.isArray(val)) {
             if (typeof schema?.[key]?.properties !== "undefined") {
-                init += objectToString(val, key, schema[key].properties);
+                init.push(...objectToString(val, key, schema[key].properties));
                 continue;
             }
-            init += objectToString(val, key);
+            init.push(...objectToString(val, key));
             continue;
         }
 
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        init += ` "${`${k}.${key}`}" "${hashFieldToString(<BaseField>schema?.[key] ?? convertUnknownToSchema(val), val)}"`;
+        init.push(`"${`${k}.${key}`}"`, `"${hashFieldToString(<BaseField>schema?.[key] ?? convertUnknownToSchema(val), val)}"`);
 
     }
 
@@ -116,5 +116,5 @@ export function convertUnknownToSchema(val: any): BaseField {
 }
 
 export function getLastKeyInSchema(data: Required<ObjectField>): BaseField {
-
+    return <any>data
 }

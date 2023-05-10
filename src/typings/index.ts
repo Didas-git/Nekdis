@@ -13,3 +13,4 @@ export type * from "./map-search-fields";
 export type * from "./point-units";
 export type * from "./parse-schema";
 export type * from "./return-doc";
+export type * from "./doc-base";
