@@ -5,11 +5,10 @@ import { Search } from "./search";
 import {
     stringOrDocToString,
     extractIdFromRecord,
+    parseSchemaToSearchIndex,
     RecordRegex,
     methods,
-    schemaData,
-    JSONParse,
-    // HASHParse
+    schemaData
 } from "./utils";
 
 import type { Schema } from "./schema";
@@ -40,7 +39,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
         this.#client = client;
         this.#schema = data;
         this.#validate = !this.#schema.options.skipDocumentValidation;
-        this.#parsedSchema = JSONParse(this.#schema[schemaData].data);
+        this.#parsedSchema = parseSchemaToSearchIndex(this.#schema[schemaData].data);
         this.#searchIndexName = `${name}:nekdis:index`;
         this.#searchIndexHashName = `${name}:nekdis:index:hash`;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -137,6 +136,8 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
 
         await this.deleteIndex();
 
+        const prefix = this.#schema.options.dataStructure === "JSON" ? "$." : "";
+
         for (let i = 0, len = this.#parsedSchema.size, entries = [...this.#parsedSchema.entries()]; i < len; i++) {
             const [key, val] = entries[i];
             const { path, value } = val;
@@ -153,7 +154,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
             }
 
             this.#searchIndex.push(
-                `$.${key}${arrayPath}`,
+                `${prefix}${key}${arrayPath}`,
                 "AS",
                 path,
                 value.type === "text" ? "TEXT" : value.type === "number" || value.type === "date" ? "NUMERIC" : value.type === "point" ? "GEO" : "TAG"
