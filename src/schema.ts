@@ -2,9 +2,9 @@ import { inspect } from "node:util";
 
 import { Color } from "colours.js/dst";
 
-import { methods, schemaData, ParsingError } from "./utils";
+import { methods, schemaData, ParsingErrors } from "./utils";
 
-import type { SchemaDefinition, SchemaOptions, MethodsDefinition, ParseSchema } from "./typings";
+import type { SchemaDefinition, SchemaOptions, MethodsDefinition, ParseSchema, BaseField } from "./typings";
 
 export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P extends ParseSchema<S> = ParseSchema<S>> {
 
@@ -44,8 +44,8 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
 
             if (typeof value === "string") {
                 //@ts-expect-error Some people do not read docs
-                if (value === "object" || value === "reference")
-                    throw new PrettyError(`Type '${value}' needs to use its object definition`, {
+                if (value === "object") {
+                    throw new PrettyError("Type 'object' needs to use its object definition", {
                         ref: "nekdis",
                         lines: [
                             {
@@ -53,38 +53,63 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
                                 marker: { text: "Parsing:" }
                             },
                             {
-                                err: ParsingError.Object(key),
-                                marker: { text: "Possible Fix:", color: Color.fromHex("#00FF00"), nl: true }
+                                err: ParsingErrors.Fix.Object(key),
+                                marker: { text: "Fix:", color: Color.fromHex("#00FF00"), nl: true }
                             },
                             {
-                                err: ParsingError.Info.Object,
+                                err: ParsingErrors.Info.Object,
                                 marker: { text: "Information:", color: Color.fromHex("#009dff"), spaced: true, nl: true }
                             }
                         ]
                     });
-
-                if (value === "array")
+                    //@ts-expect-error Some people do not read docs
+                } if (value === "reference") {
+                    throw new PrettyError("Type 'reference' needs to use its object definition", {
+                        ref: "nekdis",
+                        lines: [
+                            {
+                                err: inspect({ [key]: value }, { colors: true }),
+                                marker: { text: "Parsing:" }
+                            },
+                            {
+                                err: ParsingErrors.Fix.Reference(key),
+                                marker: { text: "Fix:", color: Color.fromHex("#00FF00"), nl: true }
+                            }
+                        ]
+                    });
+                } if (value === "array") {
                     value = { type: value, elements: "string", default: undefined, required: false, sortable: false, index: true };
-                else
+                } else {
                     value = { type: value, default: undefined, required: false, sortable: false, index: true };
+                }
             } else {
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                if (!value.type) throw new PrettyError("Type not defined");
+                if (!value.type) throw new PrettyError("Type not defined", {
+                    ref: "nekdis",
+                    lines: [
+                        {
+                            err: inspect({ [key]: value }, { colors: true }),
+                            marker: { text: "Parsing:" }
+                        }
+                    ]
+                });
                 if (value.type === "array") {
-                    if (typeof value.default === "undefined") value.default = undefined;
-                    if (typeof value.required === "undefined") value.required = false;
                     if (typeof value.elements === "undefined") value.elements = "string";
                     if (typeof value.separator === "undefined") value.separator = ",";
-                    if (typeof value.sortable === "undefined") value.sortable = false;
-                    if (typeof value.index === "undefined") value.index = true;
-                    if (typeof value.elements === "object" && !Array.isArray(value.elements)) throw new Error();/* value.elements = this.#parse(value.elements); */
+                    if (typeof value.elements === "object" && !Array.isArray(value.elements)) throw new PrettyError("Objects inside arrays are not yet supported", {
+                        ref: "nekdis",
+                        lines: [
+                            {
+                                err: inspect({ [key]: value }, { colors: true }),
+                                marker: { text: "Parsing:" }
+                            }
+                        ]
+                    });
+                    value = this.#fill(value);
                 } else if (value.type === "date") {
                     if (value.default instanceof Date) value.default = value.default.getTime();
                     if (typeof value.default === "string" || typeof value.default === "number") value.default = new Date(value.default).getTime();
-                    if (typeof value.default === "undefined") value.default = undefined;
-                    if (typeof value.required === "undefined") value.required = false;
-                    if (typeof value.sortable === "undefined") value.sortable = false;
-                    if (typeof value.index === "undefined") value.index = true;
+                    value = this.#fill(value);
                 } else if (value.type === "object") {
                     if (typeof value.default === "undefined") value.default = undefined;
                     if (typeof value.required === "undefined") value.required = false;
@@ -92,18 +117,35 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
                     else value.properties = <never>this.#parse(value.properties).data;
                 } else if (value.type === "reference") {
                     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
-                    if (!value.schema) throw new Error();
+                    if (!value.schema) throw new PrettyError("Type 'reference' lacks a schema", {
+                        ref: "nekdis",
+                        lines: [
+                            {
+                                err: inspect({ [key]: value }, { colors: true }),
+                                marker: { text: "Parsing:" }
+                            },
+                            {
+                                err: ParsingErrors.Fix.Reference(key),
+                                marker: { text: "Fix:", color: Color.fromHex("#00FF00"), nl: true }
+                            }
+                        ]
+                    });
                     references[key] = null;
                     continue;
                 } else {
-                    if (typeof value.default === "undefined") value.default = undefined;
-                    if (typeof value.required === "undefined") value.required = false;
-                    if (typeof value.sortable === "undefined") value.sortable = false;
-                    if (typeof value.index === "undefined") value.index = true;
+                    value = this.#fill(value);
                 }
             }
             data[key] = value;
         }
         return <never>{ data, references };
+    }
+
+    #fill(value: BaseField): any {
+        if (typeof value.default === "undefined") value.default = undefined;
+        if (typeof value.required === "undefined") value.required = false;
+        if (typeof value.sortable === "undefined") value.sortable = false;
+        if (typeof value.index === "undefined") value.index = true;
+        return value;
     }
 }
