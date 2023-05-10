@@ -1,10 +1,11 @@
 import { randomUUID, createHash } from "node:crypto";
 
-import { stringOrDocToString } from "./utils/string-or-document-to-string";
-import { RecordRegex, extractIdFromRecord } from "./utils/extract-id";
 import { JSONDocument, HASHDocument } from "./document";
 import { Search } from "./search";
 import {
+    stringOrDocToString,
+    extractIdFromRecord,
+    RecordRegex,
     methods,
     schemaData,
     JSONParse,
@@ -59,7 +60,6 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     public async get<F extends boolean = false>(id: string | number, autoFetch?: F): Promise<ReturnDocument<S, F> | null> {
         if (typeof id === "undefined") throw new Error();
         if (RecordRegex.exec(id.toString()) === null) {
-            console.log(id);
             id = `${this.name}:${id}`;
         }
 
@@ -82,18 +82,18 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
             }
         }
 
-        return <never>new this.#docType(this.#schema[schemaData], this.name, extractIdFromRecord(id.toString()), data, this.#validate, autoFetch);
+        return <never>new this.#docType(this.#schema[schemaData], this.name, extractIdFromRecord(id.toString()), data, true, this.#validate, autoFetch);
     }
 
     public create(id?: string | number): ReturnDocument<S> {
-        return <never>new this.#docType(this.#schema[schemaData], this.name, id?.toString() ?? randomUUID(), void 0, this.#validate, false);
+        return <never>new this.#docType(this.#schema[schemaData], this.name, id?.toString() ?? randomUUID(), void 0, false, this.#validate, false);
     }
 
     public async save(doc: Doc): Promise<void> {
         if (typeof doc === "undefined") throw new Error();
 
         // eslint-disable-next-line @typescript-eslint/no-base-to-string
-        if (this.#schema.options.dataStructure === "HASH") await this.#client.sendCommand(["HSET", `${this.name}:${doc.$id}`, doc.toString()]);
+        if (this.#schema.options.dataStructure === "HASH") await this.#client.sendCommand(["HSET", `${this.name}:${doc.$id}`, ...doc.toString()]);
         // eslint-disable-next-line @typescript-eslint/no-base-to-string
         else await this.#client.sendCommand(["JSON.SET", `${this.name}:${doc.$id}`, "$", doc.toString()]);
     }
@@ -122,7 +122,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     }
 
     public async createAndSave(data: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true>): Promise<void> {
-        const doc = new this.#docType(this.#schema[schemaData], this.name, data.$id?.toString() ?? randomUUID(), data, this.#validate, false);
+        const doc = new this.#docType(this.#schema[schemaData], this.name, data.$id?.toString() ?? randomUUID(), data, false, this.#validate, false);
         await this.save(doc);
     }
 

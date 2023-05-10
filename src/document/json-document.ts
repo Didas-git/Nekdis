@@ -1,4 +1,4 @@
-import { ReferenceArray, dateToNumber } from "../utils";
+import { ReferenceArray, dateToNumber, jsonFieldToDoc } from "../utils";
 
 import type { DocumentShared, ObjectField, ParseSchema } from "../typings";
 
@@ -18,7 +18,7 @@ export class JSONDocument implements DocumentShared {
     */
     [key: string]: any;
 
-    public constructor(schema: ParseSchema<any>, public $key_name: string, public $id: string | number, data?: {}, validate: boolean = true, wasAutoFetched: boolean = false) {
+    public constructor(schema: ParseSchema<any>, public $key_name: string, public $id: string | number, data?: {}, isFetchedData: boolean = false, validate: boolean = true, wasAutoFetched: boolean = false) {
 
         this.$record_id = `${$key_name}:${$id}`;
         this.#schema = schema;
@@ -28,30 +28,28 @@ export class JSONDocument implements DocumentShared {
         this.#populate();
 
         if (data) {
-            for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
-                const [key, value] = entries[i];
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                if (schema.references[key] === null && !this.#autoFetch) {
-                    this[key] = new ReferenceArray(...<Array<string>>value);
-                    continue;
-                }
+            if (isFetchedData) {
+                for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
+                    const [key, value] = entries[i];
 
-                if (schema.data[key].type === "date") {
-                    this[key] = new Date(<number>value);
-                    continue;
-                }
-
-                //@ts-expect-error Typescript is getting confused due to the union of array and object
-                if (schema.data[key].type === "array" && schema.data[key].elements === "date") {
-                    for (let j = 0, le = (<Array<number>>value).length; j < le; j++) {
-                        //@ts-expect-error Im not going to fill this with castings
-                        value[j] = new Date(value[j]);
+                    if (typeof schema.data[key] !== "undefined") {
+                        this[key] = jsonFieldToDoc(schema.data[key], value);
+                        continue;
                     }
-                    this[key] = value;
-                    continue;
-                }
 
-                this[key] = value;
+                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                    if (schema.references[key] === null && !this.#autoFetch) {
+                        this[key] = new ReferenceArray(...<Array<string>>value);
+                        continue;
+                    }
+
+                    this[key] = value;
+                }
+            } else {
+                for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
+                    const [key, value] = entries[i];
+                    this[key] = value;
+                }
             }
         }
     }
@@ -109,7 +107,7 @@ export class JSONDocument implements DocumentShared {
                 });
 
             } else if (value.type === "date") {
-                if (!(dataVal instanceof Date) || typeof dataVal !== "number") throw new Error();
+                if (!(dataVal instanceof Date) && typeof dataVal !== "number") throw new Error();
             } else if (value.type === "point") {
                 if (typeof dataVal !== "object") throw new Error();
                 if (!dataVal.longitude || !dataVal.latitude) throw new Error();

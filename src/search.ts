@@ -1,6 +1,5 @@
 import type { SearchOptions, SearchReply } from "redis";
 
-import { extractIdFromRecord } from "./utils/extract-id";
 import { JSONDocument, HASHDocument } from "./document";
 import {
     type SearchField,
@@ -9,8 +8,9 @@ import {
     BooleanField,
     TextField,
     DateField,
-    PointField
-} from "./utils/search-builders";
+    PointField,
+    extractIdFromRecord
+} from "./utils";
 
 import type {
     FieldTypes,
@@ -124,7 +124,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                 }
             }
 
-            docs.push(new this.#docType(this.#schema, this.#keyName, extractIdFromRecord(doc.id), doc.value, this.#validate, autoFetch));
+            docs.push(new this.#docType(this.#schema, this.#keyName, extractIdFromRecord(doc.id), doc.value, true, this.#validate, autoFetch));
         }
 
         return <never>docs;
@@ -186,7 +186,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                     doc.value[key] = <never>await Promise.all(temp);
                 }
             }
-            docs.push(new this.#docType(this.#schema, this.#keyName, extractIdFromRecord(doc.id), doc.value, this.#validate, autoFetch));
+            docs.push(new this.#docType(this.#schema, this.#keyName, extractIdFromRecord(doc.id), doc.value, true, this.#validate, autoFetch));
         }
 
         return <never>docs;
@@ -262,7 +262,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
 
         if (data === null) return null;
 
-        return <never>new this.#docType(this.#schema, this.#keyName, extractIdFromRecord(id.toString()), data, this.#validate, false);
+        return <never>new this.#docType(this.#schema, this.#keyName, extractIdFromRecord(id.toString()), data, true, this.#validate, false);
     }
 
     #buildQuery(): string {

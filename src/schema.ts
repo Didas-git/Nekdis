@@ -2,8 +2,7 @@ import { inspect } from "node:util";
 
 import { Color } from "colours.js/dst";
 
-import { methods, schemaData } from "./utils/symbols";
-import { ParsingError } from "./utils";
+import { methods, schemaData, ParsingError } from "./utils";
 
 import type { SchemaDefinition, SchemaOptions, MethodsDefinition, ParseSchema } from "./typings";
 

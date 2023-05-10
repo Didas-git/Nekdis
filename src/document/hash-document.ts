@@ -18,7 +18,7 @@ export class HASHDocument implements DocumentShared {
     */
     [key: string]: any;
 
-    public constructor(schema: ParseSchema<any>, public $key_name: string, public $id: string | number, data?: {}, validate: boolean = true, wasAutoFetched: boolean = false) {
+    public constructor(schema: ParseSchema<any>, public $key_name: string, public $id: string | number, data?: {}, isFetchedData: boolean = false, validate: boolean = true, wasAutoFetched: boolean = false) {
 
         this.$record_id = `${$key_name}:${$id}`;
         this.#schema = schema;
@@ -28,23 +28,38 @@ export class HASHDocument implements DocumentShared {
         this.#populate();
 
         if (data) {
-            for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
-                const [key, value] = entries[i];
-                const arr = key.split(".");
+            if (isFetchedData) {
+                for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
+                    const [key, value] = entries[i];
+                    const arr = key.split(".");
 
-                if (arr.length > 1) /* This is an object */ {
-                    this[arr[0]] = deepMerge(this[arr[0]], stringToObject(arr, stringToHashField(getLastKeyInSchema(<Required<ObjectField>>schema.data[arr[0]]), <string>value)));
-                    continue;
+                    if (arr.length > 1) /* This is an object */ {
+                        this[arr[0]] = deepMerge(
+                            this[arr[0]],
+                            stringToObject(
+                                arr,
+                                stringToHashField(
+                                    getLastKeyInSchema(<Required<ObjectField>>schema.data[arr[0]], <string>arr.at(-1)) ?? { type: "string" },
+                                    <string>value
+                                )
+                            )[arr[0]]
+                        );
+                        continue;
+                    }
+
+                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                    if (schema.references[key] === null && !this.#autoFetch) {
+                        this[key] = new ReferenceArray(...<Array<string>>stringToHashField({ type: "array" }, <string>value));
+                        continue;
+                    }
+
+                    this[key] = stringToHashField(schema.data[key], <string>value);
                 }
-
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                if (schema.references[key] === null && !this.#autoFetch) {
-                    this[key] = new ReferenceArray(...<Array<string>>stringToHashField({ type: "array" }, <string>value));
-                    continue;
+            } else {
+                for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
+                    const [key, value] = entries[i];
+                    this[key] = value;
                 }
-
-                this[key] = stringToHashField(schema.data[key], <string>value);
-
             }
         }
     }
@@ -102,7 +117,7 @@ export class HASHDocument implements DocumentShared {
                 });
 
             } else if (value.type === "date") {
-                if (!(dataVal instanceof Date) || typeof dataVal !== "number") throw new Error();
+                if (!(dataVal instanceof Date) && typeof dataVal !== "number") throw new Error();
             } else if (value.type === "point") {
                 if (typeof dataVal !== "object") throw new Error();
                 if (!dataVal.longitude || !dataVal.latitude) throw new Error();
@@ -119,16 +134,16 @@ export class HASHDocument implements DocumentShared {
     public toString(): string {
         if (this.#validate) this.#validateSchemaData();
 
-        let str = [];
+        const arr = [];
 
         for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
-            let [key, val] = entries[i];
+            const [key, val] = entries[i];
 
             if (val.type === "object") {
                 //@ts-expect-error Typescript is getting confused due to the union of array and object
-                str.push(...objectToString(this[key], key, val.properties));
+                arr.push(...objectToString(this[key], key, val.properties));
             } else {
-                str.push(`"${key}"`, `"${hashFieldToString(val, this[key])}"`);
+                arr.push(key, hashFieldToString(val, this[key]));
             }
         }
 
@@ -137,10 +152,12 @@ export class HASHDocument implements DocumentShared {
             for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
                 const key = keys[i];
 
-                str.push(`"${key}"`, `"${hashFieldToString({ type: "array" }, this[key])}"`);
+                arr.push(key, hashFieldToString({ type: "array" }, this[key]) ?? "");
             }
         }
 
-        return str.join(" ");
+        //@ts-expect-error pls dont question it
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return arr;
     }
 }
