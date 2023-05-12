@@ -9,6 +9,7 @@ Nekdis is the temporary name for a proposal for [redis-om](https://github.com/re
 Right now the proposal includes almost every feature that redis-om already has (See: [Missing Features](#missing-features) ) and introduces some like more like [References]().
 
 The next steps for the proposal include:
+- Improve performance on parsing nested objects for hashes[^1]
 - Adding [Vector Similarity Search](https://redis.io/docs/stack/search/reference/vectors/).
 - Adding support for [Graph](https://redis.io/docs/stack/graph/) data types & relations.
 - Improving auto fetch performance by including a lua script that will get injected as a redis function.
@@ -173,3 +174,5 @@ This proposal includes the addition of 2 new shared properties and some unique o
 - Field weight.
 - Custom alias for a field.
 - Phonetic matcher
+
+[^1]: Currently the `deepMerge` function will take longer the more objects and nested objects you have, the idea i received is to do it all in one go by using a function to flatten it but im not sure yet on how to do it
