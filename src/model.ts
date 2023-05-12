@@ -1,14 +1,13 @@
-import { randomUUID, createHash } from "node:crypto";
+import { createHash } from "node:crypto";
 
 import { JSONDocument, HASHDocument } from "./document";
+import { methods, schemaData } from "./utils/symbols";
 import { Search } from "./search";
 import {
+    parseSchemaToSearchIndex,
     stringOrDocToString,
     extractIdFromRecord,
-    parseSchemaToSearchIndex,
-    RecordRegex,
-    methods,
-    schemaData
+    RecordRegex
 } from "./utils";
 
 import type { Schema } from "./schema";
@@ -81,11 +80,16 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
             }
         }
 
-        return <never>new this.#docType(this.#schema[schemaData], this.name, extractIdFromRecord(id.toString()), data, true, this.#validate, autoFetch);
+        return <never>new this.#docType(this.#schema[schemaData], this.name, <never>data, extractIdFromRecord(id.toString()), true, this.#validate, autoFetch);
     }
 
-    public create(id?: string | number): ReturnDocument<S> {
-        return <never>new this.#docType(this.#schema[schemaData], this.name, id?.toString() ?? randomUUID(), void 0, false, this.#validate, false);
+    public create(id?: string | number): ReturnDocument<S>;
+    public create(data?: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true>): ReturnDocument<S>;
+    public create(idOrData?: string | number | { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true>): ReturnDocument<S> {
+        if (typeof idOrData === "object") {
+            return <never>new this.#docType(this.#schema[schemaData], this.name, idOrData, void 0, false, this.#validate, false);
+        }
+        return <never>new this.#docType(this.#schema[schemaData], this.name, void 0, idOrData?.toString(), false, this.#validate, false);
     }
 
     public async save(doc: Doc): Promise<void> {
@@ -121,7 +125,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     }
 
     public async createAndSave(data: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true>): Promise<void> {
-        const doc = new this.#docType(this.#schema[schemaData], this.name, data.$id?.toString() ?? randomUUID(), data, false, this.#validate, false);
+        const doc = new this.#docType(this.#schema[schemaData], this.name, data, void 0, false, this.#validate, false);
         await this.save(doc);
     }
 

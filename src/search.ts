@@ -124,7 +124,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                 }
             }
 
-            docs.push(new this.#docType(this.#schema, this.#keyName, extractIdFromRecord(doc.id), doc.value, true, this.#validate, autoFetch));
+            docs.push(new this.#docType(this.#schema, this.#keyName, doc.value, extractIdFromRecord(doc.id), true, this.#validate, autoFetch));
         }
 
         return <never>docs;
@@ -186,7 +186,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                     doc.value[key] = <never>await Promise.all(temp);
                 }
             }
-            docs.push(new this.#docType(this.#schema, this.#keyName, extractIdFromRecord(doc.id), doc.value, true, this.#validate, autoFetch));
+            docs.push(new this.#docType(this.#schema, this.#keyName, doc.value, extractIdFromRecord(doc.id), true, this.#validate, autoFetch));
         }
 
         return <never>docs;
@@ -262,7 +262,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
 
         if (data === null) return null;
 
-        return <never>new this.#docType(this.#schema, this.#keyName, extractIdFromRecord(id.toString()), data, true, this.#validate, false);
+        return <never>new this.#docType(this.#schema, this.#keyName, <never>data, extractIdFromRecord(id.toString()), true, this.#validate, false);
     }
 
     #buildQuery(): string {

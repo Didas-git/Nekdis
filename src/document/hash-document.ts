@@ -1,4 +1,16 @@
-import { ReferenceArray, deepMerge, getLastKeyInSchema, hashFieldToString, objectToString, stringToHashField, stringToObject } from "../utils";
+import { randomUUID } from "node:crypto";
+
+import { ReferenceArray } from "../utils";
+import {
+    validateSchemaReferences,
+    validateSchemaData,
+    getLastKeyInSchema,
+    hashFieldToString,
+    stringToHashField,
+    objectToString,
+    stringToObject,
+    deepMerge
+} from "./document-helpers";
 
 import type { DocumentShared, ObjectField, ParseSchema } from "../typings";
 
@@ -7,6 +19,12 @@ export class HASHDocument implements DocumentShared {
     readonly #schema: ParseSchema<any>;
     readonly #validate: boolean;
     readonly #autoFetch: boolean;
+    #validateSchemaReferences = validateSchemaReferences;
+    #validateSchemaData = validateSchemaData;
+
+    /** @internal */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    public readonly $id: string;
 
     /** @internal */
     // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -18,9 +36,17 @@ export class HASHDocument implements DocumentShared {
     */
     [key: string]: any;
 
-    public constructor(schema: ParseSchema<any>, public $key_name: string, public $id: string | number, data?: {}, isFetchedData: boolean = false, validate: boolean = true, wasAutoFetched: boolean = false) {
-
-        this.$record_id = `${$key_name}:${$id}`;
+    public constructor(
+        schema: ParseSchema<any>,
+        public $key_name: string,
+        data?: Record<string, any>,
+        id?: string,
+        isFetchedData: boolean = false,
+        validate: boolean = true,
+        wasAutoFetched: boolean = false
+    ) {
+        this.$id = data?.$id ?? id ?? randomUUID();
+        this.$record_id = `${$key_name}:${this.$id}`;
         this.#schema = schema;
         this.#validate = validate;
         this.#autoFetch = wasAutoFetched;
@@ -76,63 +102,8 @@ export class HASHDocument implements DocumentShared {
         }
     }
 
-    #validateSchemaReferences(data: HASHDocument | ParseSchema<any>["references"] = this, schema: ParseSchema<any>["references"] = this.#schema.references, isField: boolean = false): void {
-        for (let i = 0, keys = Object.keys(schema), len = keys.length; i < len; i++) {
-            const key = keys[i];
-            if (isField && !data[key]) throw new Error();
-
-            const dataVal = data[key];
-
-            if (typeof dataVal === "undefined") throw new Error();
-
-            for (let j = 0, le = dataVal.length; j < le; j++) {
-                const val = dataVal[i];
-                if (typeof val !== "string") throw new Error();
-            }
-        }
-
-    }
-
-    #validateSchemaData(data: HASHDocument | ParseSchema<any>["data"] = this, schema: ParseSchema<any>["data"] = this.#schema.data, isField: boolean = false): void {
-        for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
-            const [key, value] = entries[i];
-
-            if (isField && !data[key]) throw new Error();
-
-            const dataVal = data[key];
-
-            if (dataVal === null) throw new Error();
-
-            if (typeof dataVal === "undefined" && !value.required) continue;
-            if (typeof dataVal === "undefined" && value.required && typeof value.default === "undefined") throw new Error();
-
-            if (value.type === "object") {
-                if (!(<ObjectField>value).properties) continue;
-                //@ts-expect-error Typescript is getting confused due to the union of array and object
-                this.#validateSchemaData(dataVal, value.properties, true);
-            } else if (value.type === "array") {
-                dataVal.every((val: unknown) => {
-                    //@ts-expect-error Typescript is getting confused due to the union of array and object
-                    if (typeof val !== value.elements) throw new Error();
-                });
-
-            } else if (value.type === "date") {
-                if (!(dataVal instanceof Date) && typeof dataVal !== "number") throw new Error();
-            } else if (value.type === "point") {
-                if (typeof dataVal !== "object") throw new Error();
-                if (!dataVal.longitude || !dataVal.latitude) throw new Error();
-                if (Object.keys(dataVal).length > 2) throw new Error();
-            } else if (value.type === "text") {
-                if (typeof dataVal !== "string") throw new Error();
-            } else {
-                // This handles `number`, `boolean` and `string` types
-                if (typeof dataVal !== value.type) throw new Error();
-            }
-        }
-    }
-
     public toString(): string {
-        if (this.#validate) this.#validateSchemaData();
+        if (this.#validate) this.#validateSchemaData(this.#schema.data);
 
         const arr = [];
 
@@ -148,7 +119,7 @@ export class HASHDocument implements DocumentShared {
         }
 
         if (!this.#autoFetch) {
-            if (this.#validate) this.#validateSchemaReferences();
+            if (this.#validate) this.#validateSchemaReferences(this.#schema.references);
             for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
                 const key = keys[i];
 
