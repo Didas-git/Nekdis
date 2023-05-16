@@ -103,15 +103,9 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
                 if (value.type === "array") {
                     if (typeof value.elements === "undefined") value.elements = "string";
                     if (typeof value.separator === "undefined") value.separator = ",";
-                    if (typeof value.elements === "object" && !Array.isArray(value.elements)) throw new PrettyError("Objects inside arrays are not yet supported", {
-                        ref: "nekdis",
-                        lines: [
-                            {
-                                err: inspect({ [key]: value }, { colors: true }),
-                                marker: { text: "Parsing:" }
-                            }
-                        ]
-                    });
+                    if (typeof value.elements === "object") {
+                        if (!this.options.noLogs) logger.log(`'${key}' will not be indexed because array of objects is not yet supported on RediSearch`);
+                    }
                     value = this.#fill(value);
                 } else if (value.type === "date") {
                     if (value.default instanceof Date) value.default = value.default.getTime();

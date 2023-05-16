@@ -16,6 +16,10 @@ export function parseSchemaToSearchIndex(schema: ParseSchema<any>["data"], k?: s
 
         if (!value.index) continue;
 
+        //@ts-expect-error Typescript is getting confused due to the union of array and object
+        if (value.type === "array" && typeof value.elements === "object") continue;
+
+        //@ts-expect-error ParseSchema type is confusing this (not much i can do rly)
         objs.set(k ? `${k}.${key}` : key, { value: value, path: p ? `${p}_${key}` : key });
     }
 

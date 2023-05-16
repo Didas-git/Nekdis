@@ -55,7 +55,7 @@ export class JSONDocument implements DocumentShared {
                     const [key, value] = entries[i];
 
                     if (typeof schema.data[key] !== "undefined") {
-                        this[key] = jsonFieldToDoc(schema.data[key], value);
+                        this[key] = jsonFieldToDoc(<never>schema.data[key], value);
                         continue;
                     }
 

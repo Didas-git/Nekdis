@@ -17,9 +17,10 @@ export type ParseSchema<T extends SchemaDefinition> = {
         }
         : T[K] extends ArrayField
         ? {
-            [P in keyof Required<ArrayField>]: T[K][P] extends {}
-            ? T[K][P]
-            : P extends "elements" ? "string" : Fill<P>
+            [P in keyof Required<ArrayField>]: P extends "elements"
+            ? T[K][P] extends SchemaDefinition ? ParseSchema<T[K][P]>["data"]
+            : T[K][P] extends {} ? T[K][P] : "string"
+            : Fill<P>
         }
         : T[K] extends BaseField
         ? {

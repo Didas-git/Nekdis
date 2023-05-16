@@ -18,7 +18,9 @@ type MapSchemaData<T extends ParseSchema<any>["data"], CAS extends boolean = fal
 type _MapSchemaData<T extends ParseSchema<any>["data"][number]> = T extends { properties: unknown }
     ? T["properties"] extends ParseSchema<any> ? MapSchema<T["properties"]> : unknown
     : T extends { elements: unknown }
-    ? FieldMap<FieldMap[T["elements"]]>["array"]
+    ? T["elements"] extends object
+    ? Array<MapSchemaData<T["elements"]>>
+    : FieldMap<FieldMap[T["elements"]]>["array"]
     : FieldMap[T["type"]]
     ;
 

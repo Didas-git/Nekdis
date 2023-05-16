@@ -35,7 +35,8 @@ export function hashFieldToString(schema: BaseField, val: any): string | undefin
     } else if (schema.type === "array") {
         const temp = [];
         for (let i = 0, len = (<Array<unknown>>val).length; i < len; i++) {
-            temp.push(hashFieldToString({ type: (<ArrayField>schema).elements ?? "string" }, val[i]));
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+            temp.push(hashFieldToString({ type: <never>(<ArrayField>schema).elements ?? "string" }, val[i]));
         }
         return temp.join((<ArrayField>schema).separator);
     }
@@ -84,7 +85,8 @@ export function stringToHashField(schema: BaseField, val: string): any {
     } else if (schema.type === "array") {
         const temp = val.split((<ArrayField>schema).separator ?? ",");
         for (let i = 0, len = temp.length; i < len; i++) {
-            temp[i] = stringToHashField({ type: (<ArrayField>schema).elements ?? "string" }, temp[i]);
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+            temp[i] = stringToHashField({ type: <never>(<ArrayField>schema).elements ?? "string" }, temp[i]);
         }
         return temp;
     }

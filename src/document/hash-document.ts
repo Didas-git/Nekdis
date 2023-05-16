@@ -79,7 +79,7 @@ export class HASHDocument implements DocumentShared {
                         continue;
                     }
 
-                    this[key] = stringToHashField(schema.data[key], <string>value);
+                    this[key] = stringToHashField(<never>schema.data[key], <string>value);
                 }
             } else {
                 for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
@@ -114,7 +114,7 @@ export class HASHDocument implements DocumentShared {
                 //@ts-expect-error Typescript is getting confused due to the union of array and object
                 arr.push(...objectToString(this[key], key, val.properties));
             } else {
-                arr.push(key, hashFieldToString(val, this[key]));
+                arr.push(key, hashFieldToString(<never>val, this[key]));
             }
         }
 

@@ -10,7 +10,8 @@ export function jsonFieldToDoc(schema: BaseField, val: any): any {
         parseJsonObject(<never>schema, val);
     } else if (schema.type === "array") {
         for (let i = 0, le = val.length; i < le; i++) {
-            val[i] = jsonFieldToDoc({ type: (<ArrayField>schema).elements ?? "string" }, val[i]);
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+            val[i] = jsonFieldToDoc({ type: <never>(<ArrayField>schema).elements ?? "string" }, val[i]);
         }
         return val;
     }

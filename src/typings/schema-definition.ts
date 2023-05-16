@@ -53,7 +53,7 @@ export interface PointField extends BaseField {
 // FALLBACK
 export interface ArrayField extends BaseField {
     type: "array";
-    elements?: Exclude<keyof FieldMap, "array" | "reference" | "object"> | undefined /*SchemaDefinition*/;
+    elements?: Exclude<keyof FieldMap, "array" | "reference" | "object"> | SchemaDefinition | undefined;
     default?: Array<unknown> | undefined;
     separator?: string;
 }
