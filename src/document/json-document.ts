@@ -80,7 +80,7 @@ export class JSONDocument implements DocumentShared {
     #populate(): void {
         for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
             const [key, value] = entries[i];
-            this[key] = value.default ?? value.type === "object" ? {} : void 0;
+            this[key] = value.default ?? (value.type === "object" ? {} : void 0);
         }
 
         for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
