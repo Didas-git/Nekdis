@@ -58,10 +58,17 @@ export function validateSchemaData(
             validateSchemaData(value.properties, dataVal, true);
         } else if (value.type === "array") {
             dataVal.every((val: unknown) => {
+                if (typeof val === "object") return;
                 //@ts-expect-error Typescript is getting confused due to the union of array and object
                 if (typeof val !== value.elements) throw new Error();
             });
 
+        } else if (value.type === "tuple") {
+            //@ts-expect-error Typescript is getting confused due to the union of array and object
+            for (let j = 0, le = value.elements.length; j < le; j++) {
+                //@ts-expect-error Typescript is getting confused due to the union of array and object
+                validateSchemaData({ [j]: value.elements[j] }, { [j]: dataVal[j] });
+            }
         } else if (value.type === "date") {
             if (!(dataVal instanceof Date) && typeof dataVal !== "number") throw new Error();
         } else if (value.type === "point") {

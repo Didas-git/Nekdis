@@ -12,6 +12,7 @@ export interface FieldMap<T = string> {
     date: Date | number;
     point: Point;
     array: Array<T>;
+    tuple: [T];
     object: Record<string, SchemaDefinition>;
     reference: Array<Record<string, SchemaDefinition>>;
 }

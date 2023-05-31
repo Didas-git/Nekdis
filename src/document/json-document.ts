@@ -5,7 +5,8 @@ import {
     validateSchemaReferences,
     validateSchemaData,
     jsonFieldToDoc,
-    dateToNumber
+    dateToNumber,
+    tupleToObjStrings
 } from "./document-helpers";
 
 import type { DocumentShared, ParseSchema } from "../typings";
@@ -30,6 +31,7 @@ export class JSONDocument implements DocumentShared {
     * Using any so everything works as intended
     * I couldn't find any other way to do this or implement the MapSchema type directly in the class
     */
+    /** @internal */
     [key: string]: any;
 
     public constructor(
@@ -97,13 +99,18 @@ export class JSONDocument implements DocumentShared {
         for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
             const [key, val] = entries[i];
 
-            if (val.type === "date") {
+            if (val.type === "tuple") {
+                const temp = tupleToObjStrings(<never>this[key], key);
+                for (let j = 0, le = temp.length; j < le; j++) {
+                    const [k, value] = Object.entries(temp[j])[0];
+                    obj[k] = value;
+                }
+                continue;
+            } else if (val.type === "date") {
                 obj[key] = dateToNumber(this[key]);
                 continue;
-            }
-
-            //@ts-expect-error elements exists but again ts is confused
-            if (val.type === "array" && val.elements === "date") {
+                //@ts-expect-error elements exists but again ts is confused
+            } else if (val.type === "array" && val.elements === "date") {
                 const temp = this[key];
                 for (let j = 0, le = temp.length; j < le; j++) {
                     temp[j] = dateToNumber(temp[j]);

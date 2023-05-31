@@ -36,3 +36,39 @@ export function parseJsonObject(schema: Required<ObjectField>, val: any): any {
 
     return val;
 }
+
+export function objectToString(val: Record<string, unknown>, k: string): Array<Record<string, unknown>> {
+    const arr: Array<Record<string, unknown>> = [];
+
+    for (let i = 0, entries = Object.entries(val), len = entries.length; i < len; i++) {
+        const [key, value] = entries[i];
+
+        if (typeof value === "object") {
+            const temp = objectToString(<never>value, `${k}.${key}`);
+            arr.push(...temp);
+            continue;
+        }
+
+        arr.push({ [`${k}.${key}`]: value });
+    }
+
+    return arr;
+}
+
+export function tupleToObjStrings(val: Array<unknown>, key: string): Array<Record<string, unknown>> {
+    const arr: Array<Record<string, unknown>> = [];
+
+    for (let i = 0, len = val.length; i < len; i++) {
+        const value = val[i];
+
+        if (typeof value === "object") {
+            const parsed = objectToString(<never>value, `${key}.${i}`);
+            arr.push(...parsed);
+            continue;
+        }
+
+        arr.push({ [`${key}.${i}`]: value });
+    }
+
+    return arr;
+}

@@ -285,7 +285,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return <never>this.#defineReturn(path, value.type === "array" ? <never>value.elements : value.type);
     }
 
-    #defineReturn(field: string, type: Exclude<FieldTypes["type"], "array" | "reference">): BaseField {
+    #defineReturn(field: string, type: Exclude<FieldTypes["type"], "tuple" | "array" | "reference">): BaseField {
         switch (type) {
             case "string": {
                 this.#workingType = "string";

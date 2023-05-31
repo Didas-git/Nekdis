@@ -16,9 +16,15 @@ type MapSchemaData<T extends ParseSchema<any>["data"], CAS extends boolean = fal
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 type _MapSchemaData<T extends ParseSchema<any>["data"][number]> = T extends { properties: unknown }
-    ? T["properties"] extends ParseSchema<any> ? MapSchema<T["properties"]> : unknown
+    ? T["properties"] extends ParseSchema<any>
+    ? MapSchema<T["properties"]>
+    : T["properties"] extends ParseSchema<any>["data"]
+    ? MapSchemaData<T["properties"]>
+    : unknown
     : T extends { elements: unknown }
-    ? T["elements"] extends object
+    ? T["elements"] extends [unknown, ...Array<unknown>]
+    ? Test<T["elements"]>
+    : T["elements"] extends object
     ? Array<MapSchemaData<T["elements"]>>
     : FieldMap<FieldMap[T["elements"]]>["array"]
     : FieldMap[T["type"]]
@@ -34,3 +40,7 @@ type MapSchemaReferences<T extends ParseSchema<any>["references"], AF extends bo
 type _MapSchemaReferences<T extends ParseSchema<any>["references"][number], AF extends boolean = false> = AF extends true
     ? Array<MapSchema<T["schema"]>>
     : ReferenceArray;
+
+type Test<T> = {
+    [K in keyof T]: T[K] extends ParseSchema<any>["data"][number] ? _MapSchemaData<T[K]> : never
+};

@@ -51,7 +51,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
 
             if (typeof value === "string") {
                 //@ts-expect-error Some people do not read docs
-                if (value === "object") {
+                if (value === "object" || value === "tuple") {
                     throw new PrettyError("Type 'object' needs to use its object definition", {
                         ref: "nekdis",
                         lines: [
@@ -117,6 +117,13 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
                     if (typeof value.required === "undefined") value.required = false;
                     if (!value.properties) value.properties = undefined;
                     else value.properties = <never>this.#parse(value.properties).data;
+                } else if (value.type === "tuple") {
+                    if (typeof value.elements === "undefined") throw new PrettyError();
+                    for (let j = 0, le = value.elements.length; j < le; j++) {
+                        //@ts-expect-error No comment
+                        value.elements[j] = this.#parse({ [j]: typeof value.elements[j] === "string" ? value.elements[j] : { type: "object", properties: value.elements[j] } }).data[j];
+                    }
+                    value = this.#fill(value);
                 } else if (value.type === "reference") {
                     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
                     if (!value.schema) throw new PrettyError("Type 'reference' lacks a schema", {
