@@ -104,6 +104,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
                     if (typeof value.elements === "undefined") value.elements = "string";
                     if (typeof value.separator === "undefined") value.separator = ",";
                     if (typeof value.elements === "object") {
+                        value.elements = <never>this.#parse(value.elements).data;
                         if (!this.options.noLogs) logger.log(`'${key}' will not be indexed because array of objects is not yet supported on RediSearch`);
                     }
                     value = this.#fill(value);
