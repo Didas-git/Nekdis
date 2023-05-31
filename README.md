@@ -6,7 +6,7 @@ Nekdis is the temporary name for a proposal for [redis-om](https://github.com/re
 
 ## Future Plans
 
-Right now the proposal includes almost every feature that redis-om already has (See: [Missing Features](#missing-features) ) and introduces some like more like [References]().
+Right now the proposal includes almost every feature that redis-om already has (See: [Missing Features](#missing-features) ) and introduces some like more like [References](#schema-types).
 
 The next steps for the proposal include:
 - Improve performance on parsing nested objects for hashes[^1]
