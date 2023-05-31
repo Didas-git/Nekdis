@@ -130,7 +130,7 @@ const results = await albumModel.searchByName("DROP");
 
 # Schema Types
 
-This proposal adds 3 new data types `array`, `object` & `reference` and removes the `string[]` type.
+This proposal adds 4 new data types `array`, `object`, `tuple` & `reference` and removes the `string[]` type.
 
 | Type        | Description                                                                                                                                                                                                                                                                                                                                                                                 |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
