@@ -2,9 +2,11 @@ import type { FieldMap } from "./field-map";
 import type { Schema } from "../schema";
 import type { Point } from "./point";
 
-export type SchemaDefinition = Record<string, keyof Omit<FieldMap, "object" | "reference"> | FieldTypes>;
+export type SchemaDefinition = Record<string, keyof Omit<FieldMap, "tuple" | "object" | "reference"> | FieldTypes>;
 
-export type FieldTypes = StringField | NumberField | BooleanField | TextField | DateField | PointField | ArrayField | ObjectField | ReferenceField;
+export type FieldTypes = StringField | NumberField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField | ReferenceField;
+
+export type TupleElement = Exclude<keyof FieldMap, "tuple" | "reference" | "object"> | SchemaDefinition | undefined;
 
 export interface BaseField {
     type: keyof FieldMap;
@@ -53,9 +55,16 @@ export interface PointField extends BaseField {
 // FALLBACK
 export interface ArrayField extends BaseField {
     type: "array";
-    elements?: Exclude<keyof FieldMap, "array" | "reference" | "object"> | SchemaDefinition | undefined;
+    elements?: Exclude<keyof FieldMap, "array" | "reference" | "object" | "tuple"> | SchemaDefinition | undefined;
     default?: Array<unknown> | undefined;
     separator?: string;
+}
+
+//FALLBACK
+export interface TupleField extends Omit<BaseField, "sortable"> {
+    type: "tuple";
+    elements: [TupleElement, ...Array<TupleElement>];
+    default?: Array<unknown> | undefined;
 }
 
 // FALLBACK

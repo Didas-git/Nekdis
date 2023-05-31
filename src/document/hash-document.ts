@@ -7,9 +7,11 @@ import {
     getLastKeyInSchema,
     hashFieldToString,
     stringToHashField,
-    objectToString,
+    objectToHashString,
     stringToObject,
-    deepMerge
+    deepMerge,
+    tupleToObjStrings,
+    convertUnknownToSchema
 } from "./document-helpers";
 
 import type { DocumentShared, ObjectField, ParseSchema } from "../typings";
@@ -34,6 +36,7 @@ export class HASHDocument implements DocumentShared {
     * Using any so everything works as intended
     * I couldn't find any other way to do this or implement the MapSchema type directly in the class
     */
+    /** @internal */
     [key: string]: any;
 
     public constructor(
@@ -112,10 +115,19 @@ export class HASHDocument implements DocumentShared {
 
             if (val.type === "object") {
                 //@ts-expect-error Typescript is getting confused due to the union of array and object
-                arr.push(...objectToString(this[key], key, val.properties));
-            } else {
-                arr.push(key, hashFieldToString(<never>val, this[key]));
+                arr.push(...objectToHashString(this[key], key, val.properties));
+                continue;
+            } else if (val.type === "tuple") {
+                const temp = tupleToObjStrings(<never>this[key], key);
+                for (let j = 0, le = temp.length; j < le; j++) {
+                    const [k, value] = Object.entries(temp[j])[0];
+                    arr.push(k, hashFieldToString(convertUnknownToSchema(<never>val), value));
+                }
+                continue;
             }
+
+            arr.push(key, hashFieldToString(<never>val, this[key]));
+
         }
 
         if (!this.#autoFetch) {

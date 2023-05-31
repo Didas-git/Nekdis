@@ -4,7 +4,8 @@ import type {
     BaseField,
     ObjectField,
     ReferenceField,
-    SchemaDefinition
+    SchemaDefinition,
+    TupleField
 } from "./schema-definition";
 
 export type ParseSchema<T extends SchemaDefinition> = {
@@ -12,7 +13,7 @@ export type ParseSchema<T extends SchemaDefinition> = {
         [K in keyof T as T[K] extends ReferenceField ? never : K]: T[K] extends ObjectField
         ? {
             [P in keyof Required<ObjectField>]: P extends "properties"
-            ? T[K][P] extends {} ? ParseSchema<T[K][P]> : undefined
+            ? T[K][P] extends {} ? ParseSchema<T[K][P]>["data"] : undefined
             : T[K][P] extends {} ? T[K][P] : Fill<P>
         }
         : T[K] extends ArrayField
@@ -21,6 +22,20 @@ export type ParseSchema<T extends SchemaDefinition> = {
             ? T[K][P] extends SchemaDefinition ? ParseSchema<T[K][P]>["data"]
             : T[K][P] extends {} ? T[K][P] : "string"
             : Fill<P>
+        }
+        : T[K] extends TupleField
+        ? {
+            [P in keyof Required<TupleField>]: P extends "elements"
+            ? T extends Record<K, Record<P, infer V>>
+            ? {
+                [U in keyof V]: V[U] extends string
+                ? CreateDefinitionFromString<V[U]>
+                : V[U] extends SchemaDefinition
+                ? ParseSchema<{ $: { type: "object", properties: V[U] } }>["data"]["$"]
+                : never
+            }
+            : never
+            : T[K][P] extends {} ? T[K][P] : Fill<P>
         }
         : T[K] extends BaseField
         ? {

@@ -44,17 +44,17 @@ export function hashFieldToString(schema: BaseField, val: any): string | undefin
 
 }
 
-export function objectToString(data: Record<string, any>, k: string, schema?: Record<string, any>): Array<string> {
+export function objectToHashString(data: Record<string, any>, k: string, schema?: Record<string, any>): Array<string> {
     let init: Array<string> = [];
     for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
         const [key, val] = entries[i];
 
         if (typeof val === "object" && !Array.isArray(val)) {
             if (typeof schema?.[key]?.properties !== "undefined") {
-                init.push(...objectToString(val, `${k}.${key}`, schema[key].properties));
+                init.push(...objectToHashString(val, `${k}.${key}`, schema[key].properties));
                 continue;
             }
-            init.push(...objectToString(val, `${k}.${key}`));
+            init.push(...objectToHashString(val, `${k}.${key}`));
             continue;
         }
 
