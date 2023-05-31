@@ -1,4 +1,4 @@
-import { dateToNumber, numberToDate } from "./general-helpers";
+import { dateToNumber, numberToDate, stringsToObject } from "./general-helpers";
 
 import type { ArrayField, BaseField, ObjectField, Point } from "../../typings";
 
@@ -93,19 +93,31 @@ export function stringToHashField(schema: BaseField, val: string): any {
     return val;
 }
 
-export function stringToObject(arr: Array<string>, val: unknown): Record<string, any> {
-    let obj: any = {};
-    arr.reduce((object, accessor, i) => {
-        object[accessor] = {};
+export function stringToHashArray(arr: Array<string>, schema: any, val: string): Record<string, any> {
+    let temp: any = [];
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const idx = arr.shift()!;
+    let props = schema[idx].properties;
 
-        if (arr.length - 1 === i) {
-            object[accessor] = val;
+    if (arr.length === 1) {
+        return { [arr[0]]: val };
+    }
+
+    for (let i = 0, len = arr.length; i < len; i++) {
+        const value = arr[i];
+
+        if (props[value].type === "object") {
+            temp.push(value);
+            const x = i + 1;
+            props = { [arr[x]]: props[value].properties[arr[x]] };
+            continue;
         }
 
-        return <Record<string, unknown>>object[accessor];
-    }, obj);
+        temp.push(value, stringToHashField(props[value], val));
+    }
 
-    return <Record<string, any>>obj;
+    const trueVal = temp.pop();
+    return stringsToObject(temp, trueVal);
 }
 
 export function deepMerge(...objects: Array<Record<string, any>>): Record<string, any> {

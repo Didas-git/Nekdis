@@ -4,9 +4,10 @@ import { ReferenceArray } from "../utils";
 import {
     validateSchemaReferences,
     validateSchemaData,
+    tupleToObjStrings,
     jsonFieldToDoc,
-    dateToNumber,
-    tupleToObjStrings
+    stringToArray,
+    dateToNumber
 } from "./document-helpers";
 
 import type { DocumentShared, ParseSchema } from "../typings";
@@ -55,6 +56,23 @@ export class JSONDocument implements DocumentShared {
             if (isFetchedData) {
                 for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
                     const [key, value] = entries[i];
+                    const arr = key.split(".");
+
+                    if (arr.length > 1) /* This is a tuple */ {
+
+                        // var name
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        const temp = arr.shift()!;
+
+                        if (arr.length === 1) {
+                            this[temp].push(value);
+                            continue;
+                        }
+
+                        //@ts-expect-error Type overload
+                        this[temp].push(stringToArray(arr, schema.data[temp].elements, value));
+                        continue;
+                    }
 
                     if (typeof schema.data[key] !== "undefined") {
                         this[key] = jsonFieldToDoc(<never>schema.data[key], value);
@@ -82,7 +100,7 @@ export class JSONDocument implements DocumentShared {
     #populate(): void {
         for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
             const [key, value] = entries[i];
-            this[key] = value.default ?? (value.type === "object" ? {} : void 0);
+            this[key] = value.default ?? (value.type === "object" ? {} : value.type === "tuple" ? [] : void 0);
         }
 
         for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {

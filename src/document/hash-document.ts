@@ -3,15 +3,16 @@ import { randomUUID } from "node:crypto";
 import { ReferenceArray } from "../utils";
 import {
     validateSchemaReferences,
+    convertUnknownToSchema,
     validateSchemaData,
+    objectToHashString,
     getLastKeyInSchema,
+    tupleToObjStrings,
     hashFieldToString,
     stringToHashField,
-    objectToHashString,
-    stringToObject,
-    deepMerge,
-    tupleToObjStrings,
-    convertUnknownToSchema
+    stringToHashArray,
+    stringsToObject,
+    deepMerge
 } from "./document-helpers";
 
 import type { DocumentShared, ObjectField, ParseSchema } from "../typings";
@@ -62,17 +63,37 @@ export class HASHDocument implements DocumentShared {
                     const [key, value] = entries[i];
                     const arr = key.split(".");
 
-                    if (arr.length > 1) /* This is an object */ {
-                        this[arr[0]] = deepMerge(
-                            this[arr[0]],
-                            stringToObject(
-                                arr,
-                                stringToHashField(
-                                    getLastKeyInSchema(<Required<ObjectField>>schema.data[arr[0]], <string>arr.at(-1)) ?? { type: "string" },
+                    if (arr.length > 1) /* This is an object or tuple */ {
+                        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                        if (schema.data[arr[0]]?.type === "tuple") {
+                            // var name
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            const temp = arr.shift()!;
+
+                            if (arr.length === 1) {
+                                this[temp].push(stringToHashField(
+                                    //@ts-expect-error Type overload
+                                    schema.data[temp].elements[arr[0]],
                                     <string>value
-                                )
-                            )[arr[0]]
-                        );
+                                ));
+
+                                continue;
+                            }
+
+                            //@ts-expect-error Type overload
+                            this[temp].push(stringToHashArray(arr, schema.data[temp].elements, value));
+                        } else /*we assume its an object*/ {
+                            this[arr[0]] = deepMerge(
+                                this[arr[0]],
+                                stringsToObject(
+                                    arr,
+                                    stringToHashField(
+                                        getLastKeyInSchema(<Required<ObjectField>>schema.data[arr[0]], <string>arr.at(-1)) ?? { type: "string" },
+                                        <string>value
+                                    )
+                                )[arr[0]]
+                            );
+                        }
                         continue;
                     }
 
@@ -96,7 +117,7 @@ export class HASHDocument implements DocumentShared {
     #populate(): void {
         for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
             const [key, value] = entries[i];
-            this[key] = value.default ?? (value.type === "object" ? {} : void 0);
+            this[key] = value.default ?? (value.type === "object" ? {} : value.type === "tuple" ? [] : void 0);
         }
 
         for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {

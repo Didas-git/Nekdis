@@ -1,4 +1,4 @@
-import { numberToDate } from "./general-helpers";
+import { numberToDate, stringsToObject } from "./general-helpers";
 
 import type { ArrayField, BaseField, ObjectField } from "../../typings";
 
@@ -17,6 +17,33 @@ export function jsonFieldToDoc(schema: BaseField, val: any): any {
     }
 
     return val;
+}
+
+export function stringToArray(arr: Array<string>, schema: any, val: string): Record<string, any> {
+    let temp: any = [];
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const idx = arr.shift()!;
+    let props = schema[idx].properties;
+
+    if (arr.length === 1) {
+        return { [arr[0]]: val };
+    }
+
+    for (let i = 0, len = arr.length; i < len; i++) {
+        const value = arr[i];
+
+        if (props[value].type === "object") {
+            temp.push(value);
+            const x = i + 1;
+            props = { [arr[x]]: props[value].properties[arr[x]] };
+            continue;
+        }
+
+        temp.push(value, val);
+    }
+
+    const trueVal = temp.pop();
+    return stringsToObject(temp, trueVal);
 }
 
 export function parseJsonObject(schema: Required<ObjectField>, val: any): any {
