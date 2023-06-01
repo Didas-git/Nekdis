@@ -30,6 +30,7 @@ The next steps for the proposal include:
   - [Creating a Schema](#creating-a-schema)
   - [Creating a Model](#creating-a-model)
   - [Creating and Saving data](#creating-and-saving-data)
+- [The new `RecordId`](#the-new-recordid)
 - [Custom Methods](#custom-methods)
 - [Schema Types](#schema-types)
 - [Field Properties](#field-properties)
@@ -105,6 +106,14 @@ const aCat = catModel.createAndSave({
     name: "Nozomi"
 });
 ```
+
+# The new `RecordId`
+
+This proposal introduces a new way to create unique ids called `RecordId`.
+
+RecordIds allow you to set prefixes and other properties to your id that is shared across all of the records.
+
+![](./recordid.svg)
 
 # Custom Methods
 
