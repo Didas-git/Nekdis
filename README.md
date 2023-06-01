@@ -1,180 +1,189 @@
-# Redis-OM Proposal: Simplify interface (v2)
+# Nekdis
 
-This proposal aims to improve the developer experience while using redis-om for node.
+## What is it?
 
-## Motivation
+Nekdis is the temporary name for a proposal for [redis-om](https://github.com/redis/redis-om-node) that aims to improve the user experience and performance by providing an ODM-like naming scheme like the famous library [mongoose](https://mongoosejs.com/) for MongoDB
 
-During my experience with redis-om I experienced some interface problems where it would not throw errors when it should or even feel way to complex for what it aims to do.
+## Future Plans
 
-## Proposal
+Right now the proposal includes almost every feature that redis-om already has (See: [Missing Features](#missing-features) ) and introduces some like more like [References](#schema-types).
 
-The proposal aims to improve the developer experience by switching to a more simple interface inspired by [mongoose](https://mongoosejs.com/) by only providing 2 classes, 1 for defining the data structure and 1 for interacting with the database.
+The next steps for the proposal include:
+- Improve performance on parsing nested objects for hashes[^1]
+- Adding [Vector Similarity Search](https://redis.io/docs/stack/search/reference/vectors/).
+- Adding support for [Graph](https://redis.io/docs/stack/graph/) data types & relations.
+- Improving auto fetch performance by including a lua script that will get injected as a redis function.
+- Allow auto references to be updated.
+- Improve reference checking
+- Adding support for objects inside arrays.
+- Make a proposal for [`node-redis`](https://github.com/redis/node-redis) to improve its performance.
 
-### Examples
+# Table of contents
 
-**Disclaimer:** The `Model` is used just for the sake of the examples, I am aware that both users and redis-om devs would probably like to keep it as `Repository`.
+- [Nekdis](#nekdis)
+  - [What is it?](#what-is-it)
+  - [Future Plans](#future-plans)
+- [Table of contents](#table-of-contents)
+- [Installation](#installation)
+- [Getting Started](#getting-started)
+  - [Connecting to the database](#connecting-to-the-database)
+  - [Creating a Schema](#creating-a-schema)
+  - [Creating a Model](#creating-a-model)
+  - [Creating and Saving data](#creating-and-saving-data)
+- [The new `RecordId`](#the-new-recordid)
+- [Custom Methods](#custom-methods)
+- [Schema Types](#schema-types)
+- [Field Properties](#field-properties)
+  - [Shared Properties](#shared-properties)
+  - [Unique Properties](#unique-properties)
+- [Missing features](#missing-features)
 
-#### Connecting to redis
+# Installation
+
+Nekdis is available on npm via the command
+
+```sh
+npm i nekdis
+```
+
+# Getting Started
+
+## Connecting to the database
+
+Nekdis already exports a global client but you can also create your own instance with the `Client` class.
 
 ```ts
-import { client } from "redis-om";
+import { client } from "nekdis";
 
-// url is optional and it defaults to localhost
 client.connect().then(() => {
-    console.log("Connected to redis")
-})
-```
-
-#### Creating a schema
-
-All the current types apart from array on redis-om would not be changed but support for nested objects would be added. I still dont have a great idea on how to go about nested objects so whats is shown on the example is the current way I can think of doing it.
-
-```ts
-import { client } from "redis-om";
-
-const memberSchema = client.schema({
-    name: { type: "string", required: true },
-    points: { type: "number", default: 0 },
-    followingArtists: { type: "array", elements: {
-        name: "string",
-        points: "number"
-    }},
-    address: { type: "object", data: {
-        city: "string",
-        postalCode: "number" 
-    }},
-})
-```
-
-Or optionally you could also import the schema class itself.
-
-```ts
-import { Schema } from "redis-om";
-
-const memberSchema = new Schema({
-    name: { type: "string", required: true },
-    points: { type: "number", default: 0 },
-    followingArtists: { type: "array", elements: {
-        name: "string",
-        reference: "string"
-    }},
-    address: { type: "object", data: {
-        city: "string",
-        postalCode: "number" 
-    }},
-})
-```
-
-#### Creating a Model
-
-```ts
-import { client } from "redis-om";
-
-client.model("Member", memberSchema);
-```
-
-Or optionally you can import the model class itself.<br/>
-**WARNING:** the model function adds the model to a client map so it can be fetched from anywhere on your code if you have your client.
-
-```ts
-import { Model } from "redis-om";
-
-const memberModel = new Model(client, "Member", memberSchema)
+    console.log("Connected to redis");
+});
 ```
 
 <details>
-<summary>Adding the model to the client connection</summary>
-
-This method is only in case you decided to create your own model instance, it works just like the normal model method but accepts a model instead of a schema
+<summary>Creating an instance</summary>
 
 ```ts
-import { client } from "redis-om";
+import { Client } from "nekdis";
 
-client.addModel("Member", memberModel)
+const client = new Client();
+
+client.connect().then(() => {
+    console.log("Connected to redis");
+});
 ```
 
 </details>
 
-#### Creating a key on the database
+## Creating a Schema
+
+The client provides a helper to build a schema without any extra steps.
 
 ```ts
-import { client } from "redis-om";
+import { client } from "nekdis";
 
-memberModel.createAndSave({
-    name: "DidaS",
-    followingArtists: [
-        {
-            name: "EGOIST",
-            // null is saved to the database independent of the data type but undefined will throw an error
-            reference: null
-        },
-        {
-            name: "Minami",
-            reference: null
-        }
-    ]
-})
+const catSchema = client.schema({
+    name: { type: "string" }
+});
 ```
 
-#### Creating methods
+## Creating a Model
+
+The client also provides a helper to create a model.
 
 ```ts
-import { Model } from "redis-om";
+import { client } from "nekdis";
 
-const userSchema = client.schema({
-    name: { type: "string", required: true },
-    email: { type: "string", required: true },
-    address: { type: "string" }
+const catModel = client.model("Cat", catSchema);
+```
+
+## Creating and Saving data
+
+The model is what provides all the functions to manage your data on the database.
+
+```ts
+const aCat = catModel.createAndSave({
+    name: "Nozomi"
+});
+```
+
+# The new `RecordId`
+
+This proposal introduces a new way to create unique ids called `RecordId`.
+
+RecordIds allow you to set prefixes and other properties to your id that is shared across all of the records.
+
+![](./recordid.svg)
+
+# Custom Methods
+
+In this proposal you can create your own custom methods that will be added to the `Model`, this methods are defined on the schema directly.
+
+> **WARNING:** Anonymous functions cannot be used when defining custom methods/functions
+
+```ts
+const albumSchema = client.schema({
+    artist: { type: "string", required: true },
+    name: { type: "text", required: true },
+    year: "number"
 }, {
-    searchByName: async function(name: string) {
-        return await this.search().where("name").equals(name).returnAll();
+    searchByName: async function (name: string) {
+        return await this.search().where("name").matches(name).returnAll();
     }
 })
 
-const userModel = client.model("User", userSchema);
-const usersNamedDidaS = await userModel.searchByName("DidaS");
+const albumModel = client.model("Album", albumSchema);
+
+const results = await albumModel.searchByName("DROP");
 ```
 
-### Documentation
+# Schema Types
 
-#### Client
+This proposal adds 4 new data types `array`, `object`, `tuple` & `reference` and removes the `string[]` type.
 
-| Syntax                           | Description                                                                          |
-| -------------------------------- | ------------------------------------------------------------------------------------ |
-| connect(url)                     | connects to the redis database                                                       |
-| disconnect()                     | closes the current connection after finishing the ongoing transactions               |
-| forceDisconnect()                | closes the current connection without finishing transactions.                        |
-| schema(data, methods?, options?) | ALIAS TO `new Schema()` (creates a new schema)                                       |
-| model(name, schema?)             | creates a new model and adds it to the client collection of models                   |
-| addModel(name, model, override?) | takes in an instance of a model class and adds it to the client collection of models |
-| isOpen                           | returns a boolean depending reflecting the state of the client                       |
-| raw                              | Exposes the `node-redis` client                                                      |
-| withModules(modules)             |                                                                                      |
+| Type        | Description                                                                                                                                                                                                                                                                                                                                                                                 |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `string`    | A standard string that will be treated as `TAG`                                                                                                                                                                                                                                                                                                                                             |
+| `number`    | A standard float64 number that will be treated as `NUMERIC`                                                                                                                                                                                                                                                                                                                                 |
+| `boolean`   | A standard boolean that will be treated as `TAG`                                                                                                                                                                                                                                                                                                                                            |
+| `text`      | A standard string that will be treated as `TEXT` which allows for full text search                                                                                                                                                                                                                                                                                                          |
+| `date`      | This field will internally be treated as `NUMERIC`, it gets saved as a Unix Epoch but you will be able to interact with it normally as it will be a [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date) when you access it                                                                                                                      |
+| `point`     | This is an object containing a `latitude` and `longitude` and will be treated as `GEO`                                                                                                                                                                                                                                                                                                      |
+| `array`     | Internally it will be treated as the type given to the `elements` property which defaults to `string`                                                                                                                                                                                                                                                                                       |
+| `object`    | This type allows you to nest forever using the `properties` property in the schema and what gets indexed are its properties, if none are given it will not be indexed not checked                                                                                                                                                                                                           |
+| `reference` | When using this type you will be given a `ReferenceArray` which is a normal array with a `reference` method that you can pass in another document or a record id to it, references can be auto fetched but auto fetched references cannot be changed                                                                                                                                        |
+| `tuple`     | Tuples will be presented as per-index type safe arrays but they are dealt with in a different way. They will be indexed as static props so you can search on a specific element only, this also affects the query builder instead of `where(arrayName)` it will be `where(arrayName.idx.prop)` but this has working intellisense just like all the other fields so it shouldn't be an issue |
 
-#### Schema
-| Syntax        | Description                                                                                    |
-| ------------- | ---------------------------------------------------------------------------------------------- |
-| add(data)     | adds data to the schema after it being created, this method is not recommend but its an option |
-| methods(data) | adds methods to the schema after it being created, also not recommended                        |
+# Field Properties
 
-#### Model
-| Syntax                           | Description                                                                    |
-| -------------------------------- | ------------------------------------------------------------------------------ |
-| get(id)                          | get a specific document using the record id                                    |
-| create(id?)                      | creates a new document.                                                        |
-| save(document)                   | saves the given document to the database                                       |
-| delete(documents)                | deletes the given documents or id(s) from the database                         |
-| exists(documents)                | checks whether the document or id(s) already exists                            |
-| expire(documents, seconds, mode) | calls the expire method on the documents with the given parameters             |
-| createAndSave(data)              | ALIAS TO `const nModel = model.create(); model.save(nModel)`                   |
-| search()                         | returns the search builder                                                     |
-| createIndex()                    | creates the redis search index                                                 |
-| deleteIndex()                    | deletes the redis search index                                                 |
-| rawSearch(args)                  | raw redis search query                                                         |
-| ~~update(id, data)~~             | updates the entry on the database                                              |
-| ~~count()~~                      | returns the amount of existent entries corresponding to the model schema       |
-| ~~watch()~~                      | creates an event emitter so you can listen to changes on data using that model |
-| ~~aggregate()~~                  | retrieves the entry and aggregates data to it                                  |
+This proposal includes the addition of 2 new shared properties and some unique ones
 
-#### Search
-Refer to the current [redis-om](https://github.com/redis/redis-om-node#searching) version for now
+## Shared Properties
+
+| Property   | Description                                                                                                              |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `type`     | The type of the field                                                                                                    |
+| `required` | Defines whether the field is required to exist or not (this doesn't work if validation is disabled)                      |
+| `default`  | Chose a default value for the field making so that it will always exist even if it isn't required                        |
+| `index`    | Defines whether the field should be indexed or not (defaults to `true`)                                                  |
+| `sortable` | Defines whether the field is sortable or not (note that this doesn't exist nor work on object fields & reference fields) |
+
+## Unique Properties
+
+| Property     | Type        | Description                                                                                                                                                                  |
+| ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `elements`   | `array`     | Defines the type of the array                                                                                                                                                |
+| `elements`   | `tuple`     | Even tho it has the same name this field is required in tuples and there are no ways to define infinite length tuples (just use normal arrays)                               |
+| `separator`  | `array`     | This defines the separator that will be used for arrays on hash fields                                                                                                       |
+| `properties` | `object`    | The properties the object contains, if this isn't defined the object wont be type checked nor indexed                                                                        |
+| `schema`     | `reference` | This is a required property when using references and it allows for intellisense to give the types on auto fetch and later on for certain type checking to also work as well |
+
+# Missing features
+
+- Case sensitive search fields.
+- Word stemming.
+- Field weight.
+- Custom alias for a field.
+- Phonetic matcher
+
+[^1]: Currently the `deepMerge` function will take longer the more objects and nested objects you have, the idea i received is to do it all in one go by using a function to flatten it but im not sure yet on how to do it
