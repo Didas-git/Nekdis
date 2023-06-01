@@ -113,7 +113,7 @@ This proposal introduces a new way to create unique ids called `RecordId`.
 
 RecordIds allow you to set prefixes and other properties to your id that is shared across all of the records.
 
-![](./recordid.svg)
+![](./recordid.png)
 
 # Custom Methods
 
