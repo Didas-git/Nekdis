@@ -22,6 +22,7 @@ export class Client {
     #client!: RedisClient;
     #models: Map<string, Model<any>> = new Map();
     #open: boolean = false;
+    #prefix: string = "Nekdis";
 
     public async connect(url: string | URLObject = "redis://localhost:6379"): Promise<Client> {
         if (this.#open) return this;
@@ -78,16 +79,9 @@ export class Client {
 
         if (!schema) throw new Error("You have to pass a schema if it doesn't exist");
 
-        model = new Model(this.#client, name, schema);
+        model = new Model(this.#client, this.#prefix, "V1", name, schema);
         this.#models.set(name, model);
         return <never>model;
-    }
-
-    public addModel(name: string, model: Model<any>, override: boolean = false): void {
-        if (this.#models.has(name) && !override) throw new Error("The model passed already exists, if you wish to override it pass in `true` as the third argument");
-        if (!(model instanceof Model)) throw new Error("The received model was of the wrong type");
-
-        this.#models.set(name, model);
     }
 
     public get raw(): RedisClient {
@@ -102,6 +96,10 @@ export class Client {
         if (!this.#open) {
             this.#client = client;
         }
+    }
+
+    public set globalPrefix(str: string) {
+        this.#prefix = str;
     }
 }
 

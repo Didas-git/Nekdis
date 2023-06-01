@@ -8,8 +8,7 @@ import {
     BooleanField,
     TextField,
     DateField,
-    PointField,
-    extractIdFromRecord
+    PointField
 } from "./utils";
 
 import type {
@@ -30,7 +29,6 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     readonly #client: RedisClient;
     readonly #schema: T;
     readonly #parsedSchema: ParsedMap;
-    readonly #keyName: string;
     readonly #index: string;
     readonly #validate: boolean;
     // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
@@ -46,11 +44,17 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     /** @internal */
     public _query: Array<SearchField<T>> = [];
 
-    public constructor(client: RedisClient, schema: T, parsedSchema: ParsedMap, keyName: string, searchIndex: string, validate: boolean = true, structure: "JSON" | "HASH" = "JSON") {
+    public constructor(
+        client: RedisClient,
+        schema: T,
+        parsedSchema: ParsedMap,
+        searchIndex: string,
+        validate: boolean = true,
+        structure: "JSON" | "HASH" = "JSON"
+    ) {
         this.#client = client;
         this.#schema = schema;
         this.#parsedSchema = parsedSchema;
-        this.#keyName = keyName;
         this.#index = searchIndex;
         this.#validate = validate;
 
@@ -124,19 +128,19 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                 }
             }
 
-            docs.push(new this.#docType(this.#schema, this.#keyName, doc.value, extractIdFromRecord(doc.id), true, this.#validate, autoFetch));
+            docs.push(new this.#docType(this.#schema, void 0, doc.value, true, this.#validate, autoFetch));
         }
 
         return <never>docs;
     }
 
-    public async pageOfIds(offset: number, count: number, withKey: boolean = false): Promise<Array<string>> {
+    public async pageOfIds(offset: number, count: number, idOnly: boolean = false): Promise<Array<string>> {
         const docs: Array<string> = [];
         const { documents } = await this.#search({ LIMIT: { from: offset, size: count } }, true);
 
         for (let j = 0, len = documents.length; j < len; j++) {
             const doc = documents[j];
-            docs.push(withKey ? doc.id : extractIdFromRecord(doc.id));
+            docs.push(idOnly ? doc.value.$id?.toString() ?? "UNKNOWN" : doc.id);
         }
 
         return docs;
@@ -186,20 +190,20 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                     doc.value[key] = <never>await Promise.all(temp);
                 }
             }
-            docs.push(new this.#docType(this.#schema, this.#keyName, doc.value, extractIdFromRecord(doc.id), true, this.#validate, autoFetch));
+            docs.push(new this.#docType(this.#schema, void 0, doc.value, true, this.#validate, autoFetch));
         }
 
         return <never>docs;
     }
 
-    public async allIds(withKey: boolean = false): Promise<Array<string>> {
+    public async allIds(idOnly: boolean = false): Promise<Array<string>> {
         const docs: Array<string> = [];
 
         const { documents } = await this.#search({ LIMIT: { from: 0, size: (await this.#search({ LIMIT: { from: 0, size: 0 } })).total } });
 
         for (let i = 0, len = documents.length; i < len; i++) {
             const doc = documents[i];
-            docs.push(withKey ? doc.id : extractIdFromRecord(doc.id));
+            docs.push(idOnly ? doc.value.$id?.toString() ?? "UNKNOWN" : doc.id);
         }
 
         return docs;
@@ -262,7 +266,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
 
         if (data === null) return null;
 
-        return <never>new this.#docType(this.#schema, this.#keyName, <never>data, extractIdFromRecord(id.toString()), true, this.#validate, false);
+        return <never>new this.#docType(this.#schema, void 0, <never>data, true, this.#validate, false);
     }
 
     #buildQuery(): string {
