@@ -1,5 +1,3 @@
-import type { SearchOptions, SearchReply } from "redis";
-
 import { JSONDocument, HASHDocument } from "./document";
 import {
     type SearchField,
@@ -11,6 +9,7 @@ import {
     PointField
 } from "./utils";
 
+import type { SearchOptions, SearchReply } from "redis";
 import type {
     FieldTypes,
     RedisClient,
@@ -172,25 +171,32 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
 
     public async all<F extends boolean = false>(autoFetch?: F): Promise<Array<ReturnDocument<T, F>>> {
         const docs = [];
-        const { documents } = await this.#search({ LIMIT: { from: 0, size: (await this.#search({ LIMIT: { from: 0, size: 0 } })).total } });
+        const { size, idx } = this.#parseNum((await this.#search({ LIMIT: { from: 0, size: 0 } })).total);
+        // const { documents } = await this.#search({ LIMIT: { from: 0, size: (await this.#search({ LIMIT: { from: 0, size: 0 } })).total } });
 
-        for (let i = 0, len = documents.length; i < len; i++) {
-            const doc = documents[i];
+        for (let i = 0, from = 0; i < idx; i++) {
+            const { documents } = await this.#search({ LIMIT: { from, size } });
+            for (let j = 0, len = documents.length; j < len; j++) {
+                const doc = documents[j];
 
-            if (autoFetch) {
-                for (let j = 0, keys = Object.keys(this.#schema.references), le = keys.length; j < le; j++) {
-                    const key = keys[j];
-                    const val = <Array<string>><unknown>doc.value[key];
-                    const temp = [];
+                if (autoFetch) {
+                    for (let k = 0, keys = Object.keys(this.#schema.references), le = keys.length; k < le; k++) {
+                        const key = keys[k];
+                        const val = <Array<string>><unknown>doc.value[key];
+                        const temp = [];
 
-                    for (let k = 0, l = val.length; k < l; k++) {
-                        temp.push(this.#get(val[k]));
+                        for (let p = 0, l = val.length; p < l; p++) {
+                            temp.push(this.#get(val[p]));
+                        }
+
+                        doc.value[key] = <never>await Promise.all(temp);
                     }
-
-                    doc.value[key] = <never>await Promise.all(temp);
                 }
+
+                docs.push(new this.#docType(this.#schema, void 0, doc.value, true, this.#validate, autoFetch));
             }
-            docs.push(new this.#docType(this.#schema, void 0, doc.value, true, this.#validate, autoFetch));
+
+            from += size;
         }
 
         return <never>docs;
@@ -317,6 +323,19 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
             }
             case "object": { throw new Error('Not implemented yet: "object" case'); }
         }
+    }
+
+    #parseNum(num: number): {
+        size: number,
+        idx: number
+    } {
+        let size = 1000;
+        if (num < size) return { size, idx: 1 };
+        if (num > 10000) size = 10000;
+        return {
+            size,
+            idx: Math.ceil(num / size)
+        };
     }
 
     public get rawQuery(): string {

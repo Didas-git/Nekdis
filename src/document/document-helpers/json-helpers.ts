@@ -89,8 +89,11 @@ export function tupleToObjStrings(val: Array<unknown>, key: string): Array<Recor
         const value = val[i];
 
         if (typeof value === "object") {
-            const parsed = objectToString(<never>value, `${key}.${i}`);
-            arr.push(...parsed);
+            for (let j = 0, entries = Object.entries(<never>value), le = entries.length; j < le; j++) {
+                const [k, v] = entries[j];
+
+                arr.push({ [`${key}.${i}.${k}`]: v });
+            }
             continue;
         }
 

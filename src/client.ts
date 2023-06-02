@@ -1,5 +1,6 @@
 import { createClient } from "redis";
 
+import { LoadBalancer } from "./workers/load-balancer";
 import { Schema } from "./schema";
 import { Model } from "./model";
 
@@ -23,6 +24,7 @@ export class Client {
     #models: Map<string, Model<any>> = new Map();
     #open: boolean = false;
     #prefix: string = "Nekdis";
+    #balancer?: LoadBalancer;
 
     public async connect(url: string | URLObject = "redis://localhost:6379"): Promise<Client> {
         if (this.#open) return this;
@@ -46,6 +48,7 @@ export class Client {
     }
 
     public async disconnect(): Promise<Client> {
+        await this.#balancer?.destroy();
         await this.#client.quit();
 
         this.#open = false;
@@ -53,6 +56,7 @@ export class Client {
     }
 
     public async forceDisconnect(): Promise<Client> {
+        await this.#balancer?.destroy();
         await this.#client.disconnect();
 
         this.#open = false;
@@ -79,7 +83,8 @@ export class Client {
 
         if (!schema) throw new Error("You have to pass a schema if it doesn't exist");
 
-        model = new Model(this.#client, this.#prefix, "V1", name, schema);
+        if (!this.#balancer) this.#balancer = new LoadBalancer();
+        model = new Model(this.#client, this.#prefix, "V1", name, schema, this.#balancer);
         this.#models.set(name, model);
         return <never>model;
     }
@@ -100,6 +105,10 @@ export class Client {
 
     public set globalPrefix(str: string) {
         this.#prefix = str;
+    }
+
+    public set balancerThreads(threads: number) {
+        this.#balancer = new LoadBalancer(threads);
     }
 }
 

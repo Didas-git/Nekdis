@@ -8,6 +8,7 @@ import {
     stringOrDocToString
 } from "./utils";
 
+import type { LoadBalancer } from "./workers/load-balancer";
 import type { Schema } from "./schema";
 import type {
     ExtractParsedSchemaDefinition,
@@ -34,8 +35,16 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     readonly #ver: string;
     // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
     readonly #docType: typeof JSONDocument | typeof HASHDocument;
+    readonly #balancer: LoadBalancer;
 
-    public constructor(client: RedisClient, globalPrefix: string, ver: string, private readonly name: string, data: S) {
+    public constructor(
+        client: RedisClient,
+        globalPrefix: string,
+        ver: string,
+        private readonly name: string,
+        data: S,
+        balancer: LoadBalancer
+    ) {
         this.#client = client;
         this.#schema = data;
         this.#ver = ver;
@@ -66,6 +75,8 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
 
         if (data.options.dataStructure === "HASH") this.#docType = HASHDocument;
         else this.#docType = JSONDocument;
+
+        this.#balancer = balancer;
     }
 
     public async get<F extends boolean = false>(id: string | number, autoFetch?: F): Promise<ReturnDocument<S, F> | null> {
@@ -99,7 +110,14 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
             }
         }
 
-        return <never>new this.#docType(this.#schema[schemaData], void 0, <never>data, true, this.#validate, autoFetch);
+        return <never>await this.#balancer.handle(id.toString(), {
+            type: this.#schema.options.dataStructure ?? "JSON",
+            schema: this.#schema[schemaData],
+            data,
+            isFetchedData: true,
+            validate: this.#validate,
+            wasAutoFetched: autoFetch
+        });
     }
 
     public create(id?: string | number): ReturnDocument<S>;
