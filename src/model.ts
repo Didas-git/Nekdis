@@ -43,8 +43,8 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
         this.#prefix = this.#schema.options.prefix ?? this.#ver;
         this.#validate = !this.#schema.options.skipDocumentValidation;
         this.#parsedSchema = parseSchemaToSearchIndex(this.#schema[schemaData].data);
-        this.#searchIndexName = `Nekdis:${globalPrefix}:${this.#prefix}:${this.name}:index`;
-        this.#searchIndexHashName = `Nekdis:${globalPrefix}:${this.#prefix}:${this.name}:index:hash`;
+        this.#searchIndexName = `${globalPrefix}:${this.#prefix}:${this.name}:index`;
+        this.#searchIndexHashName = `${globalPrefix}:${this.#prefix}:${this.name}:index:hash`;
         this.#searchIndex = [
             "FT.CREATE",
             this.#searchIndexName,
