@@ -15,8 +15,8 @@ export class LoadBalancer {
             const worker = new Worker(join(__dirname, "./worker.js"));
             this.#workers.set(worker, true);
 
-            worker.on("message", ({ type, id, data }) => {
-                switch (type) {
+            worker.on("message", ({ eventType, id, data }) => {
+                switch (eventType) {
                     case "idle":
                         this.#workers.set(worker, true);
                         this.onIdle();
@@ -31,7 +31,7 @@ export class LoadBalancer {
         }
     }
 
-    public async handle(id: string, data: any): Promise<any> {
+    public async handle(id: string, data: Record<string, unknown>): Promise<any> {
         return new Promise((resolve) => {
             this.#resolvers.set(id, resolve);
 
@@ -53,7 +53,9 @@ export class LoadBalancer {
             if (val) {
                 this.#last = worker.threadId;
                 this.#workers.set(worker, false);
-                worker.postMessage(data ?? this.#queue.shift());
+                data ??= this.#queue.shift();
+                this.#queue.shift();
+                worker.postMessage(data);
                 return;
             } else {
                 if (!data) return;
@@ -68,5 +70,4 @@ export class LoadBalancer {
             await key.terminate();
         }
     }
-
 }
