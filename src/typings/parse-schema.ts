@@ -47,7 +47,9 @@ export type ParseSchema<T extends SchemaDefinition> = {
         [K in keyof T as T[K] extends ReferenceField ? K : never]: T[K] extends ReferenceField
         ? {
             [P in keyof ReferenceField]: P extends "schema"
-            ? ExtractParsedSchemaDefinition<T[K][P]>
+            ? T[K][P] extends "self"
+            ? ParseSchema<T>
+            : ExtractParsedSchemaDefinition<T[K][P]>
             : T[K][P]
         }
         : never
