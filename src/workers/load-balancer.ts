@@ -1,21 +1,53 @@
 import { Worker } from "node:worker_threads";
 import { join } from "node:path";
 
+import { HASHDocument, JSONDocument } from "../document";
+
+import type { ParseSchema } from "../typings";
+
+export type WorkerResponse = WorkerResultResponse | WorkerIdleResponse;
+
+export interface WorkerResultResponse {
+    eventType: "result";
+    id: string;
+    type: "JSON" | "HASH";
+    schema: ParseSchema<any>;
+    data: object;
+    validate: boolean;
+    wasAutoFetched: boolean;
+}
+
+export interface WorkerIdleResponse {
+    eventType: "idle";
+    id?: undefined;
+    type?: undefined;
+    schema?: undefined;
+    data?: undefined;
+    validate?: undefined;
+    wasAutoFetched?: undefined;
+
+}
+
 export class LoadBalancer {
-    #last: number = 0;
-    readonly #queue: any = [];
+    readonly #queue: Array<object> = [];
     readonly #resolvers = new Map<string, ((result: any) => void)>();
     // boolean = is free
     readonly #workers = new Map<Worker, boolean>();
-    readonly #threadAmt: number;
+    readonly #docType = { JSON: JSONDocument, HASH: HASHDocument };
 
     public constructor(threads: number = 3) {
-        this.#threadAmt = threads;
         for (let i = 0; i < threads; i++) {
             const worker = new Worker(join(__dirname, "./worker.js"));
             this.#workers.set(worker, true);
 
-            worker.on("message", ({ eventType, id, data }) => {
+            worker.on("message", ({
+                eventType,
+                id,
+                type,
+                schema,
+                data,
+                validate
+            }: WorkerResponse) => {
                 switch (eventType) {
                     case "idle":
                         this.#workers.set(worker, true);
@@ -23,7 +55,7 @@ export class LoadBalancer {
                         break;
                     case "result":
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        this.#resolvers.get(id)!(data);
+                        this.#resolvers.get(id)!(new this.#docType[type](schema, void 0, data, validate));
                         this.#resolvers.delete(id);
                         break;
                 }
@@ -39,28 +71,25 @@ export class LoadBalancer {
         });
     }
 
-    public onIdle(data?: any): any {
+    public onIdle(data?: any): void {
         if (!data && this.#queue.length < 1) return;
-        for (let i = 0, entries = [...this.#workers.entries()], len = this.#workers.size; i < len; i++) {
+        for (let i = 0, entries = [...this.#workers.entries()], len = this.#workers.size; i <= len; i++) {
+            if (i === len) {
+                this.#queue.push(data);
+                return;
+            }
+
             const [worker, val] = entries[i];
 
-            this.#last = this.#last === this.#threadAmt ? 1 : this.#last;
-
-            if (worker.threadId === this.#last) {
+            if (!val) {
                 continue;
             }
 
-            if (val) {
-                this.#last = worker.threadId;
-                this.#workers.set(worker, false);
-                data ??= this.#queue.shift();
-                this.#queue.shift();
-                worker.postMessage(data);
-                return;
-            } else {
-                if (!data) return;
-                this.#queue.push(data);
-            }
+            data ??= this.#queue.shift();
+            worker.postMessage(data);
+            this.#workers.set(worker, false);
+            return;
+
         }
     }
 

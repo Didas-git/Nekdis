@@ -127,7 +127,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                 }
             }
 
-            docs.push(new this.#docType(this.#schema, void 0, doc.value, true, this.#validate, autoFetch));
+            docs.push(new this.#docType(this.#schema, void 0, doc.value, this.#validate, autoFetch));
         }
 
         return <never>docs;
@@ -193,7 +193,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                     }
                 }
 
-                docs.push(new this.#docType(this.#schema, void 0, doc.value, true, this.#validate, autoFetch));
+                docs.push(new this.#docType(this.#schema, void 0, doc.value, this.#validate, autoFetch));
             }
 
             from += size;
@@ -272,7 +272,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
 
         if (data === null) return null;
 
-        return <never>new this.#docType(this.#schema, void 0, <never>data, true, this.#validate, false);
+        return <never>new this.#docType(this.#schema, void 0, <never>data, this.#validate, false);
     }
 
     #buildQuery(): string {

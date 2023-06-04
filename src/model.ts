@@ -114,7 +114,6 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
             type: this.#schema.options.dataStructure ?? "JSON",
             schema: this.#schema[schemaData],
             data,
-            isFetchedData: true,
             validate: this.#validate,
             wasAutoFetched: autoFetch
         });
@@ -129,7 +128,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
                 prefix: this.#prefix,
                 name: this.name,
                 suffix: this.#schema.options.suffix
-            }, idOrData, false, this.#validate, false);
+            }, idOrData, this.#validate, false);
         }
 
         return <never>new this.#docType(this.#schema[schemaData], {
@@ -138,7 +137,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
             name: this.name,
             suffix: this.#schema.options.suffix,
             id: idOrData?.toString()
-        }, void 0, false, this.#validate, false);
+        }, void 0, this.#validate, false);
     }
 
     public async save(doc: Doc): Promise<void> {
@@ -179,7 +178,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
             prefix: this.#prefix,
             name: this.name,
             suffix: this.#schema.options.suffix
-        }, data, false, this.#validate, false);
+        }, data, this.#validate, false);
         await this.save(doc);
     }
 

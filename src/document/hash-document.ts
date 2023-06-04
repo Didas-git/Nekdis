@@ -1,22 +1,16 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { randomUUID } from "node:crypto";
 
-import { ReferenceArray } from "../utils";
 import {
     validateSchemaReferences,
     convertUnknownToSchema,
     validateSchemaData,
     objectToHashString,
-    getLastKeyInSchema,
     tupleToObjStrings,
-    hashFieldToString,
-    stringToHashField,
-    stringToHashArray,
-    stringsToObject,
-    deepMerge
+    hashFieldToString
 } from "./document-helpers";
 
-import type { DocumentShared, ObjectField, ParseSchema } from "../typings";
+import type { DocumentShared, ParseSchema } from "../typings";
 
 export class HASHDocument implements DocumentShared {
 
@@ -50,7 +44,6 @@ export class HASHDocument implements DocumentShared {
             id?: string | undefined
         },
         data?: Record<string, any>,
-        isFetchedData: boolean = false,
         validate: boolean = true,
         wasAutoFetched: boolean = false
     ) {
@@ -64,74 +57,11 @@ export class HASHDocument implements DocumentShared {
         this.#validate = validate;
         this.#autoFetch = wasAutoFetched;
 
-        this.#populate();
-
         if (data) {
-            if (isFetchedData) {
-                for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
-                    const [key, value] = entries[i];
-                    const arr = key.split(".");
-
-                    if (arr.length > 1) /* This is an object or tuple */ {
-                        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                        if (schema.data[arr[0]]?.type === "tuple") {
-                            // var name
-                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                            const temp = arr.shift()!;
-
-                            if (arr.length === 1) {
-                                this[temp].push(stringToHashField(
-                                    //@ts-expect-error Type overload
-                                    schema.data[temp].elements[arr[0]],
-                                    <string>value
-                                ));
-
-                                continue;
-                            }
-
-                            //@ts-expect-error Type overload
-                            this[temp].push(stringToHashArray(arr, schema.data[temp].elements, value));
-                        } else /*we assume its an object*/ {
-                            this[arr[0]] = deepMerge(
-                                this[arr[0]],
-                                stringsToObject(
-                                    arr,
-                                    stringToHashField(
-                                        getLastKeyInSchema(<Required<ObjectField>>schema.data[arr[0]], <string>arr.at(-1)) ?? { type: "string" },
-                                        <string>value
-                                    )
-                                )[arr[0]]
-                            );
-                        }
-                        continue;
-                    }
-
-                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                    if (schema.references[key] === null && !this.#autoFetch) {
-                        this[key] = new ReferenceArray(...<Array<string>>stringToHashField({ type: "array" }, <string>value));
-                        continue;
-                    }
-
-                    this[key] = stringToHashField(<never>schema.data[key], <string>value);
-                }
-            } else {
-                for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
-                    const [key, value] = entries[i];
-                    this[key] = value;
-                }
+            for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
+                const [key, value] = entries[i];
+                this[key] = value;
             }
-        }
-    }
-
-    #populate(): void {
-        for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
-            const [key, value] = entries[i];
-            this[key] = value.default ?? (value.type === "object" ? {} : value.type === "tuple" ? [] : void 0);
-        }
-
-        for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
-            const key = keys[i];
-            this[key] = new ReferenceArray();
         }
     }
 

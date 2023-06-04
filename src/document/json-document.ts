@@ -1,13 +1,10 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { randomUUID } from "node:crypto";
 
-import { ReferenceArray } from "../utils";
 import {
     validateSchemaReferences,
     validateSchemaData,
     tupleToObjStrings,
-    jsonFieldToDoc,
-    stringToArray,
     dateToNumber
 } from "./document-helpers";
 
@@ -45,7 +42,6 @@ export class JSONDocument implements DocumentShared {
             id?: string | undefined
         },
         data?: Record<string, any>,
-        isFetchedData: boolean = false,
         validate: boolean = true,
         wasAutoFetched: boolean = false
     ) {
@@ -59,62 +55,12 @@ export class JSONDocument implements DocumentShared {
         this.#validate = validate;
         this.#autoFetch = wasAutoFetched;
 
-        this.#populate();
-
         if (data) {
-            if (isFetchedData) {
-                for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
-                    const [key, value] = entries[i];
-                    const arr = key.split(".");
-
-                    if (arr.length > 1) /* This is a tuple */ {
-
-                        // var name
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        const temp = arr.shift()!;
-
-                        if (arr.length === 1) {
-                            this[temp].push(value);
-                            continue;
-                        }
-
-                        //@ts-expect-error Type overload
-                        this[temp].push(stringToArray(arr, schema.data[temp].elements, value));
-                        continue;
-                    }
-
-                    if (typeof schema.data[key] !== "undefined") {
-                        this[key] = jsonFieldToDoc(<never>schema.data[key], value);
-                        continue;
-                    }
-
-                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                    if (schema.references[key] === null && !this.#autoFetch) {
-                        this[key] = new ReferenceArray(...<Array<string>>value);
-                        continue;
-                    }
-
-                    this[key] = value;
-                }
-            } else {
-                for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
-                    const [key, value] = entries[i];
-                    if (key.startsWith("$")) continue;
-                    this[key] = value;
-                }
+            for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
+                const [key, value] = entries[i];
+                if (key.startsWith("$")) continue;
+                this[key] = value;
             }
-        }
-    }
-
-    #populate(): void {
-        for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
-            const [key, value] = entries[i];
-            this[key] = value.default ?? (value.type === "object" ? {} : value.type === "tuple" ? [] : void 0);
-        }
-
-        for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
-            const key = keys[i];
-            this[key] = new ReferenceArray();
         }
     }
 
