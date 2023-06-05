@@ -8,7 +8,7 @@ import {
     tupleToObjStrings,
     jsonFieldToDoc,
     stringToArray,
-    dateToNumber
+    docToJson
 } from "./document-helpers";
 
 import type { DocumentShared, ParseSchema } from "../typings";
@@ -139,20 +139,9 @@ export class JSONDocument implements DocumentShared {
                     obj[k] = value;
                 }
                 continue;
-            } else if (val.type === "date") {
-                obj[key] = dateToNumber(this[key]);
-                continue;
-                //@ts-expect-error elements exists but again ts is confused
-            } else if (val.type === "array" && val.elements === "date") {
-                const temp = this[key];
-                for (let j = 0, le = temp.length; j < le; j++) {
-                    temp[j] = dateToNumber(temp[j]);
-                }
-                obj[key] = temp;
-                continue;
             }
 
-            obj[key] = this[key];
+            obj[key] = docToJson(<never>val, this[key]);
         }
 
         if (!this.#autoFetch) {
