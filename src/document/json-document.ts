@@ -7,7 +7,6 @@ import {
     validateSchemaData,
     tupleToObjStrings,
     jsonFieldToDoc,
-    stringToArray,
     docToJson
 } from "./document-helpers";
 
@@ -53,7 +52,7 @@ export class JSONDocument implements DocumentShared {
         this.$prefix = data?.$prefix ?? record?.prefix;
         this.$model_name = data?.$model_name ?? record?.name;
         this.$suffix = data?.$suffix ?? (typeof record?.suffix === "function" ? record.suffix() : record?.suffix);
-        this.$id = data?.$id ?? record?.id ?? randomUUID();
+        this.$id = data?.$id?.toString() ?? record?.id ?? randomUUID();
         this.$record_id = `${this.$global_prefix}:${this.$prefix}:${this.$model_name}:${this.$suffix ? `${this.$suffix}:` : ""}${this.$id}`;
         this.#schema = schema;
         this.#validate = validate;
@@ -74,12 +73,13 @@ export class JSONDocument implements DocumentShared {
                         const temp = arr.shift()!;
 
                         if (arr.length === 1) {
-                            this[temp].push(value);
+                            //@ts-expect-error Type overload
+                            this[temp].push(jsonFieldToDoc(schema.data[temp].elements[arr[0]], value));
                             continue;
                         }
 
                         //@ts-expect-error Type overload
-                        this[temp].push(stringToArray(arr, schema.data[temp].elements, value));
+                        this[temp].push({ [arr[1]]: jsonFieldToDoc(schema.data[temp].elements[arr[0]].properties[arr[1]], value) });
                         continue;
                     }
 
@@ -136,6 +136,17 @@ export class JSONDocument implements DocumentShared {
                 const temp = tupleToObjStrings(<never>this[key], key);
                 for (let j = 0, le = temp.length; j < le; j++) {
                     const [k, value] = Object.entries(temp[j])[0];
+
+                    //@ts-expect-error Type overload
+                    if (val.elements[j].type === "object") {
+                        //@ts-expect-error Type overload
+                        for (let u = 0, en = Object.entries(val.elements[j].properties), l = en.length; u < l; u++) {
+                            const objV = en[u][1];
+                            obj[k] = docToJson(<any>objV, value);
+                        }
+                        continue;
+                    }
+
                     obj[k] = value;
                 }
                 continue;
@@ -151,7 +162,6 @@ export class JSONDocument implements DocumentShared {
                 obj[key] = this[key];
             }
         }
-
         return JSON.stringify(obj, null);
     }
 }
