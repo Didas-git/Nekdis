@@ -67,7 +67,7 @@ export class Client {
         for (let i = 0, len = modules.length; i < len; i++) {
             const module = modules[i];
             //@ts-expect-error shenanigans
-            this[module.name] = new module.ctor();
+            this[module.name] = new module.ctor(this);
         }
 
         return <never>this;

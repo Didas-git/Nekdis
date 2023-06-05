@@ -1,6 +1,8 @@
+import type { Client } from "../client";
+
 export interface Module {
     name: string;
-    ctor: new () => unknown;
+    ctor: new (client: Client) => unknown;
 }
 
 export type ExtractName<T> = Extract<T, string> | ([T] extends [[]] ? [] : { [K in keyof T]: ExtractName<T[K]> });
