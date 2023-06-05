@@ -77,5 +77,5 @@ export interface ObjectField extends Omit<BaseField, "sortable"> {
 // NON EXISTENT HANDLE AS ARRAY OF STRINGS WITH AUTOFETCH TRANSFORMING INTO AN OBJECT
 export interface ReferenceField extends Pick<BaseField, "type"> {
     type: "reference";
-    schema: Schema<any, any>;
+    schema: Schema<any, any> | "self";
 }
