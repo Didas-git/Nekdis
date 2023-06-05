@@ -58,7 +58,7 @@ export class HASHDocument implements DocumentShared {
         this.$prefix = data?.$prefix ?? record?.prefix;
         this.$model_name = data?.$model_name ?? record?.name;
         this.$suffix = data?.$suffix ?? (typeof record?.suffix === "function" ? record.suffix() : record?.suffix);
-        this.$id = data?.$id ?? record?.id ?? randomUUID();
+        this.$id = data?.$id?.toString() ?? record?.id ?? randomUUID();
         this.$record_id = `${this.$global_prefix}:${this.$prefix}:${this.$model_name}:${this.$suffix ? `${this.$suffix}:` : ""}${this.$id}`;
         this.#schema = schema;
         this.#validate = validate;
@@ -70,6 +70,7 @@ export class HASHDocument implements DocumentShared {
             if (isFetchedData) {
                 for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
                     const [key, value] = entries[i];
+                    if (key.startsWith("$")) continue;
                     const arr = key.split(".");
 
                     if (arr.length > 1) /* This is an object or tuple */ {
@@ -117,6 +118,7 @@ export class HASHDocument implements DocumentShared {
             } else {
                 for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
                     const [key, value] = entries[i];
+                    if (key.startsWith("$")) continue;
                     this[key] = value;
                 }
             }
@@ -145,11 +147,11 @@ export class HASHDocument implements DocumentShared {
             this.$prefix,
             "$model_name",
             this.$model_name,
-            "$suffix",
-            this.$suffix,
             "$id",
             this.$id
         ];
+
+        if (this.$suffix) arr.push("$suffix", this.$suffix);
 
         for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
             const [key, val] = entries[i];
@@ -176,7 +178,7 @@ export class HASHDocument implements DocumentShared {
             for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
                 const key = keys[i];
 
-                arr.push(key, hashFieldToString({ type: "array" }, this[key]) ?? "");
+                arr.push(key, hashFieldToString({ type: "array" }, this[key]));
             }
         }
 

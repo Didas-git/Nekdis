@@ -2,9 +2,8 @@ import { dateToNumber, numberToDate, stringsToObject } from "./general-helpers";
 
 import type { ArrayField, BaseField, ObjectField, Point } from "../../typings";
 
-export function booleanToString(val: boolean): string | undefined {
-    if (typeof val !== "undefined") return (+val).toString();
-    return void 0;
+export function booleanToString(val: boolean): string {
+    return (+val).toString();
 }
 
 export function pointToString(val: Point): string {
@@ -25,7 +24,7 @@ export function stringToNumber(val: string): number {
     return parseFloat(val);
 }
 
-export function hashFieldToString(schema: BaseField, val: any): string | undefined {
+export function hashFieldToString(schema: BaseField, val: any): string {
     if (schema.type === "boolean") {
         return booleanToString(val);
     } else if (schema.type === "date") {
@@ -45,7 +44,7 @@ export function hashFieldToString(schema: BaseField, val: any): string | undefin
 }
 
 export function objectToHashString(data: Record<string, any>, k: string, schema?: Record<string, any>): Array<string> {
-    let init: Array<string> = [];
+    const init: Array<string> = [];
     for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
         const [key, val] = entries[i];
 
@@ -60,7 +59,6 @@ export function objectToHashString(data: Record<string, any>, k: string, schema?
 
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         init.push(`${k}.${key}`, hashFieldToString(<BaseField>schema?.[key] ?? convertUnknownToSchema(val), val) ?? "");
-
     }
 
     return init;

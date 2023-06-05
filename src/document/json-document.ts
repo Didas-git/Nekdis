@@ -64,6 +64,7 @@ export class JSONDocument implements DocumentShared {
             if (isFetchedData) {
                 for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
                     const [key, value] = entries[i];
+                    if (key.startsWith("$")) continue;
                     const arr = key.split(".");
 
                     if (arr.length > 1) /* This is a tuple */ {
