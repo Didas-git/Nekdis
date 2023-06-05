@@ -2,11 +2,8 @@ import { createHash } from "node:crypto";
 
 import { JSONDocument, HASHDocument } from "./document";
 import { methods, schemaData } from "./utils/symbols";
+import { parseSchemaToSearchIndex } from "./utils";
 import { Search } from "./search";
-import {
-    parseSchemaToSearchIndex,
-    stringOrDocToString
-} from "./utils";
 
 import type { Schema } from "./schema";
 import type {
@@ -134,17 +131,20 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
 
     public async delete(...docs: Array<string | number | Doc>): Promise<void> {
         if (!docs.length) throw new Error();
-        await this.#client.del(stringOrDocToString(docs, this.name));
+        await this.#client.del(this.#stringOrDocToString(docs));
     }
 
     public async exists(...docs: Array<string | number | Doc>): Promise<number> {
         if (!docs.length) throw new Error();
-        return await this.#client.exists(stringOrDocToString(docs, this.name));
+        return await this.#client.exists(this.#stringOrDocToString(docs));
     }
 
-    public async expire(docs: Array<string | number | Doc>, seconds: number, mode?: "NX" | "XX" | "GT" | "LT"): Promise<void> {
+    public async expire(docs: Array<string | number | Doc>, seconds: number | Date, mode?: "NX" | "XX" | "GT" | "LT"): Promise<void> {
         if (!docs.length) throw new Error();
-        docs = stringOrDocToString(docs, this.name);
+        docs = this.#stringOrDocToString(docs);
+
+        if (seconds instanceof Date) seconds = seconds.getTime() / 1000;
+
         const temp = [];
 
         for (let i = 0, len = docs.length; i < len; i++) {
@@ -224,6 +224,31 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
 
     public async rawSearch(...args: Array<string>): Promise<ReturnType<RedisClient["ft"]["search"]>> {
         return await this.#client.ft.search(this.#searchIndexName, args.join(" "));
+    }
+
+    #stringOrDocToString(stringOrNumOrDoc: Array<string | number | Doc>): Array<string> {
+        const temp = [];
+
+        for (let i = 0, len = stringOrNumOrDoc.length; i < len; i++) {
+            const el = stringOrNumOrDoc[i];
+            let id = "";
+
+            if (el instanceof JSONDocument || el instanceof HASHDocument) {
+                id = el.$record_id;
+            } else if (el.toString().split(":").length === 1) {
+                const suffix = this.#schema.options.suffix;
+
+                if (typeof suffix === "function") {
+                    throw new PrettyError("Due to the use of dynamic suffixes you gave to pass in a full id");
+                }
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                id = `${this.#globalPrefix}:${this.#prefix}:${this.name}:${suffix ? `${suffix}:` : ""}${el.toString()}`;
+            }
+
+            temp.push(id);
+        }
+
+        return temp;
     }
 
     #defineMethods(): void {
