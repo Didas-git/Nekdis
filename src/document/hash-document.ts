@@ -107,8 +107,12 @@ export class HASHDocument implements DocumentShared {
                     }
 
                     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                    if (schema.references[key] === null && !this.#autoFetch) {
-                        this[key] = new ReferenceArray(...<Array<string>>stringToHashField({ type: "array" }, <string>value));
+                    if (schema.references[key] === null) {
+                        if (!this.#autoFetch) {
+                            this[key] = new ReferenceArray(...<Array<string>>stringToHashField({ type: "array" }, <string>value));
+                            continue;
+                        }
+                        this[key] = value;
                         continue;
                     }
 
