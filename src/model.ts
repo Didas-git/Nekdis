@@ -16,6 +16,7 @@ import type {
     ReturnDocument,
     Doc
 } from "./typings";
+import { stringToHashField } from "./document/document-helpers";
 
 export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
     readonly #schema: S;
@@ -84,7 +85,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
             for (let i = 0, keys = Object.keys(this.#schema[schemaData].references), len = keys.length; i < len; i++) {
                 const key = keys[i];
                 //@ts-expect-error node-redis types decided to die
-                const val = data[key];
+                const val = this.#schema.options.dataStructure === "JSON" ? data[key] : stringToHashField({ type: "array" }, <string>data[key]);
                 const temp = [];
 
                 for (let j = 0, le = val.length; j < le; j++) {

@@ -4,7 +4,6 @@ import { randomUUID } from "node:crypto";
 import { ReferenceArray } from "../utils";
 import {
     validateSchemaReferences,
-    convertUnknownToSchema,
     validateSchemaData,
     objectToHashString,
     getLastKeyInSchema,
@@ -164,7 +163,15 @@ export class HASHDocument implements DocumentShared {
                 const temp = tupleToObjStrings(<never>this[key], key);
                 for (let j = 0, le = temp.length; j < le; j++) {
                     const [k, value] = Object.entries(temp[j])[0];
-                    arr.push(k, hashFieldToString(convertUnknownToSchema(<never>val), value));
+
+                    //@ts-expect-error Type Overload
+                    if (val.elements[j].type === "object") {
+                        //@ts-expect-error Type Overload
+                        arr.push(...objectToHashString(value, k, val.elements[j].properties));
+                        continue;
+                    }
+
+                    arr.push(k, hashFieldToString(<never>val, value));
                 }
                 continue;
             }
