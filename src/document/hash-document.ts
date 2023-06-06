@@ -185,6 +185,7 @@ export class HASHDocument implements DocumentShared {
             for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
                 const key = keys[i];
 
+                if (!this[key]?.length) continue;
                 arr.push(key, hashFieldToString({ type: "array" }, this[key]));
             }
         }
