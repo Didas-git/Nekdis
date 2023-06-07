@@ -37,6 +37,7 @@ The next steps for the proposal include:
   - [Shared Properties](#shared-properties)
   - [Unique Properties](#unique-properties)
 - [Missing features](#missing-features)
+- [Todo](#todo)
 
 # Installation
 
@@ -180,10 +181,20 @@ This proposal includes the addition of 2 new shared properties and some unique o
 
 # Missing features
 
+- Stop Words.
 - Case sensitive search fields.
 - Word stemming.
 - Field weight.
 - Custom alias for a field.
 - Phonetic matcher
+
+# Todo
+
+- VSS
+- `in` operator for number search
+- Array of points
+- Fully support array of objects
+- Graph implementation
+
 
 [^1]: Currently the `deepMerge` function will take longer the more objects and nested objects you have, the idea i received is to do it all in one go by using a function to flatten it but im not sure yet on how to do it
