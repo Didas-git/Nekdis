@@ -5,6 +5,9 @@ import type { ArrayField, BaseField, ObjectField } from "../../typings";
 export function jsonFieldToDoc(schema: BaseField, val: any): any {
     if (schema.type === "date") {
         return numberToDate(val);
+    } else if (schema.type === "point") {
+        const [longitude, latitude] = val.split(",");
+        return { longitude: +longitude, latitude: +latitude };
     } else if (schema.type === "object") {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         parseJsonObject(<never>schema, val);
@@ -21,6 +24,8 @@ export function jsonFieldToDoc(schema: BaseField, val: any): any {
 export function docToJson(schema: BaseField, val: any): any {
     if (schema.type === "date") {
         return dateToNumber(val);
+    } else if (schema.type === "point") {
+        return `${val.longitude},${val.latitude}`;
     } else if (schema.type === "object") {
         parseDoc(<never>schema, val);
     } else if (schema.type === "array") {
