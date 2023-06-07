@@ -114,7 +114,7 @@ This proposal introduces a new way to create unique ids called `RecordId`.
 
 RecordIds allow you to set prefixes and other properties to your id that is shared across all of the records.
 
-![](./recordid.png)
+![](https://p20.zdusercontent.com/attachment/66681/cllm256dcJu2AjItkfX3Z4tb8?token=eyJhbGciOiJkaXIiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0..pTCS69J5xsWIQ8VSZGqIaQ.VLayJFxCXi4-3e3Se4jiD2TvZYtzwUCXOKTISp1cR_HW-G4_DelN2BGFmZRwRKz3L-qdQaIKyhiCfQ9JeC9e5GtWr1yXmubMWDtCF00O6WAm3dgKGaV1THnyYDL3WhRcmiG34ls5ti1nmZ_qIa6iJYXcBSR_CtlbRd4QQwYNboIkvoA5UUs7QZQNb8v_-wEHBj8LZLxh26DxEwyx4bLsmaanFK0oQ89YcZKw4DXQxBbXuN8TSOPN9ipvwpeCE11u5Gc3Yf32wZ9NWDoAP7vLOYwl-vbNiILcgWN8OC7zpOg.JU-r9QMnUYNqcXTb7m5gEA)
 
 # Custom Methods
 
