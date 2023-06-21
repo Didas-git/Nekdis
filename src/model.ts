@@ -144,7 +144,7 @@ export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
         if (!docs.length) throw new Error();
         docs = this.#stringOrDocToString(docs);
 
-        if (seconds instanceof Date) seconds = seconds.getTime() / 1000;
+        if (seconds instanceof Date) seconds = Math.round(seconds.getTime() / 1000 - Date.now());
 
         const temp = [];
 
