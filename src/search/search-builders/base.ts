@@ -1,5 +1,5 @@
 import type { ParseSchema } from "../../typings";
-import type { Search } from "../../search";
+import type { Search } from "../search";
 
 export abstract class SearchField<T extends ParseSchema<any>> {
 

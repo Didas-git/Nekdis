@@ -1,6 +1,6 @@
 import type { SearchOptions, SearchReply } from "redis";
 
-import { JSONDocument, HASHDocument } from "./document";
+import { JSONDocument, HASHDocument } from "../document";
 import {
     type SearchField,
     StringField,
@@ -9,7 +9,7 @@ import {
     TextField,
     DateField,
     PointField
-} from "./utils";
+} from "./search-builders";
 
 import type {
     FieldTypes,
@@ -20,7 +20,7 @@ import type {
     BaseField,
     ParsedMap,
     ReturnDocument
-} from "./typings";
+} from "../typings";
 
 export type SearchReturn<T extends Search<ParseSchema<any>>> = Omit<T, "where" | "and" | "or" | "rawQuery" | `sort${string}` | `return${string}`>;
 export type SearchSortReturn<T extends Search<ParseSchema<any>>> = Omit<T, `sort${string}`>;

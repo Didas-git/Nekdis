@@ -1,7 +1,7 @@
 import { SearchField } from "./base";
 
 import type { ParseSchema } from "../../typings";
-import type { Search } from "../../search";
+import type { Search } from "../search";
 
 export class BooleanField<T extends ParseSchema<any>> extends SearchField<T> {
 

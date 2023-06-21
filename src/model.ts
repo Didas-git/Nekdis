@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { JSONDocument, HASHDocument } from "./document";
 import { methods, schemaData } from "./utils/symbols";
 import { parseSchemaToSearchIndex } from "./utils";
-import { Search } from "./search";
+import { Search } from "./search/search";
 
 import type { Schema } from "./schema";
 import type {
