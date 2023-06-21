@@ -38,6 +38,15 @@ The next steps for the proposal include:
   - [Unique Properties](#unique-properties)
 - [Missing features](#missing-features)
 - [Todo](#todo)
+- [Nekdis VS Redis-OM](#nekdis-vs-redis-om)
+  - [Client](#client)
+  - [Schema](#schema)
+  - [Model vs Repository](#model-vs-repository)
+    - [Nekdis Document](#nekdis-document)
+      - [Creating and saving](#creating-and-saving)
+      - [Creating and mutating](#creating-and-mutating)
+  - [Search](#search)
+  - [Open Issues this proposal fixes](#open-issues-this-proposal-fixes)
 
 # Installation
 
@@ -198,3 +207,144 @@ This proposal includes the addition of 2 new shared properties and some unique o
 
 
 [^1]: Currently the `deepMerge` function will take longer the more objects and nested objects you have, the idea i received is to do it all in one go by using a function to flatten it but im not sure yet on how to do it
+
+# Nekdis VS Redis-OM
+
+In this part of the document im going to cover how this proposal compares to the current redis-om (0.4.0-beta.3) and the major differences.
+
+## Client
+
+In Nekdis the `Client` does not provide any methods to interact directly with the database and its pretty much only used to store your models and handle the connection, **however** you can access the `node-redis` client by accessing `client.raw`.
+
+## Schema
+
+The schema in Nekdis is just where you define the shape of your data while in redis-om it also takes care of creating indexes and some other internal bits.
+
+With this comes the big question "Well, why not use just a plain object then", the simple answer to this question is ease of use but to explain it further, having the schema defined this way allows the library to internally check if there isn't anything missing and parse it so you are allowed to use the shorthand methods like `field: "string"`, this approach also allows for you to define methods an options that will be passed down to the model down the road and not to mention that this is one of the only ways to have references working properly without affecting performance.
+
+## Model vs Repository
+
+In redis-om you use a `repository` to interact with the db by using methods like `fetch`, `save` and `search`.
+
+In Nekdis the `model` is not that different but it allows you to add more functionality to it (see: [Custom Methods](#custom-methods)) and overall gives more functionality out of the box.
+
+### Nekdis Document
+
+In Nekdis you have what are called documents, this is just an abstraction to the data to allow better interaction with references and faster parsing.
+
+At first this might look daunting compared to redis-om that now uses plain objects but i can assure you that there isn't that much of a difference, and i will give some examples to demonstrate it.
+
+#### Creating and saving
+
+See, its just as easy
+
+<table>
+<tr>
+<th>Nekdis</th>
+<th>Redis-OM</th>
+</tr>
+<tr>
+<td>
+
+```ts
+await model.createAndSave({
+    name: "DidaS"
+});
+```
+
+</td>
+<td>
+
+```ts
+await repository.save({
+    name: "DidaS"
+});
+```
+
+</td>
+</tr>
+</table>
+
+#### Creating and mutating
+
+This is where things start to be a bit different, even tho you **can** use a plain object that isn't recommended since it would just use more memory.
+
+<table>
+<tr>
+<th>Nekdis</th>
+<th>Nekdis with plain object</th>
+<th>Redis-OM</th>
+</tr>
+<tr>
+<td>
+
+```ts
+// You can pass values directly to it
+// just like in createAndSave
+const data = model.create({
+    name: "DidaS"
+});
+
+// mutate data
+data.year = 2023;
+
+await model.save(data);
+```
+
+</td>
+<td>
+
+```ts
+// Doing it this way will use more memory
+// and you wont have intellisense
+const data = {
+    name: "DidaS"
+}
+
+// mutate data
+data.year = 2023;
+
+await model.createAndSave(data);
+```
+
+</td>
+<td>
+
+```ts
+const data = {
+    name: "DidaS"
+}
+
+// mutate data
+data.year = 2023;
+
+await repository.save(data);
+```
+
+</td>
+</tr>
+</table>
+
+## Search
+
+Looking at search for the first time it is pretty much the same, the only difference is that `equals` operations exist in **every** data type so a lot of times changing the data type in the schema wont break the query **and** the best part is that `eq`, `equals` and other operators like them support arrays (so they pretty much work like an `in` operator).
+
+## Open Issues this proposal fixes
+
+- [#25 (Use reflection to do object mapping for a more declarative API)](https://github.com/redis/redis-om-node/issues/25)
+  - Achieves this purely on the type level working for both js and ts without extra steps and without the declarative (decorators) part
+- [#28 (Transactions & relations)](https://github.com/redis/redis-om-node/issues/28)
+  - Relations are added and transactions are in the plans with a nice api like the c# lib
+- [#44 (Add in (eq for multiple values))](https://github.com/redis/redis-om-node/issues/44)
+  - As mentioned in [Search](#search) methods like `equals` work just like it
+- [#54 (Add boolean[] as a new type)](https://github.com/redis/redis-om-node/issues/54)
+- [#55 (Add number[] as a new type)](https://github.com/redis/redis-om-node/issues/55)
+- [#66 (Implement implicit transaction and locking in the context of redis-om for master-detail relations )](https://github.com/redis/redis-om-node/issues/66)
+  - Partially done with relations
+- [#69 (Add default value to Schema)](https://github.com/redis/redis-om-node/issues/69)
+  - Also `required` was added
+- [#120 (Add expireAt)](https://github.com/redis/redis-om-node/issues/120)
+  - normal expire accepts both seconds or a date object
+- [#141 (Feature: "in" query clause functionality)](https://github.com/redis/redis-om-node/issues/141)
+  - Same as issue #44
+- [#184 (Set a Global Prefix in Node Om)](https://github.com/redis/redis-om-node/issues/184)
