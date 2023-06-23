@@ -32,6 +32,7 @@ The next steps for the proposal include:
   - [Creating and Saving data](#creating-and-saving-data)
 - [The new `RecordId`](#the-new-recordid)
 - [Custom Methods](#custom-methods)
+- [Modules](#modules)
 - [Schema Types](#schema-types)
 - [Field Properties](#field-properties)
   - [Shared Properties](#shared-properties)
@@ -46,6 +47,7 @@ The next steps for the proposal include:
       - [Creating and saving](#creating-and-saving)
       - [Creating and mutating](#creating-and-mutating)
   - [Search](#search)
+  - [A Simple example](#a-simple-example)
   - [Open Issues this proposal fixes](#open-issues-this-proposal-fixes)
 
 # Installation
@@ -145,6 +147,31 @@ const albumSchema = client.schema({
 const albumModel = client.model("Album", albumSchema);
 
 const results = await albumModel.searchByName("DROP");
+```
+
+# Modules
+
+Nekdis allows you to add modules to the client, modules are something that adds extra functionality to the library, you pass in a class where the constructor will receive the client as its first argument.
+
+Keep in mind that this might be more useful if you are creating your own instance of the client and exporting it because that way you will also get intellisense for the module.
+
+```ts
+import {type Client, client} from "nekdis";
+
+class MyModule {
+    constructor(client: Client) {
+        // Do something
+    }
+
+    myFunction() {
+        // Do something
+    }
+}
+
+client.withModules({ name: "myMod", ctor: MyModule });
+
+// Access it
+client.myMod.myFunction()
 ```
 
 # Schema Types
@@ -328,6 +355,121 @@ await repository.save(data);
 ## Search
 
 Looking at search for the first time it is pretty much the same, the only difference is that `equals` operations exist in **every** data type so a lot of times changing the data type in the schema wont break the query **and** the best part is that `eq`, `equals` and other operators like them support arrays (so they pretty much work like an `in` operator).
+
+## A Simple example
+
+This is a simple program example that generates 30 random users with random ages and fetches the ones matching a certain age just to show the differences between the libraries
+
+<table>
+<tr>
+<th>Nekdis</th>
+<th>Redis-OM</th>
+</tr>
+<tr>
+<td>
+
+```ts
+// Import the global client
+import { client } from "nekdis";
+
+// Connect to the db
+await client.connect();
+
+// Create the schema
+const userSchema = client.schema({
+    age: "number"
+}, {
+    // Define function to help repetitive task
+    findBetweenAge: async function (min: number, max: number) {
+        return await this.search().where("age").between(min, max).returnAll();
+    }
+    // Add creation date to the key
+}, { suffix: () => Date.now().toString() });
+
+// Create the interface
+const userModel = client.model("User", userSchema);
+
+// Create the search index
+await userModel.createIndex();
+
+// Generate 30 users
+for (let i = 0; i < 30; i++) {
+    await userModel.createAndSave({
+        age: between(18, 90)
+    });
+}
+
+// Get the users that are between 30 and 50 years old
+const users = await userModel.findBetweenAge(30, 50);
+
+// Log the users
+console.log(users)
+
+// Close the connection
+await client.disconnect();
+
+// A helper function that generates a random number between min and max
+function between(min: number, max: number) {
+    return Math.round(Math.random() * (max - min + 1)) + min;
+};
+```
+
+</td>
+<td>
+
+```ts
+// Import the redis client
+import { createClient } from "redis";
+// Import OM utilities
+import { Schema, Repository } from "redis-om";
+
+// Create Client
+const client = createClient()
+
+// Connect to the db
+await client.connect();
+
+// Create the schema
+const userSchema = new Schema("User", {
+    age: { type: "number" }
+});
+
+// Create the interface
+const userRepository = new Repository(userSchema, client);
+
+// Create the search index
+await userRepository.createIndex();
+
+// Generate 30 users
+for (let i = 0; i < 30; i++) {
+    await userRepository.save({
+        age: between(18, 90)
+    });
+}
+
+// Get the users that are between 30 and 50 years old
+const users = await findBetweenAge(userRepository, 30, 50);
+
+// Log the users
+console.log(users)
+
+// Close the connection
+await client.disconnect();
+
+// Define function to help repetitive task
+async function findBetweenAge(repository: Repository, min: number, max: number) {
+    return await repository.search().where("age").between(min, max).returnAll();
+}
+
+// A helper function that generates a random number between min and max
+function between(min: number, max: number) {
+    return Math.round(Math.random() * (max - min + 1)) + min;
+};
+```
+
+</td>
+</tr>
+</table>
 
 ## Open Issues this proposal fixes
 
