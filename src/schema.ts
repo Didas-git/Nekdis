@@ -13,7 +13,7 @@ import type {
     BaseField
 } from "./typings";
 
-export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P extends ParseSchema<S> = ParseSchema<S>> {
+export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> = MethodsDefinition<S>, P extends ParseSchema<S> = ParseSchema<S>> {
 
     /** @internal */
     public [methods]: M;
@@ -22,21 +22,10 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition, P e
     public [schemaData]: P;
 
     public constructor(rawData: S, methodsData?: M, public readonly options: SchemaOptions = {}) {
-        // R.I.P. Performance
         this[schemaData] = this.#parse(rawData);
         this[methods] = methodsData ?? <M>{};
         this.options.dataStructure = options.dataStructure ?? "JSON";
 
-    }
-
-    public add<SD extends SchemaDefinition>(data: SD): this {
-        this[schemaData] = { ...this[schemaData], ...this.#parse(data) };
-        return this;
-    }
-
-    public methods<MD extends MethodsDefinition>(data: MD): this {
-        this[methods] = { ...this[methods], ...data };
-        return this;
     }
 
     #parse<T extends SchemaDefinition>(schema: T): P {
