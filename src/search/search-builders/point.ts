@@ -108,6 +108,7 @@ export class PointField<T extends ParseSchema<any>> extends SearchField<T> {
 
     public override eq(fn: CircleFunction | Circle): Search<T> {
         this.#circle = typeof fn === "function" ? fn(this.#circle) : fn;
+        this.search._query.push(this);
         return this.search;
     }
 

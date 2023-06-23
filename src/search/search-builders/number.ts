@@ -15,26 +15,31 @@ export class NumberField<T extends ParseSchema<any>> extends SearchField<T> {
 
     public gt(value: number): Search<T> {
         this.value = [`(${value}`, "+inf"];
+        this.search._query.push(this);
         return this.search;
     }
 
     public gte(value: number): Search<T> {
         this.value = [value.toString(), "+inf"];
+        this.search._query.push(this);
         return this.search;
     }
 
     public lt(value: number): Search<T> {
         this.value = ["-inf", `(${value}`];
+        this.search._query.push(this);
         return this.search;
     }
 
     public lte(value: number): Search<T> {
         this.value = ["-inf", value.toString()];
+        this.search._query.push(this);
         return this.search;
     }
 
     public between(lower: number, upper: number): Search<T> {
         this.value = [lower.toString(), upper.toString()];
+        this.search._query.push(this);
         return this.search;
     }
 

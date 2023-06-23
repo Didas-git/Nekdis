@@ -16,26 +16,31 @@ export class DateField<T extends ParseSchema<any>> extends SearchField<T> {
 
     public gt(value: Date | number | string): Search<T> {
         this.value = [`(${this.#getTime(value)}`, "+inf"];
+        this.search._query.push(this);
         return this.search;
     }
 
     public gte(value: Date | number | string): Search<T> {
         this.value = [this.#getTime(value), "+inf"];
+        this.search._query.push(this);
         return this.search;
     }
 
     public lt(value: Date | number | string): Search<T> {
         this.value = ["-inf", `(${this.#getTime(value)}`];
+        this.search._query.push(this);
         return this.search;
     }
 
     public lte(value: Date | number | string): Search<T> {
         this.value = ["-inf", this.#getTime(value)];
+        this.search._query.push(this);
         return this.search;
     }
 
     public between(lower: Date | number | string, upper: Date | number | string): Search<T> {
         this.value = [this.#getTime(lower), this.#getTime(upper)];
+        this.search._query.push(this);
         return this.search;
     }
 
