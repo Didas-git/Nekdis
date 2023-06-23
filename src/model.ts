@@ -8,17 +8,15 @@ import { Search } from "./search/search";
 import type { Schema } from "./schema";
 import type {
     ExtractParsedSchemaDefinition,
-    SchemaDefinition,
-    MapSchema,
-    MethodsDefinition,
-    RedisClient,
-    ParsedMap,
     ReturnDocument,
+    RedisClient,
+    MapSchema,
+    ParsedMap,
     Doc
 } from "./typings";
 import { stringToHashField } from "./document/document-helpers";
 
-export class Model<S extends Schema<SchemaDefinition, MethodsDefinition>> {
+export class Model<S extends Schema<any>> {
     readonly #schema: S;
     readonly #client: RedisClient;
     readonly #globalPrefix: string;

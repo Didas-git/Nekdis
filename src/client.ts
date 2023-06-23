@@ -8,12 +8,11 @@ import type {
     MethodsDefinition,
     SchemaDefinition,
     SchemaOptions,
-    Module,
     WithModules,
-    URLObject,
     RedisClient,
     ExtractName,
-    ParseSchema
+    URLObject,
+    Module
 } from "./typings";
 
 import "@infinite-fansub/logger";
@@ -59,8 +58,19 @@ export class Client {
         return this;
     }
 
-    public schema<T extends SchemaDefinition, M extends MethodsDefinition>(schemaData: T, methods?: M, options?: SchemaOptions): Schema<T, M> {
+    public schema<T extends SchemaDefinition, M extends MethodsDefinition<T>>(schemaData: T, methods?: M, options?: SchemaOptions): Schema<T, M> {
         return new Schema<T, M>(schemaData, methods, options);
+    }
+
+    public model<T extends Schema<any>>(name: string, schema?: T): Model<T> & ExtractSchemaMethods<T> {
+        let model = this.#models.get(name);
+        if (model) return <never>model;
+
+        if (!schema) throw new PrettyError("You have to pass a schema if it doesn't exist");
+
+        model = new Model(this.#client, this.#prefix, "V1", name, schema);
+        this.#models.set(name, model);
+        return <never>model;
     }
 
     public withModules<T extends Array<Module>>(modules: ExtractName<T>): this & WithModules<T> {
@@ -71,17 +81,6 @@ export class Client {
         }
 
         return <never>this;
-    }
-
-    public model<T extends Schema<SchemaDefinition, MethodsDefinition, ParseSchema<any>>>(name: string, schema?: T): Model<T> & ExtractSchemaMethods<T> {
-        let model = this.#models.get(name);
-        if (model) return <never>model;
-
-        if (!schema) throw new Error("You have to pass a schema if it doesn't exist");
-
-        model = new Model(this.#client, this.#prefix, "V1", name, schema);
-        this.#models.set(name, model);
-        return <never>model;
     }
 
     public get raw(): RedisClient {
