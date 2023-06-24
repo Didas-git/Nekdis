@@ -418,10 +418,12 @@ function between(min: number, max: number) {
 <td>
 
 ```ts
+// Node stuff for the id
+import { randomUUID } from "node:crypto";
 // Import the redis client
 import { createClient } from "redis";
 // Import OM utilities
-import { Schema, Repository } from "redis-om";
+import { Schema, Repository, Entity, EntityId } from "redis-om";
 
 // Create Client
 const client = createClient()
@@ -434,6 +436,13 @@ const userSchema = new Schema("User", {
     age: { type: "number" }
 });
 
+// Create an interface to allow type safe manipulation
+// However you will need to use it everywhere 
+// If you are using js you would need to do it in jsdoc for it to work
+interface UserEntity extends Entity {
+    age: number
+}
+
 // Create the interface
 const userRepository = new Repository(userSchema, client);
 
@@ -443,6 +452,8 @@ await userRepository.createIndex();
 // Generate 30 users
 for (let i = 0; i < 30; i++) {
     await userRepository.save({
+        // We set the "suffix" and random id to somewhat match Nekdis (still not 100% accurate you would need even more) 
+        [EntityId]: `${Date.now()}:${randomUUID()}`,
         age: between(18, 90)
     });
 }
@@ -457,8 +468,9 @@ console.log(users)
 await client.disconnect();
 
 // Define function to help repetitive task
-async function findBetweenAge(repository: Repository, min: number, max: number) {
-    return await repository.search().where("age").between(min, max).returnAll();
+async function findBetweenAge(repository: Repository, min: number, max: number): Promise<Array<UserEntity>> {
+    // Type assertion so ts does not complain
+    return <Array<UserEntity>>await repository.search().where("age").between(min, max).returnAll();
 }
 
 // A helper function that generates a random number between min and max
