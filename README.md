@@ -47,6 +47,7 @@ The next steps for the proposal include:
       - [Creating and saving](#creating-and-saving)
       - [Creating and mutating](#creating-and-mutating)
   - [Search](#search)
+  - [Nested objects](#nested-objects)
   - [A Simple example](#a-simple-example)
   - [Open Issues this proposal fixes](#open-issues-this-proposal-fixes)
 
@@ -355,6 +356,57 @@ await repository.save(data);
 ## Search
 
 Looking at search for the first time it is pretty much the same, the only difference is that `equals` operations exist in **every** data type so a lot of times changing the data type in the schema wont break the query **and** the best part is that `eq`, `equals` and other operators like them support arrays (so they pretty much work like an `in` operator).
+
+## Nested objects
+
+Currently in redis-om you need to define a path for each field to define your nested objects, meanwhile in Nekdis they just work like normal js objects!
+
+There are several advantages to this, two of the main ones being, faster serialization/deserialization and simpler to use, here is an example comparing both
+
+<table>
+<tr>
+<th>Nekdis</th>
+<th>Redis-OM</th>
+</tr>
+<tr>
+<td>
+
+```ts
+client.schema({
+    field: {
+        type: "object",
+        properties: {
+            aNumberInsideOfIt: "number",
+            nesting: {
+                type: "object",
+                properties: {
+                    doubleNested: "boolean"
+                }
+            }
+        }
+    }
+})
+```
+
+</td>
+<td>
+
+```ts
+Schema("OM", {
+    aNumberInsideOfIt: {
+        type: "number",
+        path: "$.field.aNumberInsideOfIt"
+    },
+    doubleNested: {
+        type: "boolean",
+        path: "$.field.nesting.doubleNested"
+    }
+})
+```
+
+</td>
+</tr>
+</table>
 
 ## A Simple example
 
