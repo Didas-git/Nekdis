@@ -21,12 +21,15 @@ import {
 } from "./createAndSave.mjs";
 
 export async function main(iter: number, amt: number) {
+    //#region createAndSave
     // With Validation
     await benchJSONCreateAndSave(iter, amt);
     await benchHASHCreateAndSave(iter, amt);
 
     await benchBatchJSONCreateAndSave(iter, amt);
     await benchBatchHASHCreateAndSave(iter, amt);
+
+    await client.raw.flushAll();
 
     await benchFullJSONCreateAndSave(iter, amt);
     await benchFullHASHCreateAndSave(iter, amt);
@@ -46,6 +49,10 @@ export async function main(iter: number, amt: number) {
 
     await benchBatchNoValFullJSONCreateAndSave(iter, amt);
     await benchBatchNoValFullHASHCreateAndSave(iter, amt);
+    //#endregion createAndSave
+    //#region get
+
+    //#endregion get
 
     await client.disconnect();
 }

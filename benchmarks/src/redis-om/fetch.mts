@@ -1,7 +1,6 @@
-import { EntityId } from "redis-om";
-import { client, JSONRepository, HASHRepository } from "./setup.mjs";
+import { JSONRepository, HASHRepository } from "./setup.mjs";
 
-export async function benchJSONSave(iter: number, amt: number): Promise<void> {
+export async function benchJSONFetch(iter: number, amt: number) {
     const table: Record<"AVG" | number, { Takes: number, PerCallRequestAverage: number }> = {} as never;
 
     const all = [];
@@ -12,21 +11,7 @@ export async function benchJSONSave(iter: number, amt: number): Promise<void> {
         for (let j = 0; j < amt; j++) {
             const start = performance.now();
 
-            await JSONRepository.save({
-                aString: "ABC",
-                aNumber: 3,
-                aBoolean: true,
-                someText: "Full Text",
-                aDate: new Date(),
-                aPoint: { longitude: 139.7745, latitude: 35.7023 },
-                aStringArray: ["A", "B", "C"],
-                anObject: {
-                    anotherBoolean: false,
-                    anotherObject: {
-                        anotherText: "Lovely"
-                    }
-                }
-            })
+            await JSONRepository.fetch(j.toString());
 
             const end = performance.now();
             temp[i].push(end - start);
@@ -43,13 +28,11 @@ export async function benchJSONSave(iter: number, amt: number): Promise<void> {
         PerCallRequestAverage: temp.reduce((prev, curr) => prev + curr, 0) / temp.length
     };
 
-    console.log(`JSON save\nIterations: ${iter}\nDocuments: ${amt}`)
+    console.log(`JSON fetch\nIterations: ${iter}\nDocuments: ${amt}`)
     console.table(table);
-
-    await client.flushAll();
 }
 
-export async function benchBatchJSONSave(iter: number, amt: number): Promise<void> {
+export async function benchBatchJSONFetch(iter: number, amt: number): Promise<void> {
     const table: Record<"AVG" | number, { Takes: number }> = {} as never;
 
     const all = [];
@@ -57,22 +40,7 @@ export async function benchBatchJSONSave(iter: number, amt: number): Promise<voi
         const temp = [];
         const loopStart = performance.now()
         for (let j = 0; j < amt; j++) {
-            temp.push(JSONRepository.save({
-                [EntityId]: j.toString(),
-                aString: "ABC",
-                aNumber: 3,
-                aBoolean: true,
-                someText: "Full Text",
-                aDate: new Date(),
-                aPoint: { longitude: 139.7745, latitude: 35.7023 },
-                aStringArray: ["A", "B", "C"],
-                anObject: {
-                    anotherBoolean: false,
-                    anotherObject: {
-                        anotherText: "Lovely"
-                    }
-                }
-            }))
+            temp.push(JSONRepository.fetch(j.toString()))
         }
         await Promise.all(temp);
         const loopEnd = performance.now();
@@ -85,11 +53,11 @@ export async function benchBatchJSONSave(iter: number, amt: number): Promise<voi
         Takes: all.reduce((prev, curr) => prev + curr, 0) / all.length
     };
 
-    console.log(`JSON Batch save\nIterations: ${iter}\nDocuments: ${amt}`)
+    console.log(`JSON Batch fetch\nIterations: ${iter}\nDocuments: ${amt}`)
     console.table(table);
 }
 
-export async function benchHASHSave(iter: number, amt: number): Promise<void> {
+export async function benchHASHFetch(iter: number, amt: number) {
     const table: Record<"AVG" | number, { Takes: number, PerCallRequestAverage: number }> = {} as never;
 
     const all = [];
@@ -100,15 +68,7 @@ export async function benchHASHSave(iter: number, amt: number): Promise<void> {
         for (let j = 0; j < amt; j++) {
             const start = performance.now();
 
-            await HASHRepository.save({
-                aString: "ABC",
-                aNumber: 3,
-                aBoolean: true,
-                someText: "Full Text",
-                aDate: new Date(),
-                aPoint: { longitude: 139.7745, latitude: 35.7023 },
-                aStringArray: ["A", "B", "C"]
-            })
+            await HASHRepository.fetch(j.toString());
 
             const end = performance.now();
             temp[i].push(end - start);
@@ -125,13 +85,11 @@ export async function benchHASHSave(iter: number, amt: number): Promise<void> {
         PerCallRequestAverage: temp.reduce((prev, curr) => prev + curr, 0) / temp.length
     };
 
-    console.log(`HASH save\nIterations: ${iter}\nDocuments: ${amt}`)
+    console.log(`HASH fetch\nIterations: ${iter}\nDocuments: ${amt}`)
     console.table(table);
-
-    await client.flushAll();
 }
 
-export async function benchBatchHASHSave(iter: number, amt: number): Promise<void> {
+export async function benchBatchHASHFetch(iter: number, amt: number): Promise<void> {
     const table: Record<"AVG" | number, { Takes: number }> = {} as never;
 
     const all = [];
@@ -139,16 +97,7 @@ export async function benchBatchHASHSave(iter: number, amt: number): Promise<voi
         const temp = [];
         const loopStart = performance.now()
         for (let j = 0; j < amt; j++) {
-            temp.push(HASHRepository.save({
-                [EntityId]: j.toString(),
-                aString: "ABC",
-                aNumber: 3,
-                aBoolean: true,
-                someText: "Full Text",
-                aDate: new Date(),
-                aPoint: { longitude: 139.7745, latitude: 35.7023 },
-                aStringArray: ["A", "B", "C"]
-            }))
+            temp.push(HASHRepository.fetch(j.toString()))
         }
         await Promise.all(temp);
         const loopEnd = performance.now();
@@ -161,6 +110,6 @@ export async function benchBatchHASHSave(iter: number, amt: number): Promise<voi
         Takes: all.reduce((prev, curr) => prev + curr, 0) / all.length
     };
 
-    console.log(`HASH Batch save\nIterations: ${iter}\nDocuments: ${amt}`)
+    console.log(`HASH Batch fetch\nIterations: ${iter}\nDocuments: ${amt}`)
     console.table(table);
 }

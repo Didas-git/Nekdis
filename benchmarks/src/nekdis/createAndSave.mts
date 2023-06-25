@@ -71,6 +71,7 @@ export async function benchBatchJSONCreateAndSave(iter: number, amt: number): Pr
         const loopStart = performance.now()
         for (let j = 0; j < amt; j++) {
             temp.push(model.createAndSave({
+                $id: j,
                 aString: "ABC",
                 aNumber: 3,
                 aBoolean: true,
@@ -99,8 +100,6 @@ export async function benchBatchJSONCreateAndSave(iter: number, amt: number): Pr
 
     console.log(`JSON Batch createAndSave\nIterations: ${iter}\nDocuments: ${amt}`)
     console.table(table);
-
-    await client.raw.flushAll();
 }
 
 export async function benchHASHCreateAndSave(iter: number, amt: number): Promise<void> {
@@ -156,6 +155,7 @@ export async function benchBatchHASHCreateAndSave(iter: number, amt: number): Pr
         const loopStart = performance.now()
         for (let j = 0; j < amt; j++) {
             temp.push(model.createAndSave({
+                $id: j,
                 aString: "ABC",
                 aNumber: 3,
                 aBoolean: true,
@@ -178,8 +178,6 @@ export async function benchBatchHASHCreateAndSave(iter: number, amt: number): Pr
 
     console.log(`HASH Batch createAndSave\nIterations: ${iter}\nDocuments: ${amt}`)
     console.table(table);
-
-    await client.raw.flushAll();
 }
 
 export async function benchNoValJSONCreateAndSave(iter: number, amt: number): Promise<void> {
