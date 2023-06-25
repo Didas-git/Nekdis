@@ -3,10 +3,12 @@
         "*.json",
         "*.d.ts",
         "*.graphql",
-        "dist/",
         "*.js",
-        "docs/",
-        "examples/"
+        "dist/**/*",
+        "spec/**/*",
+        "docs/**/*",
+        "examples/**/*",
+        "benchmarks/**/*"
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {

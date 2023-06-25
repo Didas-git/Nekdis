@@ -19,7 +19,8 @@
     "test": "vitest run --coverage",
     "lint": "eslint src/**/*.ts",
     "build": "rm -rf ./dist && tsc",
-    "build:test": "tsc --noEmit"
+    "build:test": "tsc --noEmit",
+    "bench": "rm -rf ./bench-dist && cd benchmarks && tsc && cd .. && node bench-dist/dist/index.mjs"
   },
   "repository": "github:Didas-git/Nekdis",
   "homepage": "https://github.com/Didas-git/Nekdis#readme",
@@ -49,6 +50,7 @@
   "dependencies": {
     "@infinite-fansub/logger": "^2.1.0",
     "colours.js": "^3.1.2",
-    "redis": "^4.6.7"
+    "redis": "^4.6.7",
+    "redis-om": "0.4.0-beta.3"
   }
 }

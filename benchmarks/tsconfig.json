@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "outDir": "../bench-dist/dist",
+        "target": "ES2022",
+        "module": "NodeNext"
+    },
+    "include": [
+        "src/**/*"
+    ]
+}
