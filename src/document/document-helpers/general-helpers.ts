@@ -58,7 +58,7 @@ export function validateSchemaData(
     for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
         const [key, value] = entries[i];
 
-        if (isField && !data[key]) throw new Error();
+        if (isField && typeof data[key] === "undefined") throw new Error();
 
         const dataVal = data[key];
 
