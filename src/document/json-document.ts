@@ -133,6 +133,8 @@ export class JSONDocument implements DocumentShared {
         for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
             const [key, val] = entries[i];
 
+            if (typeof this[key] === "undefined") continue;
+
             if (val.type === "tuple") {
                 const temp = tupleToObjStrings(<never>this[key], key);
                 for (let j = 0, le = temp.length; j < le; j++) {

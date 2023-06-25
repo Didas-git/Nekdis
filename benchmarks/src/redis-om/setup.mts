@@ -1,13 +1,13 @@
 import { colorConsole, Color } from "colours.js/dst/index.js";
 import { createClient } from "redis";
-import { Schema } from "redis-om";
+import { Schema, Repository } from "redis-om";
 
 export const client = createClient();
 
-await client.connect().then(() => console.log(colorConsole.uniform("Nekdis Connected!", Color.fromHex("#0000FF"))));
+await client.connect().then(() => console.log(colorConsole.uniform("Redis-OM Connected!", Color.fromHex("#FF0000"))));
 await client.flushAll();
 
-export const JSONBenchSchema = new Schema("JSONBench", {
+const JSONBenchSchema = new Schema("JSONBench", {
     aString: { type: "string" },
     aNumber: { type: "number" },
     aBoolean: { type: "boolean" },
@@ -19,7 +19,9 @@ export const JSONBenchSchema = new Schema("JSONBench", {
     anotherText: { type: "text", path: "$.anObject.anotherObject.anotherText" }
 });
 
-export const HASHBenchSchema = new Schema("HASHBench", {
+export const JSONRepository = new Repository(JSONBenchSchema, client);
+
+const HASHBenchSchema = new Schema("HASHBench", {
     aString: { type: "string" },
     aNumber: { type: "number" },
     aBoolean: { type: "boolean" },
@@ -28,3 +30,5 @@ export const HASHBenchSchema = new Schema("HASHBench", {
     aPoint: { type: "point" },
     aStringArray: { type: "string[]" }
 }, { dataStructure: "HASH" });
+
+export const HASHRepository = new Repository(HASHBenchSchema, client);

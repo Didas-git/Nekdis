@@ -159,6 +159,8 @@ export class HASHDocument implements DocumentShared {
         for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
             const [key, val] = entries[i];
 
+            if (typeof this[key] === "undefined") continue;
+
             if (val.type === "object") {
                 //@ts-expect-error Typescript is getting confused due to the union of array and object
                 arr.push(...objectToHashString(this[key], key, val.properties));

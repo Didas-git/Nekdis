@@ -75,6 +75,11 @@ export function validateSchemaData(
             dataVal.every((val: unknown) => {
                 if (typeof val === "object") return;
                 //@ts-expect-error Typescript is getting confused due to the union of array and object
+                if (value.elements === "text") {
+                    if (typeof val !== "string") throw new Error();
+                    return;
+                }
+                //@ts-expect-error Typescript is getting confused due to the union of array and object
                 if (typeof val !== value.elements) throw new Error();
             });
 
