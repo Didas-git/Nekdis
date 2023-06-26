@@ -97,7 +97,7 @@ export async function main(iter: number, amt: number, spv: boolean) {
     await benchFullJSONPage(iter, spv ? amt : amt > 9999 ? 9999 : amt);
     await benchFullHASHPage(iter, spv ? amt : amt > 9999 ? 9999 : amt);
     //#endregion page
-    // await client.raw.flushAll();
+    await client.raw.flushAll();
 
     await client.disconnect();
 }

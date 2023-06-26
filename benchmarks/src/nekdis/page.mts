@@ -13,9 +13,9 @@ const sleep = promisify(setTimeout);
 
 export async function benchJSONPage(iter: number, amt: number): Promise<void> {
     const model = client.model<typeof JSONBenchSchema>("JSONBench");
-    // Let redisearch do its thing
-    await sleep(3000);
     await model.createIndex();
+    // Let redisearch do its thing
+    await sleep(20000);
     const table: Record<"AVG" | number, { Takes: number }> = {} as never;
 
     const all = [];
@@ -42,7 +42,7 @@ export async function benchHASHPage(iter: number, amt: number): Promise<void> {
     const model = client.model<typeof HASHBenchSchema>("HASHBench");
     await model.createIndex();
     // Let redisearch do its thing
-    await sleep(3000);
+    await sleep(20000);
     const table: Record<"AVG" | number, { Takes: number }> = {} as never;
 
     const all = [];
@@ -69,7 +69,7 @@ export async function benchFullJSONPage(iter: number, amt: number): Promise<void
     const model = client.model<typeof FullJSONBenchSchema>("FullJSONBench");
     await model.createIndex();
     // Let redisearch do its thing
-    await sleep(3000);
+    await sleep(20000);
     const table: Record<"AVG" | number, { Takes: number }> = {} as never;
 
     const all = [];
@@ -96,7 +96,7 @@ export async function benchFullHASHPage(iter: number, amt: number): Promise<void
     const model = client.model<typeof FullHASHBenchSchema>("FullHASHBench");
     await model.createIndex();
     // Let redisearch do its thing
-    await sleep(3000);
+    await sleep(20000);
     const table: Record<"AVG" | number, { Takes: number }> = {} as never;
 
     const all = [];

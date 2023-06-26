@@ -21,7 +21,15 @@ export async function main(iter: number, amt: number, spv: boolean) {
     await benchBatchJSONSave(iter, amt);
     await benchBatchHASHSave(iter, amt);
 
+    //Reasons...
+    await client.flushAll()
+
     //#endregion save
+
+    // We need data for the next tests
+    await benchBatchJSONSave(1, amt);
+    await benchBatchHASHSave(1, amt);
+
     //#region fetch
     await benchJSONFetch(iter, amt);
     await benchHASHFetch(iter, amt);
