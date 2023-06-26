@@ -29,8 +29,14 @@ import {
     benchJSONGet,
     benchHASHGet
 } from "./get.mjs";
+import {
+    benchFullJSONPage,
+    benchFullHASHPage,
+    benchJSONPage,
+    benchHASHPage
+} from "./page.mjs";
 
-export async function main(iter: number, amt: number) {
+export async function main(iter: number, amt: number, spv: boolean) {
     //#region createAndSave
     // With Validation
     await benchJSONCreateAndSave(iter, amt);
@@ -84,8 +90,14 @@ export async function main(iter: number, amt: number) {
     await benchBatchFullJSONGet(iter, amt);
     await benchBatchFullHASHGet(iter, amt);
     //#endregion get
+    //#region page
+    await benchJSONPage(iter, spv ? amt : amt > 9999 ? 9999 : amt);
+    await benchHASHPage(iter, spv ? amt : amt > 9999 ? 9999 : amt);
 
-    await client.raw.flushAll();
+    await benchFullJSONPage(iter, spv ? amt : amt > 9999 ? 9999 : amt);
+    await benchFullHASHPage(iter, spv ? amt : amt > 9999 ? 9999 : amt);
+    //#endregion page
+    // await client.raw.flushAll();
 
     await client.disconnect();
 }

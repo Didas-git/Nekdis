@@ -1,7 +1,12 @@
 import { JSONRepository, HASHRepository } from "./setup.mjs";
+import { promisify } from "node:util";
+
+const sleep = promisify(setTimeout);
 
 export async function benchJSONPage(iter: number, amt: number): Promise<void> {
     await JSONRepository.createIndex();
+    // Let redisearch do its thing
+    await sleep(3000);
     const table: Record<"AVG" | number, { Takes: number }> = {} as never;
 
     const all = [];
@@ -26,6 +31,8 @@ export async function benchJSONPage(iter: number, amt: number): Promise<void> {
 
 export async function benchHASHPage(iter: number, amt: number): Promise<void> {
     await HASHRepository.createIndex();
+    // Let redisearch do its thing
+    await sleep(3000);
     const table: Record<"AVG" | number, { Takes: number }> = {} as never;
 
     const all = [];

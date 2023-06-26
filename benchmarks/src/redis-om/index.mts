@@ -13,7 +13,7 @@ import {
     benchHASHFetch
 } from "./fetch.mjs";
 
-export async function main(iter: number, amt: number) {
+export async function main(iter: number, amt: number, spv: boolean) {
     //#region save
     await benchJSONSave(iter, amt);
     await benchHASHSave(iter, amt);
@@ -30,8 +30,8 @@ export async function main(iter: number, amt: number) {
     await benchBatchHASHFetch(iter, amt);
     //#endregion fetch
     //#region page
-    await benchJSONPage(iter, amt);
-    await benchHASHPage(iter, amt);
+    await benchJSONPage(iter, spv ? amt : amt > 9999 ? 9999 : amt);
+    await benchHASHPage(iter, spv ? amt : amt > 9999 ? 9999 : amt);
     //#endregion page
 
     await client.flushAll();

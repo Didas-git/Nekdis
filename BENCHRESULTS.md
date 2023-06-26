@@ -58,13 +58,14 @@ Redis Stack (v6.2.6-v7) Docker Image Running on MacOS.
 
 To run the tests its pretty simples, just clone the repository, build the library using `pnpm run build` and run the benchmarks by doing `pnpm run bench`.
 
-The benchmarks accept 2 arguments:
+The benchmark script accept 3 arguments:
 
-`pnpm run bench [iterations] [documents]`
+`pnpm run bench [iterations] [documents] [spv]`
 
 Defaults (See: [bench](./benchmarks/src/index.mts)):
 - Iterations - 15
 - Documents - 1000
+- SPV - `Skip Page Validation` should only be set to true if and only if you have overwritten the default redis config, otherwise it will crash saying that RediSearch cant return more than 10K documents
 
 # Nekdis
 
