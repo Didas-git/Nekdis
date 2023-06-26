@@ -270,6 +270,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     }
 
     #buildQuery(): string {
+        if (this._query.length === 0) return "*";
         let query = "";
         for (let i = 0, len = this._query.length; i < len; i++) {
             const queryPart = this._query[i];
