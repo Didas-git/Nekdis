@@ -1,6 +1,8 @@
 # Table of contents
 
 - [Table of contents](#table-of-contents)
+- [Test Environment:](#test-environment)
+- [Running the tests](#running-the-tests)
 - [Nekdis](#nekdis)
   - [Model.createAndSave](#modelcreateandsave)
     - [Redis-OM Limited](#redis-om-limited)
@@ -42,7 +44,7 @@
     - [JSON](#json-10)
     - [HASH](#hash-10)
 
-Environment:
+# Test Environment:
 
 Redis Stack (v6.2.6-v7) Docker Image Running on MacOS.
 
@@ -51,6 +53,18 @@ Redis Stack (v6.2.6-v7) Docker Image Running on MacOS.
 - Ram: 16GB
 
 > NOTE: All tests were ran locally because the idea is to test how the new data types and parsing system impacts performance compared to redis-om
+
+# Running the tests
+
+To run the tests its pretty simples, just clone the repository, build the library using `pnpm run build` and run the benchmarks by doing `pnpm run bench`.
+
+The benchmarks accept 2 arguments:
+
+`pnpm run bench [iterations] [documents]`
+
+Defaults (See: [bench](./benchmarks/src/index.mts)):
+- Iterations - 15
+- Documents - 1000
 
 # Nekdis
 
