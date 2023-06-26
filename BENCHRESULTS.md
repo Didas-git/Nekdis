@@ -56,6 +56,8 @@ Redis Stack (v6.2.6-v7) Docker Image Running on MacOS.
 
 # Running the tests
 
+**Warning:** Be aware that the tests will wipe the entire DB they run on so please be careful and run them on a new docker instance or dev db.
+
 To run the tests its pretty simples, just clone the repository, build the library using `pnpm run build` and run the benchmarks by doing `pnpm run bench`.
 
 The benchmark script accept 3 arguments:
