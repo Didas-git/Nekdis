@@ -38,8 +38,8 @@ export async function main(iter: number, amt: number, spv: boolean) {
     await benchBatchHASHFetch(iter, amt);
     //#endregion fetch
     //#region page
-    await benchJSONPage(iter, spv ? amt : amt > 9999 ? 9999 : amt);
-    await benchHASHPage(iter, spv ? amt : amt > 9999 ? 9999 : amt);
+    await benchJSONPage(iter, spv ? amt : amt > 10000 ? 10000 : amt);
+    await benchHASHPage(iter, spv ? amt : amt > 10000 ? 10000 : amt);
     //#endregion page
 
     await client.flushAll();

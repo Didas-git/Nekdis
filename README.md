@@ -50,6 +50,7 @@ The next steps for the proposal include:
   - [Nested objects](#nested-objects)
   - [A Simple example](#a-simple-example)
   - [Open Issues this proposal fixes](#open-issues-this-proposal-fixes)
+  - [Benchmarks](#benchmarks)
 
 # Installation
 
@@ -554,3 +555,7 @@ function between(min: number, max: number) {
 - [#141 (Feature: "in" query clause functionality)](https://github.com/redis/redis-om-node/issues/141)
   - Same as issue #44
 - [#184 (Set a Global Prefix in Node Om)](https://github.com/redis/redis-om-node/issues/184)
+
+## Benchmarks
+
+There were a lot of benchmarks made this past week and they can be found [here](./BENCHRESULTS.md)

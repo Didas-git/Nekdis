@@ -91,11 +91,11 @@ export async function main(iter: number, amt: number, spv: boolean) {
     await benchBatchFullHASHGet(iter, amt);
     //#endregion get
     //#region page
-    await benchJSONPage(iter, spv ? amt : amt > 9999 ? 9999 : amt);
-    await benchHASHPage(iter, spv ? amt : amt > 9999 ? 9999 : amt);
+    await benchJSONPage(iter, spv ? amt : amt > 10000 ? 10000 : amt);
+    await benchHASHPage(iter, spv ? amt : amt > 10000 ? 10000 : amt);
 
-    await benchFullJSONPage(iter, spv ? amt : amt > 9999 ? 9999 : amt);
-    await benchFullHASHPage(iter, spv ? amt : amt > 9999 ? 9999 : amt);
+    await benchFullJSONPage(iter, spv ? amt : amt > 10000 ? 10000 : amt);
+    await benchFullHASHPage(iter, spv ? amt : amt > 10000 ? 10000 : amt);
     //#endregion page
     await client.raw.flushAll();
 
