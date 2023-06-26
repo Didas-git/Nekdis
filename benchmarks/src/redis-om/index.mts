@@ -1,3 +1,4 @@
+import { benchHASHPage, benchJSONPage } from "./page.mjs";
 import { client } from "./setup.mjs";
 import {
     benchBatchJSONSave,
@@ -28,6 +29,10 @@ export async function main(iter: number, amt: number) {
     await benchBatchJSONFetch(iter, amt);
     await benchBatchHASHFetch(iter, amt);
     //#endregion fetch
+    //#region page
+    await benchJSONPage(iter, amt);
+    await benchHASHPage(iter, amt);
+    //#endregion page
 
     await client.flushAll();
 

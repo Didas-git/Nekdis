@@ -29,6 +29,7 @@ export async function main(iter: number, amt: number) {
     await benchBatchJSONCreateAndSave(iter, amt);
     await benchBatchHASHCreateAndSave(iter, amt);
 
+    // Reasons...
     await client.raw.flushAll();
 
     await benchFullJSONCreateAndSave(iter, amt);
@@ -36,6 +37,9 @@ export async function main(iter: number, amt: number) {
 
     await benchBatchFullJSONCreateAndSave(iter, amt);
     await benchBatchFullHASHCreateAndSave(iter, amt);
+
+    // Reasons...
+    await client.raw.flushAll();
 
     // Without Validation
     await benchNoValJSONCreateAndSave(iter, amt);

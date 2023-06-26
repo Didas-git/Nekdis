@@ -448,8 +448,6 @@ export async function benchBatchFullJSONCreateAndSave(iter: number, amt: number)
 
     console.log(`FullJSON Batch createAndSave\nIterations: ${iter}\nDocuments: ${amt}`)
     console.table(table);
-
-    await client.raw.flushAll();
 }
 
 export async function benchFullHASHCreateAndSave(iter: number, amt: number): Promise<void> {
@@ -547,8 +545,6 @@ export async function benchBatchFullHASHCreateAndSave(iter: number, amt: number)
 
     console.log(`FullHASH Batch createAndSave\nIterations: ${iter}\nDocuments: ${amt}`)
     console.table(table);
-
-    await client.raw.flushAll();
 }
 export async function benchNoValFullJSONCreateAndSave(iter: number, amt: number): Promise<void> {
     const model = client.model<typeof NoValidationFullJSONBenchSchema>("NoValFullJSONBench");
