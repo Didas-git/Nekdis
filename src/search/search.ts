@@ -31,6 +31,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     readonly #parsedSchema: ParsedMap;
     readonly #index: string;
     readonly #validate: boolean;
+    readonly #struct: string;
     // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
     readonly #docType: typeof JSONDocument | typeof HASHDocument;
     #workingType!: FieldTypes["type"];
@@ -57,6 +58,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         this.#parsedSchema = parsedSchema;
         this.#index = searchIndex;
         this.#validate = validate;
+        this.#struct = structure;
 
         if (structure === "HASH") this.#docType = HASHDocument;
         else this.#docType = JSONDocument;
@@ -262,7 +264,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     async #get(id: string): Promise<ReturnDocument<T> | null> {
         if (typeof id === "undefined") throw new Error();
 
-        const data = await this.#client.json.get(id);
+        const data = this.#struct === "JSON" ? await this.#client.json.get(id) : await this.#client.hGetAll(id);
 
         if (data === null) return null;
 
