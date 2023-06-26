@@ -17,8 +17,18 @@ import {
     benchFullJSONCreateAndSave,
     benchFullHASHCreateAndSave,
     benchJSONCreateAndSave,
-    benchHASHCreateAndSave,
+    benchHASHCreateAndSave
 } from "./createAndSave.mjs";
+import {
+    benchBatchFullJSONGet,
+    benchBatchFullHASHGet,
+    benchBatchJSONGet,
+    benchBatchHASHGet,
+    benchFullJSONGet,
+    benchFullHASHGet,
+    benchJSONGet,
+    benchHASHGet
+} from "./get.mjs";
 
 export async function main(iter: number, amt: number) {
     //#region createAndSave
@@ -54,9 +64,28 @@ export async function main(iter: number, amt: number) {
     await benchBatchNoValFullJSONCreateAndSave(iter, amt);
     await benchBatchNoValFullHASHCreateAndSave(iter, amt);
     //#endregion createAndSave
-    //#region get
 
+    // We need data for the next tests
+    await benchBatchJSONCreateAndSave(1, amt);
+    await benchBatchHASHCreateAndSave(1, amt);
+    await benchBatchFullJSONCreateAndSave(1, amt);
+    await benchBatchFullHASHCreateAndSave(1, amt);
+
+    //#region get
+    await benchJSONGet(iter, amt);
+    await benchHASHGet(iter, amt);
+
+    await benchBatchJSONGet(iter, amt);
+    await benchBatchHASHGet(iter, amt);
+
+    await benchFullJSONGet(iter, amt);
+    await benchFullHASHGet(iter, amt);
+
+    await benchBatchFullJSONGet(iter, amt);
+    await benchBatchFullHASHGet(iter, amt);
     //#endregion get
+
+    await client.raw.flushAll();
 
     await client.disconnect();
 }
