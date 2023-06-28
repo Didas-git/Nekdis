@@ -38,6 +38,8 @@ export function hashFieldToString(schema: BaseField, val: any): string {
             temp.push(hashFieldToString({ type: <never>(<ArrayField>schema).elements ?? "string" }, val[i]));
         }
         return temp.join((<ArrayField>schema).separator);
+    } else if (schema.type === "vector") {
+        return Buffer.from(val).toString();
     }
 
     return <string>val.toString();
@@ -88,6 +90,11 @@ export function stringToHashField(schema: BaseField, val: string): any {
             temp[i] = stringToHashField({ type: <never>(<ArrayField>schema).elements ?? "string" }, temp[i]);
         }
         return temp;
+    } else if (schema.type === "vector") {
+        //@ts-expect-error Type overload
+        if (schema.vecType === "FLOAT32") return new Float32Array(val);
+        //@ts-expect-error Type overload
+        if (schema.vecType === "FLOAT64") return new Float64Array(val);
     }
     return val;
 }
