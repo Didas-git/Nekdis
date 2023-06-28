@@ -2,10 +2,13 @@ import type { ExtractParsedSchemaDefinition } from "./extract-generic";
 import type {
     ArrayField,
     BaseField,
+    FlatVector,
+    HNSWVector,
     ObjectField,
     ReferenceField,
     SchemaDefinition,
-    TupleField
+    TupleField,
+    VectorField
 } from "./schema-definition";
 
 export type ParseSchema<T extends SchemaDefinition> = {
@@ -37,6 +40,16 @@ export type ParseSchema<T extends SchemaDefinition> = {
             : never
             : T[K][P] extends {} ? T[K][P] : Fill<P>
         }
+        : T[K] extends VectorField
+        ? T[K] extends FlatVector
+        ? {
+            [P in keyof Required<FlatVector>]: T[K][P] extends {} ? T[K][P] : Fill<P>
+        }
+        : T[K] extends HNSWVector
+        ? {
+            [P in keyof Required<HNSWVector>]: T[K][P] extends {} ? T[K][P] : Fill<P>
+        }
+        : never
         : T[K] extends BaseField
         ? {
             [P in keyof Required<BaseField>]: T[K][P] extends {} ? T[K][P] : Fill<P>
@@ -56,13 +69,33 @@ export type ParseSchema<T extends SchemaDefinition> = {
     }
 };
 
-export type CreateDefinitionFromString<T extends string> = {
-    [K in keyof Required<BaseField>]: K extends "type"
-    ? T
-    : Fill<K>
-};
+export type CreateDefinitionFromString<T extends string> = T extends "vector"
+    ? {
+        [K in keyof Required<FlatVector>]: K extends "type"
+        ? T
+        : K extends "algorithm"
+        ? "FLAT"
+        : K extends "vecType"
+        ? "FLOAT32"
+        : K extends "dim"
+        ? 128
+        : K extends "distance"
+        ? "L2"
+        : Fill<K>
+    }
+    : {
+        [K in keyof Required<BaseField>]: K extends "type"
+        ? T
+        : Fill<K>
+    };
 
 /**
  * `T` is the same as `keyof FieldTypes` but i can't use `extends` here
  */
-export type Fill<T> = T extends "default" ? undefined : T extends "index" ? true : false;
+export type Fill<T> = T extends "required"
+    ? false
+    : T extends "sortable"
+    ? false
+    : T extends "index"
+    ? true
+    : undefined;

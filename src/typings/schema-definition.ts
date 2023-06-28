@@ -4,7 +4,7 @@ import type { Point } from "./point";
 
 export type SchemaDefinition = Record<string, keyof Omit<FieldMap, "tuple" | "object" | "reference"> | FieldTypes>;
 
-export type FieldTypes = StringField | NumberField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField | ReferenceField | FlatVector | HNSWVector;
+export type FieldTypes = StringField | NumberField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField | ReferenceField | VectorField;
 
 export type TupleElement = Exclude<keyof FieldMap, "tuple" | "reference" | "object"> | SchemaDefinition | undefined;
 
@@ -75,6 +75,8 @@ export interface HNSWVector extends BaseVector {
     runtime?: number | undefined;
     epsilon?: number | undefined;
 }
+
+export type VectorField = FlatVector | HNSWVector;
 
 // FALLBACK
 export interface ArrayField extends BaseField {

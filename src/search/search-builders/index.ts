@@ -5,3 +5,4 @@ export * from "./boolean";
 export * from "./text";
 export * from "./date";
 export * from "./point";
+export * from "./vector";

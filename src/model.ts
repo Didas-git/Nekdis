@@ -10,8 +10,7 @@ import type {
     ExtractParsedSchemaDefinition,
     ReturnDocument,
     RedisClient,
-    FlatVector,
-    HNSWVector,
+    VectorField,
     MapSchema,
     ParsedMap,
     Doc
@@ -259,7 +258,7 @@ export class Model<S extends Schema<any>> {
         return await this.#client.ft.search(this.#searchIndexName, args.join(" "));
     }
 
-    #getCount(value: FlatVector | HNSWVector): string {
+    #getCount(value: VectorField): string {
         let count = 0;
         for (let i = 0, values = Object.values(value), len = values.length; i < len; i++) {
             const [val] = values[i];
