@@ -4,7 +4,7 @@ import type { Point } from "./point";
 
 export type SchemaDefinition = Record<string, keyof Omit<FieldMap, "tuple" | "object" | "reference"> | FieldTypes>;
 
-export type FieldTypes = StringField | NumberField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField | ReferenceField;
+export type FieldTypes = StringField | NumberField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField | ReferenceField | FlatVector | HNSWVector;
 
 export type TupleElement = Exclude<keyof FieldMap, "tuple" | "reference" | "object"> | SchemaDefinition | undefined;
 
@@ -50,6 +50,30 @@ export interface DateField extends BaseField {
 export interface PointField extends BaseField {
     type: "point";
     default?: Point | undefined;
+}
+
+// VECTOR
+export interface BaseVector extends BaseField {
+    type: "vector";
+    default?: Array<number> | Float32Array | Float64Array | undefined;
+    algorithm: "FLAT" | "HNSW";
+    vecType: "FLOAT32" | "FLOAT64";
+    dim: number;
+    distance: "L2" | "IP" | "COSINE";
+    cap?: number | undefined;
+}
+
+export interface FlatVector extends BaseVector {
+    algorithm: "FLAT";
+    size?: number | undefined;
+}
+
+export interface HNSWVector extends BaseVector {
+    algorithm: "HNSW";
+    m?: number | undefined;
+    construction?: number | undefined;
+    runtime?: number | undefined;
+    epsilon?: number | undefined;
 }
 
 // FALLBACK

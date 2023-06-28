@@ -11,6 +11,7 @@ export interface FieldMap<T = string> {
     text: string;
     date: Date | number;
     point: Point;
+    vector: Array<number> | Float32Array | Float64Array;
     array: Array<T>;
     tuple: [T];
     object: Record<string, SchemaDefinition>;
