@@ -10,7 +10,6 @@ Right now the proposal includes almost every feature that redis-om already has (
 
 The next steps for the proposal include:
 - Improve performance on parsing nested objects for hashes[^1]
-- Adding [Vector Similarity Search](https://redis.io/docs/stack/search/reference/vectors/).
 - Adding support for [Graph](https://redis.io/docs/stack/graph/) data types & relations.
 - Improving auto fetch performance by including a lua script that will get injected as a redis function.
 - Allow auto references to be updated.
@@ -31,6 +30,10 @@ The next steps for the proposal include:
   - [Creating a Model](#creating-a-model)
   - [Creating and Saving data](#creating-and-saving-data)
 - [The new `RecordId`](#the-new-recordid)
+- [Vector Similarity Search](#vector-similarity-search)
+  - [Pure queries](#pure-queries)
+  - [Hybrid queries](#hybrid-queries)
+  - [Range queries](#range-queries)
 - [Custom Methods](#custom-methods)
 - [Modules](#modules)
 - [Schema Types](#schema-types)
@@ -128,6 +131,71 @@ This proposal introduces a new way to create unique ids called `RecordId`.
 RecordIds allow you to set prefixes and other properties to your id that is shared across all of the records.
 
 ![](./recordid.png)
+
+# Vector Similarity Search
+
+There are 3 types of vss queries as said in the [documentation](https://redis.io/docs/stack/search/reference/vectors)
+
+Lets use the following schema & model for the next examples
+
+```ts
+import { client } from "nekdis";
+
+const testSchema = client.schema({
+    age: "number",
+    vector: "vector"
+})
+
+const testModel = client.model("Test", testSchema);
+```
+
+A note on the schema. Passing the string `"vector"` will default to the following options:
+```js
+const vectorDefaults = {
+    ALGORITHM: "FLAT",
+    // the vector type, nekdis calls it `vecType`
+    TYPE: "FLOAT32",
+    DIM: 128,
+    // nekdis calls it `distance`
+    DISTANCE_METRIC: "L2",
+}
+```
+
+## Pure queries
+
+```ts
+testModel.search().where("vec").eq((vector) => vector
+    .knn()
+    .from([2, 5, 7])
+    .return(8))
+.returnAll();
+// Generates the following query
+// "*=>[KNN 8 @vec \x02\x05\x07]" DIALECT 2
+```
+
+## Hybrid queries
+
+```ts
+testModel.search().where("age").between(18, 30)
+    .and("vec").eq((vector) => vector
+        .knn()
+        .from([2, 5, 7])
+        .return(8))
+    .returnAll();
+// Generates the following query
+// "((@age:[18 30]))=>[KNN 8 @vec \x02\x05\x07]" DIALECT 2
+```
+
+## Range queries
+
+```ts
+testModel.search().where("vec").eq((vector) => vector
+    .range(5)
+    .from([2, 5, 7]))
+.returnAll();
+// Generates the following query
+// "((@vec:[VECTOR_RANGE 5 \x02\x05\x07]))" DIALECT 2
+```
 
 # Custom Methods
 
@@ -228,7 +296,6 @@ This proposal includes the addition of 2 new shared properties and some unique o
 
 # Todo
 
-- VSS
 - `in` operator for number search
 - Array of points
 - Fully support array of objects
