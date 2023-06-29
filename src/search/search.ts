@@ -277,7 +277,20 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     }
 
     #buildQuery(): string {
-        if (this._query.length === 0) return "*";
+        let query = "";
+        if (this._query.length === 0) query = "*";
+        else query = this.#parseQuery();
+
+        if (typeof this._vector !== "undefined") {
+            this.#options.DIALECT = 2;
+            this.#options.PARAMS = { BLOB: this._vector._vector._buffer };
+            query += this._vector.toString();
+        }
+
+        return query;
+    }
+
+    #parseQuery(): string {
         let query = "";
         for (let i = 0, len = this._query.length; i < len; i++) {
             const queryPart = this._query[i];
@@ -287,12 +300,6 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
             }
             //@ts-expect-error This looks like something that should be reported
             query += `${queryPart.toString()} `;
-        }
-
-        if (typeof this._vector !== "undefined") {
-            this.#options.DIALECT = 2;
-            this.#options.PARAMS = { BLOB: this._vector._vector._buffer };
-            query += this._vector.toString();
         }
 
         return query;
