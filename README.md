@@ -617,6 +617,7 @@ function between(min: number, max: number) {
   - Partially done with relations
 - [#69 (Add default value to Schema)](https://github.com/redis/redis-om-node/issues/69)
   - Also `required` was added
+- [#85 (Vector Similarity Search)](https://github.com/redis/redis-om-node/issues/85)
 - [#120 (Add expireAt)](https://github.com/redis/redis-om-node/issues/120)
   - normal expire accepts both seconds or a date object
 - [#141 (Feature: "in" query clause functionality)](https://github.com/redis/redis-om-node/issues/141)
