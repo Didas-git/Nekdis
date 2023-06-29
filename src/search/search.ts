@@ -260,9 +260,10 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     }
 
     async #search(options?: SearchOptions, keysOnly: boolean = false): Promise<SearchReply> {
+        const query = this.#buildQuery();
         options = { ...this.#options, ...options };
         if (keysOnly) options.RETURN = [];
-        return await this.#client.ft.search(this.#index, this.#buildQuery(), options);
+        return await this.#client.ft.search(this.#index, query, options);
     }
 
     async #get(id: string): Promise<ReturnDocument<T> | null> {
@@ -282,15 +283,16 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
             const queryPart = this._query[i];
             if (queryPart instanceof VectorField) {
                 this.#options.DIALECT = 2;
+                this.#options.PARAMS = { BLOB: queryPart._vector._buffer };
             }
             //@ts-expect-error This looks like something that should be reported
             query += `${queryPart.toString()} `;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (typeof this._vector !== undefined) {
+        if (typeof this._vector !== "undefined") {
             this.#options.DIALECT = 2;
-            query += this._vector?.toString();
+            this.#options.PARAMS = { BLOB: this._vector._vector._buffer };
+            query += this._vector.toString();
         }
 
         return query;

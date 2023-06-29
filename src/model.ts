@@ -259,13 +259,16 @@ export class Model<S extends Schema<any>> {
     }
 
     #getCount(value: VectorField): string {
-        let count = 0;
-        for (let i = 0, values = Object.values(value), len = values.length; i < len; i++) {
-            const [val] = values[i];
+        let count = 6;
 
-            if (val === undefined) continue;
-
-            count += 2;
+        if (value.cap) count += 2;
+        if (value.algorithm === "FLAT") {
+            if (value.size) count += 2;
+        } else {
+            if (value.m) count += 2;
+            if (value.construction) count += 2;
+            if (value.runtime) count += 2;
+            if (value.epsilon) count += 2;
         }
 
         return count.toString();
