@@ -143,7 +143,7 @@ import { client } from "nekdis";
 
 const testSchema = client.schema({
     age: "number",
-    vector: "vector"
+    vec: "vector"
 })
 
 const testModel = client.model("Test", testSchema);
