@@ -10,6 +10,7 @@ import type {
     ExtractParsedSchemaDefinition,
     ReturnDocument,
     RedisClient,
+    VectorField,
     MapSchema,
     ParsedMap,
     Doc
@@ -196,8 +197,40 @@ export class Model<S extends Schema<any>> {
                 `${prefix}${key}${arrayPath}`,
                 "AS",
                 path,
-                value.type === "text" ? "TEXT" : value.type === "number" || value.type === "date" ? "NUMERIC" : value.type === "point" ? "GEO" : "TAG"
+                value.type === "text"
+                    ? "TEXT"
+                    : value.type === "number" || value.type === "date"
+                        ? "NUMERIC"
+                        : value.type === "point"
+                            ? "GEO"
+                            : value.type === "vector"
+                                ? "VECTOR"
+                                : "TAG"
             );
+
+            if (value.type === "vector") {
+                this.#searchIndex.push(
+                    value.algorithm,
+                    this.#getCount(value),
+                    "TYPE",
+                    value.vecType,
+                    "DIM",
+                    value.dim.toString(),
+                    "DISTANCE_METRIC",
+                    value.distance
+                );
+
+                if (value.cap) this.#searchIndex.push("INITIAL_CAP", value.cap.toString());
+
+                if (value.algorithm === "FLAT") {
+                    if (value.size) this.#searchIndex.push("BLOCK_SIZE", value.size.toString());
+                } else {
+                    if (value.m) this.#searchIndex.push("M", value.m.toString());
+                    if (value.construction) this.#searchIndex.push("EF_CONSTRUCTION", value.construction.toString());
+                    if (value.runtime) this.#searchIndex.push("EF_RUNTIME", value.runtime.toString());
+                    if (value.epsilon) this.#searchIndex.push("EPSILON", value.epsilon.toString());
+                }
+            }
 
             if (value.sortable) this.#searchIndex.push("SORTABLE");
         }
@@ -223,6 +256,22 @@ export class Model<S extends Schema<any>> {
 
     public async rawSearch(...args: Array<string>): Promise<ReturnType<RedisClient["ft"]["search"]>> {
         return await this.#client.ft.search(this.#searchIndexName, args.join(" "));
+    }
+
+    #getCount(value: VectorField): string {
+        let count = 6;
+
+        if (value.cap) count += 2;
+        if (value.algorithm === "FLAT") {
+            if (value.size) count += 2;
+        } else {
+            if (value.m) count += 2;
+            if (value.construction) count += 2;
+            if (value.runtime) count += 2;
+            if (value.epsilon) count += 2;
+        }
+
+        return count.toString();
     }
 
     #stringOrDocToString(stringOrNumOrDoc: Array<string | number | Doc>): Array<string> {

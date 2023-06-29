@@ -97,6 +97,8 @@ export function validateSchemaData(
             if (Object.keys(dataVal).length > 2) throw new Error();
         } else if (value.type === "text") {
             if (typeof dataVal !== "string") throw new Error();
+        } else if (value.type === "vector") {
+            if (!(dataVal instanceof Float32Array) && !(dataVal instanceof Float64Array) && !Array.isArray(dataVal)) throw new Error();
         } else {
             // This handles `number`, `boolean` and `string` types
             if (typeof dataVal !== value.type) throw new Error();

@@ -16,6 +16,11 @@ export function jsonFieldToDoc(schema: BaseField, val: any): any {
             val[i] = jsonFieldToDoc({ type: <never>(<ArrayField>schema).elements }, val[i]);
         }
         return val;
+    } else if (schema.type === "vector") {
+        //@ts-expect-error Type overload
+        if (schema.vecType === "FLOAT32") return new Float32Array(val);
+        //@ts-expect-error Type overload
+        if (schema.vecType === "FLOAT64") return new Float64Array(val);
     }
 
     return val;
@@ -33,6 +38,8 @@ export function docToJson(schema: BaseField, val: any): any {
             val[i] = docToJson({ type: <never>(<ArrayField>schema).elements }, val[i]);
         }
         return val;
+    } else if (schema.type === "vector") {
+        return Array.from(val);
     }
 
     return val;

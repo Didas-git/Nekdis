@@ -131,7 +131,19 @@ export class HASHDocument implements DocumentShared {
     #populate(): void {
         for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
             const [key, value] = entries[i];
-            this[key] = value.default ?? (value.type === "object" ? {} : value.type === "tuple" ? [] : void 0);
+            this[key] = value.default ?? (value.type === "object"
+                ? {}
+                : value.type === "tuple"
+                    ? []
+                    : value.type === "vector"
+                        //@ts-expect-error Type overload
+                        ? value.vecType === "FLOAT32"
+                            ? new Float32Array()
+                            //@ts-expect-error Type overload
+                            : value.vecType === "FLOAT64"
+                                ? new Float64Array()
+                                : []
+                        : void 0);
         }
 
         for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {

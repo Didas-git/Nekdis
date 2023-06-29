@@ -5,7 +5,8 @@ import type {
     NumberField,
     PointField,
     StringField,
-    TextField
+    TextField,
+    VectorField
 } from "../search/search-builders";
 
 export type MapSearchField<K extends keyof T, S extends ParseSchema<any>, T extends ParseSearchSchema<S["data"]>> = T[K] extends "string"
@@ -20,6 +21,8 @@ export type MapSearchField<K extends keyof T, S extends ParseSchema<any>, T exte
     ? DateField<S>
     : T[K] extends "point"
     ? PointField<S>
+    : T[K] extends "vector"
+    ? VectorField<S>
     : never;
 
 export type SchemaToStrings<T extends ParseSchema<any>["data"], K extends keyof T = keyof T> = K extends string

@@ -8,7 +8,8 @@ import {
     BooleanField,
     TextField,
     DateField,
-    PointField
+    PointField,
+    VectorField
 } from "./search-builders";
 
 import type {
@@ -44,6 +45,9 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
 
     /** @internal */
     public _query: Array<SearchField<T>> = [];
+
+    /** @internal */
+    public _vector?: VectorField<T>;
 
     public constructor(
         client: RedisClient,
@@ -256,9 +260,10 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     }
 
     async #search(options?: SearchOptions, keysOnly: boolean = false): Promise<SearchReply> {
+        const query = this.#buildQuery();
         options = { ...this.#options, ...options };
         if (keysOnly) options.RETURN = [];
-        return await this.#client.ft.search(this.#index, this.#buildQuery(), options);
+        return await this.#client.ft.search(this.#index, query, options);
     }
 
     async #get(id: string): Promise<ReturnDocument<T> | null> {
@@ -272,12 +277,31 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     }
 
     #buildQuery(): string {
-        if (this._query.length === 0) return "*";
+        let query = "";
+        if (this._query.length === 0) query = "*";
+        else query = this.#parseQuery();
+
+        if (typeof this._vector !== "undefined") {
+            this.#options.DIALECT = 2;
+            this.#options.PARAMS = { BLOB: this._vector._vector._buffer };
+            query += this._vector.toString();
+        }
+
+        return query;
+    }
+
+    #parseQuery(): string {
         let query = "";
         for (let i = 0, len = this._query.length; i < len; i++) {
             const queryPart = this._query[i];
-            query += `${queryPart} `;
+            if (queryPart instanceof VectorField) {
+                this.#options.DIALECT = 2;
+                this.#options.PARAMS = { BLOB: queryPart._vector._buffer };
+            }
+            //@ts-expect-error This looks like something that should be reported
+            query += `${queryPart.toString()} `;
         }
+
         return query;
     }
 
@@ -317,6 +341,10 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
             case "point": {
                 this.#workingType = "point";
                 return <never>new PointField<T>(this, field);
+            }
+            case "vector": {
+                this.#workingType = "vector";
+                return <never>new VectorField<T>(this, field);
             }
             case "object": { throw new Error('Not implemented yet: "object" case'); }
         }

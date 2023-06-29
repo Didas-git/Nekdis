@@ -27,6 +27,12 @@ type _MapSchemaData<T extends ParseSchema<any>["data"][number]> = T extends { pr
     : T["elements"] extends object
     ? Array<MapSchemaData<T["elements"]>>
     : FieldMap<FieldMap[T["elements"]]>["array"]
+    : T extends { algorithm: unknown }
+    ? T extends { vecType: "FLOAT32" }
+    ? Float32Array | Array<number>
+    : T extends { vecType: "FLOAT64" }
+    ? Float64Array | Array<number>
+    : unknown
     : FieldMap[T["type"]]
     ;
 
