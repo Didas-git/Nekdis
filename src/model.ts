@@ -9,7 +9,7 @@ import type { Schema } from "./schema";
 import type {
     ExtractParsedSchemaDefinition,
     ReturnDocument,
-    RedisClient,
+    NodeRedisClient,
     VectorField,
     MapSchema,
     ParsedMap,
@@ -19,7 +19,7 @@ import { stringToHashField } from "./document/document-helpers";
 
 export class Model<S extends Schema<any>> {
     readonly #schema: S;
-    readonly #client: RedisClient;
+    readonly #client: NodeRedisClient;
     readonly #globalPrefix: string;
     readonly #prefix: string;
     readonly #searchIndexName: string;
@@ -32,7 +32,7 @@ export class Model<S extends Schema<any>> {
     // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
     readonly #docType: typeof JSONDocument | typeof HASHDocument;
 
-    public constructor(client: RedisClient, globalPrefix: string, ver: string, private readonly name: string, data: S) {
+    public constructor(client: NodeRedisClient, globalPrefix: string, ver: string, private readonly name: string, data: S) {
         this.#client = client;
         this.#schema = data;
         this.#ver = ver;
@@ -254,7 +254,7 @@ export class Model<S extends Schema<any>> {
         }
     }
 
-    public async rawSearch(...args: Array<string>): Promise<ReturnType<RedisClient["ft"]["search"]>> {
+    public async rawSearch(...args: Array<string>): Promise<ReturnType<NodeRedisClient["ft"]["search"]>> {
         return await this.#client.ft.search(this.#searchIndexName, args.join(" "));
     }
 

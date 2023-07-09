@@ -9,21 +9,37 @@ import type {
     SchemaDefinition,
     SchemaOptions,
     WithModules,
-    RedisClient,
+    NodeRedisClient,
     ExtractName,
     URLObject,
-    Module
+    Module,
+    ClientOptions
 } from "./typings";
 
 import "@infinite-fansub/logger";
 
-export class Client {
-    #client!: RedisClient;
+export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefinition<SD> = {}> {
+    #client!: NodeRedisClient;
     #models: Map<string, Model<any>> = new Map();
     #open: boolean = false;
     #prefix: string = "Nekdis";
 
-    public async connect(url: string | URLObject = "redis://localhost:6379"): Promise<Client> {
+    /** Please only access this from within a module or if you know what you are doing */
+    public _options: ClientOptions<SD, MD>;
+
+    public constructor(options?: ClientOptions<SD, MD>) {
+        this._options = options ?? <ClientOptions<SD, MD>>{};
+
+        if (this._options.modules) {
+            for (let i = 0, len = this._options.modules.length; i < len; i++) {
+                const module = this._options.modules[i];
+                //@ts-expect-error shenanigans
+                this[module.name] = new module.ctor(this);
+            }
+        }
+    }
+
+    public async connect(url: string | URLObject = this._options.url ?? "redis://localhost:6379"): Promise<Client> {
         if (this.#open) return this;
 
         if (typeof url === "object") {
@@ -58,8 +74,17 @@ export class Client {
         return this;
     }
 
-    public schema<T extends SchemaDefinition, M extends MethodsDefinition<T>>(schemaData: T, methods?: M, options?: SchemaOptions): Schema<T, M> {
-        return new Schema<T, M>(schemaData, methods, options);
+    public schema<T extends SchemaDefinition, M extends MethodsDefinition<(T & SD)>>(definition: T, methods?: M, options?: SchemaOptions): Schema<(T & SD), (M & MD)> {
+        return <never>new Schema({
+            ...this._options.inject?.schema?.definition,
+            ...definition
+        }, <never>{
+            ...this._options.inject?.schema?.methods,
+            ...methods
+        }, {
+            ...this._options.inject?.schema?.options,
+            ...options
+        });
     }
 
     public model<T extends Schema<any>>(name: string, schema?: T): Model<T> & ExtractSchemaMethods<T> {
@@ -83,7 +108,7 @@ export class Client {
         return <never>this;
     }
 
-    public get raw(): RedisClient {
+    public get raw(): NodeRedisClient {
         return this.#client;
     }
 
@@ -91,7 +116,7 @@ export class Client {
         return this.#open;
     }
 
-    public set redisClient(client: RedisClient) {
+    public set redisClient(client: NodeRedisClient) {
         if (!this.#open) {
             this.#client = client;
         }

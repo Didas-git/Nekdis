@@ -14,7 +14,7 @@ import {
 
 import type {
     FieldTypes,
-    RedisClient,
+    NodeRedisClient,
     MapSearchField,
     ParseSchema,
     ParseSearchSchema,
@@ -27,7 +27,7 @@ export type SearchReturn<T extends Search<ParseSchema<any>>> = Omit<T, "where" |
 export type SearchSortReturn<T extends Search<ParseSchema<any>>> = Omit<T, `sort${string}`>;
 
 export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["data"]> = ParseSearchSchema<T["data"]>> {
-    readonly #client: RedisClient;
+    readonly #client: NodeRedisClient;
     readonly #schema: T;
     readonly #parsedSchema: ParsedMap;
     readonly #index: string;
@@ -50,7 +50,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     public _vector?: VectorField<T>;
 
     public constructor(
-        client: RedisClient,
+        client: NodeRedisClient,
         schema: T,
         parsedSchema: ParsedMap,
         searchIndex: string,

@@ -7,7 +7,7 @@ export type * from "./extract-generic";
 export type * from "./map-schema";
 export type * from "./modules";
 export type * from "./url-object";
-export type * from "./redis-client";
+export type * from "./client";
 export type * from "./parsed-search-schema";
 export type * from "./map-search-fields";
 export type * from "./point-units";
