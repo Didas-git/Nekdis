@@ -31,16 +31,12 @@ export class StringField<T extends ParseSchema<any>> extends SearchField<T> {
     #handleMultipleFields(value: Array<any> | IArguments): Search<T> {
         const length = value.length;
 
-        if (length === 1) {
-            this.value = value[0];
-            this.search._query.push(this);
-            return this.search;
-        }
-
         this.value = value[0];
 
-        for (let i = 1; i < length; i++) {
-            this.or.push(value[i]);
+        if (length > 1) {
+            for (let i = 1; i < length; i++) {
+                this.or.push(value[i]);
+            }
         }
 
         this.search._query.push(this);
