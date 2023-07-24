@@ -290,7 +290,7 @@ This proposal includes the addition of 2 new shared properties and some unique o
 - Case sensitive search fields.
 - Word stemming.
 - Field weight.
-- Custom alias for a field.
+- Custom alias for a field[^3].
 - Phonetic matcher
 
 # Todo
@@ -298,9 +298,14 @@ This proposal includes the addition of 2 new shared properties and some unique o
 - `in` operator for number search
 - Array of points
 - Fully support array of objects
+- Add `$id` alias[^2]
 
 
 [^1]: Currently the `deepMerge` function will take longer the more objects and nested objects you have, the idea i received is to do it all in one go by using a function to flatten it but im not sure yet on how to do it
+
+[^2]: This could be a nice addition but im still unsure if this should be added and needs to be further discussed
+
+[^3]: Is this really needed? From my point of view the complexity required to add this would outweigh any benefits from it specially on the type-level transformations
 
 # Nekdis VS Redis-OM
 
