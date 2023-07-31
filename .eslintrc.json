@@ -17,7 +17,8 @@
     },
     "plugins": [
         "@typescript-eslint/eslint-plugin",
-        "eslint-plugin-tsdoc"
+        "eslint-plugin-tsdoc",
+        "import"
     ],
     "rules": {
         "no-tabs": "error",
@@ -79,7 +80,6 @@
         "@typescript-eslint/default-param-last": "error",
         "@typescript-eslint/adjacent-overload-signatures": "error",
         "@typescript-eslint/no-dupe-class-members": "error",
-        "@typescript-eslint/no-duplicate-imports": "error",
         "@typescript-eslint/no-implied-eval": "error",
         "@typescript-eslint/space-infix-ops": "warn",
         "@typescript-eslint/no-meaningless-void-operator": "warn",
@@ -121,6 +121,12 @@
         "@typescript-eslint/padding-line-between-statements": "warn",
         "@typescript-eslint/semi": "warn",
         "@typescript-eslint/space-before-blocks": "warn",
+        "import/no-duplicates": [
+            "error",
+            {
+                "prefer-inline": true
+            }
+        ],
         "@typescript-eslint/no-unnecessary-condition": [
             "warn",
             {
