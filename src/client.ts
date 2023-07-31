@@ -74,7 +74,10 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
         return this;
     }
 
-    public schema<T extends SchemaDefinition, M extends MethodsDefinition<(T & SD)>>(definition: T, methods?: M, options?: SchemaOptions): Schema<(T & SD), (M & MD)> {
+    public schema<T extends SchemaDefinition, M extends MethodsDefinition<(T & SD)>>(definition: T, methods?: M, options?: SchemaOptions): Schema<
+        { [K in keyof (T & SD)]: (T & SD)[K] },
+        { [K in keyof (M & MD)]: (M & MD)[K] }
+    > {
         return <never>new Schema({
             ...this._options.inject?.schema?.definition,
             ...definition

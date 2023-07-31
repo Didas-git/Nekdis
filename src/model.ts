@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 
+import { stringToHashField } from "./document/document-helpers";
 import { JSONDocument, HASHDocument } from "./document";
 import { methods, schemaData } from "./utils/symbols";
 import { parseSchemaToSearchIndex } from "./utils";
@@ -10,38 +11,39 @@ import type {
     ExtractParsedSchemaDefinition,
     ReturnDocument,
     NodeRedisClient,
+    ModelOptions,
     VectorField,
     MapSchema,
     ParsedMap,
     Doc
 } from "./typings";
-import { stringToHashField } from "./document/document-helpers";
 
 export class Model<S extends Schema<any>> {
     readonly #schema: S;
     readonly #client: NodeRedisClient;
-    readonly #globalPrefix: string;
-    readonly #prefix: string;
     readonly #searchIndexName: string;
     readonly #searchIndexHashName: string;
     readonly #searchIndex: Array<string>;
     readonly #searchIndexHash: string;
     readonly #parsedSchema: ParsedMap;
-    readonly #validate: boolean;
-    readonly #ver: string;
     // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
     readonly #docType: typeof JSONDocument | typeof HASHDocument;
+
+    #options: ModelOptions;
 
     public constructor(client: NodeRedisClient, globalPrefix: string, ver: string, private readonly name: string, data: S) {
         this.#client = client;
         this.#schema = data;
-        this.#ver = ver;
-        this.#globalPrefix = globalPrefix;
-        this.#prefix = this.#schema.options.prefix ?? this.#ver;
-        this.#validate = !this.#schema.options.skipDocumentValidation;
+        this.#options = {
+            ...this.#schema.options,
+            globalPrefix,
+            prefix: this.#schema.options.prefix ?? ver,
+            version: ver
+        };
+
         this.#parsedSchema = parseSchemaToSearchIndex(this.#schema[schemaData].data);
-        this.#searchIndexName = `${globalPrefix}:${this.#prefix}:${this.name}:index`;
-        this.#searchIndexHashName = `${globalPrefix}:${this.#prefix}:${this.name}:index:hash`;
+        this.#searchIndexName = `${globalPrefix}:${this.#options.prefix}:${this.name}:index`;
+        this.#searchIndexHashName = `${globalPrefix}:${this.#options.prefix}:${this.name}:index:hash`;
         this.#searchIndex = [
             "FT.CREATE",
             this.#searchIndexName,
@@ -50,12 +52,12 @@ export class Model<S extends Schema<any>> {
             data.options.dataStructure!,
             "PREFIX",
             "1",
-            `${globalPrefix}:${this.#prefix}:${this.name}:`,
+            `${globalPrefix}:${this.#options.prefix}:${this.name}:`,
             "SCHEMA"
         ];
         this.#searchIndexHash = createHash("sha1").update(JSON.stringify({
             name,
-            structure: this.#schema.options.dataStructure,
+            structure: this.#options.dataStructure,
             definition: this.#schema[schemaData].data
         })).digest("base64");
 
@@ -68,23 +70,23 @@ export class Model<S extends Schema<any>> {
     public async get<F extends boolean = false>(id: string | number, autoFetch?: F): Promise<ReturnDocument<S, F> | null> {
         if (typeof id === "undefined") throw new Error();
         if (id.toString().split(":").length === 1) {
-            const suffix = this.#schema.options.suffix;
+            const suffix = this.#options.suffix;
 
             if (typeof suffix === "function") {
                 throw new PrettyError("Due to the use of dynamic suffixes you gave to pass in a full id");
             }
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-            id = `${this.#globalPrefix}:${this.#prefix}:${this.name}:${suffix ? `${suffix}:` : ""}${id}`;
+            id = `${this.#options.globalPrefix}:${this.#options.prefix}:${this.name}:${suffix ? `${suffix}:` : ""}${id}`;
         }
 
-        const data = this.#schema.options.dataStructure === "JSON" ? await this.#client.json.get(id.toString()) : await this.#client.hGetAll(id.toString());
+        const data = this.#options.dataStructure === "JSON" ? await this.#client.json.get(id.toString()) : await this.#client.hGetAll(id.toString());
 
         if (data === null) return null;
         if (autoFetch) {
             for (let i = 0, keys = Object.keys(this.#schema[schemaData].references), len = keys.length; i < len; i++) {
                 const key = keys[i];
                 //@ts-expect-error node-redis types decided to die
-                const val = this.#schema.options.dataStructure === "JSON" ? data[key] : stringToHashField({ type: "array" }, <string>data[key]);
+                const val = this.#options.dataStructure === "JSON" ? data[key] : stringToHashField({ type: "array" }, <string>data[key]);
                 const temp = [];
 
                 for (let j = 0, le = val.length; j < le; j++) {
@@ -96,7 +98,7 @@ export class Model<S extends Schema<any>> {
             }
         }
 
-        return <never>new this.#docType(this.#schema[schemaData], void 0, <never>data, true, this.#validate, autoFetch);
+        return <never>new this.#docType(this.#schema[schemaData], void 0, <never>data, true, !this.#options.skipDocumentValidation, autoFetch);
     }
 
     public create(id?: string | number): ReturnDocument<S>;
@@ -104,27 +106,27 @@ export class Model<S extends Schema<any>> {
     public create(idOrData?: string | number | { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true>): ReturnDocument<S> {
         if (typeof idOrData === "object") {
             return <never>new this.#docType(this.#schema[schemaData], {
-                globalPrefix: this.#globalPrefix,
-                prefix: this.#prefix,
+                globalPrefix: this.#options.globalPrefix,
+                prefix: this.#options.prefix ?? this.#options.version,
                 name: this.name,
-                suffix: this.#schema.options.suffix
-            }, idOrData, false, this.#validate, false);
+                suffix: this.#options.suffix
+            }, idOrData, false, !this.#options.skipDocumentValidation, false);
         }
 
         return <never>new this.#docType(this.#schema[schemaData], {
-            globalPrefix: this.#globalPrefix,
-            prefix: this.#prefix,
+            globalPrefix: this.#options.globalPrefix,
+            prefix: this.#options.prefix ?? this.#options.version,
             name: this.name,
-            suffix: this.#schema.options.suffix,
+            suffix: this.#options.suffix,
             id: idOrData?.toString()
-        }, void 0, false, this.#validate, false);
+        }, void 0, false, !this.#options.skipDocumentValidation, false);
     }
 
     public async save(doc: Doc): Promise<void> {
         if (typeof doc === "undefined") throw new Error();
 
         // eslint-disable-next-line @typescript-eslint/no-base-to-string
-        if (this.#schema.options.dataStructure === "HASH") await this.#client.sendCommand(["HSET", doc.$record_id, ...doc.toString()]);
+        if (this.#options.dataStructure === "HASH") await this.#client.sendCommand(["HSET", doc.$record_id, ...doc.toString()]);
         // eslint-disable-next-line @typescript-eslint/no-base-to-string
         else await this.#client.sendCommand(["JSON.SET", doc.$record_id, "$", doc.toString()]);
     }
@@ -157,17 +159,17 @@ export class Model<S extends Schema<any>> {
 
     public async createAndSave(data: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true>): Promise<void> {
         const doc = new this.#docType(this.#schema[schemaData], {
-            globalPrefix: this.#globalPrefix,
-            prefix: this.#prefix,
+            globalPrefix: this.#options.globalPrefix,
+            prefix: this.#options.prefix ?? this.#options.version,
             name: this.name,
-            suffix: this.#schema.options.suffix
-        }, data, false, this.#validate, false);
+            suffix: this.#options.suffix
+        }, data, false, !this.#options.skipDocumentValidation, false);
         await this.save(doc);
     }
 
     public search(): Search<ExtractParsedSchemaDefinition<S>> {
         // eslint-disable-next-line max-len
-        return new Search<ExtractParsedSchemaDefinition<S>>(this.#client, <never>this.#schema[schemaData], this.#parsedSchema, this.#searchIndexName, this.#validate, this.#schema.options.dataStructure);
+        return new Search<ExtractParsedSchemaDefinition<S>>(this.#client, <never>this.#schema[schemaData], this.#parsedSchema, this.#searchIndexName, !this.#options.skipDocumentValidation, this.#schema.options.dataStructure);
     }
 
     public async createIndex(): Promise<void> {
@@ -176,14 +178,14 @@ export class Model<S extends Schema<any>> {
 
         await this.deleteIndex();
 
-        const prefix = this.#schema.options.dataStructure === "JSON" ? "$." : "";
+        const prefix = this.#options.dataStructure === "JSON" ? "$." : "";
 
         for (let i = 0, len = this.#parsedSchema.size, entries = [...this.#parsedSchema.entries()]; i < len; i++) {
             const [key, val] = entries[i];
             const { path, value } = val;
             let arrayPath = "";
 
-            if (this.#schema.options.dataStructure === "JSON") {
+            if (this.#options.dataStructure === "JSON") {
                 if (value.type === "array") {
                     if (typeof value.elements !== "string") {
                         throw new Error("Object definitions on `array` are not yet supported by the parser");
@@ -284,13 +286,13 @@ export class Model<S extends Schema<any>> {
             if (el instanceof JSONDocument || el instanceof HASHDocument) {
                 id = el.$record_id;
             } else if (el.toString().split(":").length === 1) {
-                const suffix = this.#schema.options.suffix;
+                const suffix = this.#options.suffix;
 
                 if (typeof suffix === "function") {
                     throw new PrettyError("Due to the use of dynamic suffixes you gave to pass in a full id");
                 }
                 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                id = `${this.#globalPrefix}:${this.#prefix}:${this.name}:${suffix ? `${suffix}:` : ""}${el.toString()}`;
+                id = `${this.#options.globalPrefix}:${this.#options.prefix}:${this.name}:${suffix ? `${suffix}:` : ""}${el.toString()}`;
             }
 
             temp.push(id);
@@ -305,5 +307,13 @@ export class Model<S extends Schema<any>> {
             //@ts-expect-error Pending fix on type notations
             this[key] = value;
         }
+    }
+
+    public get getOptions(): ModelOptions {
+        return this.#options;
+    }
+
+    public set mutateOptions(options: Partial<ModelOptions>) {
+        this.#options = { ...this.#options, ...options };
     }
 }
