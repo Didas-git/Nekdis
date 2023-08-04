@@ -1,7 +1,8 @@
 export type * from "./parsed-search-schema";
+export type * from "./search-information";
 export type * from "./methods-definition";
-export type * from "./map-search-fields";
 export type * from "./schema-definition";
+export type * from "./map-search-fields";
 export type * from "./extract-generic";
 export type * from "./schema-options";
 export type * from "./model-options";
