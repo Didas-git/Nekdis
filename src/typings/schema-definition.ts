@@ -10,7 +10,7 @@ export type TupleElement = Exclude<keyof FieldMap, "tuple" | "reference" | "obje
 
 export interface BaseField {
     type: keyof FieldMap;
-    required?: boolean | undefined;
+    optional?: boolean | undefined;
     default?: FieldMap<unknown>[keyof FieldMap] | undefined;
     sortable?: boolean;
     index?: boolean;

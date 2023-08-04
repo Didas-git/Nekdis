@@ -92,7 +92,7 @@ export type CreateDefinitionFromString<T extends string> = T extends "vector"
 /**
  * `T` is the same as `keyof FieldTypes` but i can't use `extends` here
  */
-export type Fill<T> = T extends "required"
+export type Fill<T> = T extends "optional"
     ? false
     : T extends "sortable"
     ? false
