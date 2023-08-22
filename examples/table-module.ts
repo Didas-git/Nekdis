@@ -6,6 +6,9 @@ import { ModelOptions } from "../src/typings";
 /*
 This module allows you to define tables to use with normal redis operations
 However it doesn't affect the `Search` functionality since it doesn't have suffix constrains
+
+Keep in mind that this could be way simpler but it is written this way to try and showcase
+the different features and some other possibilities
 */
 class Table<T extends Model<any>> {
     readonly #oldSuffix: ModelOptions["suffix"];

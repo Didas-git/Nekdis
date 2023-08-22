@@ -20,7 +20,8 @@ import type {
     ParseSearchSchema,
     BaseField,
     ParsedMap,
-    ReturnDocument
+    ReturnDocument,
+    SearchInformation
 } from "../typings";
 
 export type SearchReturn<T extends Search<ParseSchema<any>>> = Omit<T, "where" | "and" | "or" | "rawQuery" | `sort${string}` | `return${string}`>;
@@ -30,9 +31,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     readonly #client: NodeRedisClient;
     readonly #schema: T;
     readonly #parsedSchema: ParsedMap;
-    readonly #index: string;
-    readonly #validate: boolean;
-    readonly #struct: string;
+    readonly #information: SearchInformation;
     // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
     readonly #docType: typeof JSONDocument | typeof HASHDocument;
     #workingType!: FieldTypes["type"];
@@ -53,18 +52,14 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         client: NodeRedisClient,
         schema: T,
         parsedSchema: ParsedMap,
-        searchIndex: string,
-        validate: boolean = true,
-        structure: "JSON" | "HASH" = "JSON"
+        information: SearchInformation
     ) {
         this.#client = client;
         this.#schema = schema;
         this.#parsedSchema = parsedSchema;
-        this.#index = searchIndex;
-        this.#validate = validate;
-        this.#struct = structure;
+        this.#information = information;
 
-        if (structure === "HASH") this.#docType = HASHDocument;
+        if (information.dataStructure === "HASH") this.#docType = HASHDocument;
         else this.#docType = JSONDocument;
     }
 
@@ -134,7 +129,11 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                 }
             }
 
-            docs.push(new this.#docType(this.#schema, void 0, doc.value, true, this.#validate, autoFetch));
+            docs.push(new this.#docType(this.#schema, {
+                globalPrefix: this.#information.globalPrefix,
+                prefix: this.#information.prefix,
+                name: this.#information.modelName
+            }, doc.value, true, this.#information.skipDocumentValidation, autoFetch));
         }
 
         return <never>docs;
@@ -196,7 +195,11 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                     doc.value[key] = <never>await Promise.all(temp);
                 }
             }
-            docs.push(new this.#docType(this.#schema, void 0, doc.value, true, this.#validate, autoFetch));
+            docs.push(new this.#docType(this.#schema, {
+                globalPrefix: this.#information.globalPrefix,
+                prefix: this.#information.prefix,
+                name: this.#information.modelName
+            }, doc.value, true, this.#information.skipDocumentValidation, autoFetch));
         }
 
         return <never>docs;
@@ -263,17 +266,21 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         const query = this.#buildQuery();
         options = { ...this.#options, ...options };
         if (keysOnly) options.RETURN = [];
-        return await this.#client.ft.search(this.#index, query, options);
+        return await this.#client.ft.search(this.#information.searchIndex, query, options);
     }
 
     async #get(id: string): Promise<ReturnDocument<T> | null> {
         if (typeof id === "undefined") throw new Error();
 
-        const data = this.#struct === "JSON" ? await this.#client.json.get(id) : await this.#client.hGetAll(id);
+        const data = this.#information.dataStructure === "JSON" ? await this.#client.json.get(id) : await this.#client.hGetAll(id);
 
         if (data === null) return null;
 
-        return <never>new this.#docType(this.#schema, void 0, <never>data, true, this.#validate, false);
+        return <never>new this.#docType(this.#schema, {
+            globalPrefix: this.#information.globalPrefix,
+            prefix: this.#information.prefix,
+            name: this.#information.modelName
+        }, <never>data, true, this.#information.skipDocumentValidation, false);
     }
 
     #buildQuery(): string {

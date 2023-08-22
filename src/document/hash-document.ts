@@ -41,7 +41,7 @@ export class HASHDocument implements DocumentShared {
 
     public constructor(
         schema: ParseSchema<any>,
-        record?: {
+        record: {
             globalPrefix: string,
             prefix: string,
             name: string,
@@ -53,11 +53,11 @@ export class HASHDocument implements DocumentShared {
         validate: boolean = true,
         wasAutoFetched: boolean = false
     ) {
-        this.$global_prefix = data?.$global_prefix ?? record?.globalPrefix;
-        this.$prefix = data?.$prefix ?? record?.prefix;
-        this.$model_name = data?.$model_name ?? record?.name;
-        this.$suffix = data?.$suffix ?? (typeof record?.suffix === "function" ? record.suffix() : record?.suffix);
-        this.$id = data?.$id?.toString() ?? record?.id ?? randomUUID();
+        this.$global_prefix = record.globalPrefix;
+        this.$prefix = record.prefix;
+        this.$model_name = record.name;
+        this.$suffix = data?.$suffix ?? (typeof record.suffix === "function" ? record.suffix() : record.suffix);
+        this.$id = data?.$id ?? record.id ?? randomUUID();
         this.$record_id = `${this.$global_prefix}:${this.$prefix}:${this.$model_name}:${this.$suffix ? `${this.$suffix}:` : ""}${this.$id}`;
         this.#schema = schema;
         this.#validate = validate;
@@ -156,12 +156,6 @@ export class HASHDocument implements DocumentShared {
         if (this.#validate) this.#validateSchemaData(this.#schema.data);
 
         const arr = [
-            "$global_prefix",
-            this.$global_prefix,
-            "$prefix",
-            this.$prefix,
-            "$model_name",
-            this.$model_name,
             "$id",
             this.$id
         ];

@@ -36,6 +36,7 @@ export class Model<S extends Schema<any>> {
         this.#schema = data;
         this.#options = {
             ...this.#schema.options,
+            skipDocumentValidation: !this.#schema.options.skipDocumentValidation,
             globalPrefix,
             prefix: this.#schema.options.prefix ?? ver,
             version: ver
@@ -68,7 +69,7 @@ export class Model<S extends Schema<any>> {
     }
 
     public async get<F extends boolean = false>(id: string | number, autoFetch?: F): Promise<ReturnDocument<S, F> | null> {
-        if (typeof id === "undefined") throw new Error();
+        if (typeof id === "undefined") throw new PrettyError();
         if (id.toString().split(":").length === 1) {
             const suffix = this.#options.suffix;
 
@@ -98,7 +99,11 @@ export class Model<S extends Schema<any>> {
             }
         }
 
-        return <never>new this.#docType(this.#schema[schemaData], void 0, <never>data, true, !this.#options.skipDocumentValidation, autoFetch);
+        return <never>new this.#docType(this.#schema[schemaData], {
+            globalPrefix: this.#options.globalPrefix,
+            prefix: this.#options.prefix,
+            name: this.name
+        }, <never>data, true, this.#options.skipDocumentValidation, autoFetch);
     }
 
     public create(id?: string | number): ReturnDocument<S>;
@@ -107,19 +112,19 @@ export class Model<S extends Schema<any>> {
         if (typeof idOrData === "object") {
             return <never>new this.#docType(this.#schema[schemaData], {
                 globalPrefix: this.#options.globalPrefix,
-                prefix: this.#options.prefix ?? this.#options.version,
+                prefix: this.#options.prefix,
                 name: this.name,
                 suffix: this.#options.suffix
-            }, idOrData, false, !this.#options.skipDocumentValidation, false);
+            }, idOrData, false, this.#options.skipDocumentValidation, false);
         }
 
         return <never>new this.#docType(this.#schema[schemaData], {
             globalPrefix: this.#options.globalPrefix,
-            prefix: this.#options.prefix ?? this.#options.version,
+            prefix: this.#options.prefix,
             name: this.name,
             suffix: this.#options.suffix,
             id: idOrData?.toString()
-        }, void 0, false, !this.#options.skipDocumentValidation, false);
+        }, void 0, false, this.#options.skipDocumentValidation, false);
     }
 
     public async save(doc: Doc): Promise<void> {
@@ -160,16 +165,20 @@ export class Model<S extends Schema<any>> {
     public async createAndSave(data: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true>): Promise<void> {
         const doc = new this.#docType(this.#schema[schemaData], {
             globalPrefix: this.#options.globalPrefix,
-            prefix: this.#options.prefix ?? this.#options.version,
+            prefix: this.#options.prefix,
             name: this.name,
             suffix: this.#options.suffix
-        }, data, false, !this.#options.skipDocumentValidation, false);
+        }, data, false, this.#options.skipDocumentValidation, false);
         await this.save(doc);
     }
 
     public search(): Search<ExtractParsedSchemaDefinition<S>> {
         // eslint-disable-next-line max-len
-        return new Search<ExtractParsedSchemaDefinition<S>>(this.#client, <never>this.#schema[schemaData], this.#parsedSchema, this.#searchIndexName, !this.#options.skipDocumentValidation, this.#schema.options.dataStructure);
+        return new Search<ExtractParsedSchemaDefinition<S>>(this.#client, <never>this.#schema[schemaData], this.#parsedSchema, {
+            ...this.#options,
+            modelName: this.name,
+            searchIndex: this.#searchIndexName
+        });
     }
 
     public async createIndex(): Promise<void> {

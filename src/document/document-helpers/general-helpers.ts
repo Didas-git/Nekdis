@@ -64,8 +64,8 @@ export function validateSchemaData(
 
         if (dataVal === null) throw new Error();
 
-        if (typeof dataVal === "undefined" && !value.required) continue;
-        if (typeof dataVal === "undefined" && value.required && typeof value.default === "undefined") throw new Error();
+        if (typeof dataVal === "undefined" && value.optional) continue;
+        if (typeof dataVal === "undefined" && !value.optional && typeof value.default === "undefined") throw new Error();
 
         if (value.type === "object") {
             if (!(<ObjectField>value).properties) continue;

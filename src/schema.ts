@@ -77,7 +77,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                 } else if (value === "tuple") {
                     throw new PrettyError("Type 'tuple' needs to use its object definition");
                 } else if (value === "array") {
-                    value = { type: value, elements: "string", default: undefined, required: false, sortable: false, index: true };
+                    value = { type: value, elements: "string", default: undefined, optional: false, sortable: false, index: true };
                 } else if (value === "vector") {
                     value = {
                         type: value,
@@ -86,12 +86,12 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                         dim: 128,
                         distance: "L2",
                         default: undefined,
-                        required: false,
+                        optional: false,
                         sortable: false,
                         index: true
                     };
                 } else {
-                    value = { type: value, default: undefined, required: false, sortable: false, index: true };
+                    value = { type: value, default: undefined, optional: false, sortable: false, index: true };
                 }
 
                 data[key] = value;
@@ -123,7 +123,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                 value = this.#fill(value);
             } else if (value.type === "object") {
                 if (typeof value.default === "undefined") value.default = undefined;
-                if (typeof value.required === "undefined") value.required = false;
+                if (typeof value.optional === "undefined") value.optional = false;
                 if (!value.properties) value.properties = undefined;
                 else value.properties = <never>this.#parse(value.properties).data;
             } else if (value.type === "tuple") {
@@ -176,7 +176,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
 
     #fill(value: BaseField): any {
         if (typeof value.default === "undefined") value.default = undefined;
-        if (typeof value.required === "undefined") value.required = false;
+        if (typeof value.optional === "undefined") value.optional = false;
         if (typeof value.sortable === "undefined") value.sortable = false;
         if (typeof value.index === "undefined") value.index = true;
         return value;
