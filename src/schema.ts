@@ -5,6 +5,7 @@ import { Color } from "colours.js";
 import { methods, schemaData } from "./utils/symbols";
 
 import type {
+    ExtractSchemaDefinition,
     MethodsDefinition,
     SchemaDefinition,
     SchemaOptions,
@@ -25,6 +26,20 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
         this[methods] = methodsData ?? <M>{};
         this.options.dataStructure = options.dataStructure ?? "JSON";
 
+    }
+
+    public extends<T extends Schema<any>, SD = ExtractSchemaDefinition<T>>(schema: T): Schema<{ [K in keyof (S & SD)]: (S & SD)[K] }, MethodsDefinition<(S & SD)>> {
+        this[schemaData] = <never>{
+            data: {
+                ...schema[schemaData].data,
+                ...this[schemaData].data
+            },
+            references: {
+                ...schema[schemaData].references,
+                ...this[schemaData].references
+            }
+        };
+        return <never>this;
     }
 
     #parse<T extends SchemaDefinition>(schema: T): P {
