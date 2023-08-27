@@ -160,7 +160,7 @@ export class Model<S extends Schema<any>> {
     public async expire(docs: Array<string | number | Doc>, seconds: number | Date, mode?: "NX" | "XX" | "GT" | "LT"): Promise<void> {
         if (!docs.length) throw new PrettyError("No documents were given to expire", {
             reference: "nekdis"
-        });;
+        });
         docs = this.#stringOrDocToString(docs);
 
         if (seconds instanceof Date) seconds = Math.round((seconds.getTime() - Date.now()) / 1000);
