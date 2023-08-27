@@ -1,8 +1,7 @@
+import { PrettyError } from "@infinite-fansub/logger";
 import { inspect } from "node:util";
+import { Color } from "colours.js";
 
-import { Color } from "colours.js/dst";
-
-import { ParsingErrors } from "./utils";
 import { methods, schemaData } from "./utils/symbols";
 
 import type {
@@ -35,41 +34,59 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
         for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
             let [key, value] = entries[i];
             if (key.startsWith("$")) throw new PrettyError("Keys cannot start with '$'", {
-                ref: "nekdis"
+                reference: "nekdis"
             });
 
             if (typeof value === "string") {
                 //@ts-expect-error Some people do not read docs
                 if (value === "object") {
                     throw new PrettyError("Type 'object' needs to use its object definition", {
-                        ref: "nekdis",
+                        reference: "nekdis",
                         lines: [
                             {
-                                err: inspect({ [key]: value }, { colors: true }),
+                                error: inspect({ [key]: value }, { colors: true }),
                                 marker: { text: "Parsing:" }
                             },
                             {
-                                err: ParsingErrors.Fix.Object(key),
-                                marker: { text: "Fix:", color: Color.fromHex("#00FF00"), nl: true }
+                                error: inspect({
+                                    [key]: {
+                                        type: "object"
+                                    }
+                                }, { colors: true, compact: false }),
+                                marker: { text: "Fix:", color: Color.fromHex("#00FF00"), newLine: true }
                             },
                             {
-                                err: ParsingErrors.Info.Object,
-                                marker: { text: "Information:", color: Color.fromHex("#009dff"), spaced: true, nl: true }
+                                error: inspect({
+                                    artist: {
+                                        type: "object",
+                                        properties: {
+                                            name: "string",
+                                            age: "number",
+                                            hobbies: "array"
+                                        }
+                                    }
+                                }, { colors: true }),
+                                marker: { text: "Information:", color: Color.fromHex("#009dff"), spacedBefore: true, newLine: true }
                             }
                         ]
                     });
                     //@ts-expect-error Some people do not read docs
                 } else if (value === "reference") {
                     throw new PrettyError("Type 'reference' needs to use its object definition", {
-                        ref: "nekdis",
+                        reference: "nekdis",
                         lines: [
                             {
-                                err: inspect({ [key]: value }, { colors: true }),
+                                error: inspect({ [key]: value }, { colors: true }),
                                 marker: { text: "Parsing:" }
                             },
                             {
-                                err: ParsingErrors.Fix.Reference(key),
-                                marker: { text: "Fix:", color: Color.fromHex("#00FF00"), nl: true }
+                                error: inspect({
+                                    [key]: {
+                                        type: "reference",
+                                        schema: "`SchemaInstance`"
+                                    }
+                                }, { colors: true, compact: false }),
+                                marker: { text: "Fix:", color: Color.fromHex("#00FF00"), newLine: true }
                             }
                         ]
                     });
@@ -100,10 +117,10 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
 
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             if (!value.type) throw new PrettyError("Type not defined", {
-                ref: "nekdis",
+                reference: "nekdis",
                 lines: [
                     {
-                        err: inspect({ [key]: value }, { colors: true }),
+                        error: inspect({ [key]: value }, { colors: true }),
                         marker: { text: "Parsing:" }
                     }
                 ]
@@ -114,7 +131,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                 if (typeof value.separator === "undefined") value.separator = ",";
                 if (typeof value.elements === "object") {
                     value.elements = <never>this.#parse(value.elements).data;
-                    if (!this.options.noLogs) logger.log(`'${key}' will not be indexed because array of objects is not yet supported on RediSearch`);
+                    if (!this.options.noLogs) console.log(`'${key}' will not be indexed because array of objects is not yet supported on RediSearch`);
                 }
                 value = this.#fill(value);
             } else if (value.type === "date") {
@@ -127,7 +144,9 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                 if (!value.properties) value.properties = undefined;
                 else value.properties = <never>this.#parse(value.properties).data;
             } else if (value.type === "tuple") {
-                if (typeof value.elements === "undefined") throw new PrettyError();
+                if (typeof value.elements === "undefined") throw new PrettyError("Tuple needs to have at least 1 element", {
+                    reference: "nekdis"
+                });
                 for (let j = 0, le = value.elements.length; j < le; j++) {
                     //@ts-expect-error No comment
                     value.elements[j] = this.#parse({ [j]: typeof value.elements[j] === "string" ? value.elements[j] : { type: "object", properties: value.elements[j] } }).data[j];
@@ -136,25 +155,47 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
             } else if (value.type === "reference") {
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
                 if (!value.schema) throw new PrettyError("Type 'reference' lacks a schema", {
-                    ref: "nekdis",
+                    reference: "nekdis",
                     lines: [
                         {
-                            err: inspect({ [key]: value }, { colors: true }),
+                            error: inspect({ [key]: value }, { colors: true }),
                             marker: { text: "Parsing:" }
                         },
                         {
-                            err: ParsingErrors.Fix.Reference(key),
-                            marker: { text: "Fix:", color: Color.fromHex("#00FF00"), nl: true }
+                            error: inspect({
+                                [key]: {
+                                    type: "reference",
+                                    schema: "`SchemaInstance`"
+                                }
+                            }, { colors: true, compact: false }),
+                            marker: { text: "Fix:", color: Color.fromHex("#00FF00"), newLine: true }
                         }
                     ]
                 });
                 references[key] = null;
                 continue;
             } else if (value.type === "vector") {
-                if (typeof value.algorithm === "undefined") throw new PrettyError("algorithm not defined");
-                if (typeof value.distance === "undefined") throw new PrettyError("distance not defined");
-                if (typeof value.vecType === "undefined") throw new PrettyError("vecType not defined");
-                if (typeof value.dim === "undefined") throw new PrettyError("dim not defined");
+                if (typeof value.algorithm === "undefined") {
+                    throw new PrettyError("'algorithm' is missing on the vector definition", {
+                        reference: "nekdis"
+                    });
+                }
+                if (typeof value.distance === "undefined") {
+                    throw new PrettyError("'distance' is missing on the vector definition", {
+                        reference: "nekdis"
+                    });
+                }
+                if (typeof value.vecType === "undefined") {
+                    throw new PrettyError("'vecType' is missing on the vector definition", {
+                        reference: "nekdis"
+                    });
+                }
+                if (typeof value.dim === "undefined") {
+                    throw new PrettyError("'dim' is missing on the vector definition", {
+                        reference: "nekdis"
+                    });
+                }
+
                 if (typeof value.cap === "undefined") value.cap = undefined;
                 if (value.algorithm === "FLAT") {
                     if (typeof value.size === "undefined") value.size = undefined;

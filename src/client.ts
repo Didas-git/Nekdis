@@ -1,3 +1,4 @@
+import { PrettyError } from "@infinite-fansub/logger";
 import { createClient } from "redis";
 
 import { Schema } from "./schema";
@@ -15,8 +16,6 @@ import type {
     Module,
     ClientOptions
 } from "./typings";
-
-import "@infinite-fansub/logger";
 
 export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefinition<SD> = {}> {
     #client!: NodeRedisClient;
@@ -94,7 +93,9 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
         let model = this.#models.get(name);
         if (model) return <never>model;
 
-        if (!schema) throw new PrettyError("You have to pass a schema if it doesn't exist");
+        if (!schema) throw new PrettyError("You have to pass a schema if it doesn't exist", {
+            reference: "nekdis"
+        });
 
         model = new Model(this.#client, this.#prefix, "V1", name, schema);
         this.#models.set(name, model);

@@ -1,6 +1,9 @@
-import type { SearchOptions, SearchReply } from "redis";
+import { PrettyError } from "@infinite-fansub/logger";
 
 import { JSONDocument, HASHDocument } from "../document";
+
+import type { SearchOptions, SearchReply } from "redis";
+
 import {
     type SearchField,
     StringField,
@@ -270,8 +273,6 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     }
 
     async #get(id: string): Promise<ReturnDocument<T> | null> {
-        if (typeof id === "undefined") throw new Error();
-
         const data = this.#information.dataStructure === "JSON" ? await this.#client.json.get(id) : await this.#client.hGetAll(id);
 
         if (data === null) return null;
@@ -313,7 +314,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     }
 
     #createWhere<F extends keyof P>(field: F): MapSearchField<F, T, P> {
-        if (typeof field !== "string") throw new PrettyError();
+        if (typeof field !== "string") throw new PrettyError(`Expected a field name but instead got '${typeof field}'`);
 
         const parsedField = this.#parsedSchema.get(field);
         if (!parsedField) throw new PrettyError(`'${field}' doesn't exist on the schema`);
@@ -353,7 +354,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                 this.#workingType = "vector";
                 return <never>new VectorField<T>(this, field);
             }
-            case "object": { throw new Error('Not implemented yet: "object" case'); }
+            case "object": { throw new PrettyError("This should not be possible"); }
         }
     }
 

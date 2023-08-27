@@ -1,3 +1,4 @@
+import { PrettyError } from "@infinite-fansub/logger";
 import { createHash } from "node:crypto";
 
 import { stringToHashField } from "./document/document-helpers";
@@ -69,12 +70,16 @@ export class Model<S extends Schema<any>> {
     }
 
     public async get<F extends boolean = false>(id: string | number, autoFetch?: F): Promise<ReturnDocument<S, F> | null> {
-        if (typeof id === "undefined") throw new PrettyError();
+        if (typeof id === "undefined") throw new PrettyError("A valid id was not given", {
+            reference: "nekdis"
+        });
         if (id.toString().split(":").length === 1) {
             const suffix = this.#options.suffix;
 
             if (typeof suffix === "function") {
-                throw new PrettyError("Due to the use of dynamic suffixes you gave to pass in a full id");
+                throw new PrettyError("Due to the use of dynamic suffixes you gave to pass in a full id", {
+                    reference: "nekdis"
+                });
             }
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             id = `${this.#options.globalPrefix}:${this.#options.prefix}:${this.name}:${suffix ? `${suffix}:` : ""}${id}`;
@@ -128,7 +133,9 @@ export class Model<S extends Schema<any>> {
     }
 
     public async save(doc: Doc): Promise<void> {
-        if (typeof doc === "undefined") throw new Error();
+        if (typeof doc === "undefined") throw new PrettyError("No document was passed to be save", {
+            reference: "nekdis"
+        });
 
         // eslint-disable-next-line @typescript-eslint/no-base-to-string
         if (this.#options.dataStructure === "HASH") await this.#client.sendCommand(["HSET", doc.$record_id, ...doc.toString()]);
@@ -137,17 +144,23 @@ export class Model<S extends Schema<any>> {
     }
 
     public async delete(...docs: Array<string | number | Doc>): Promise<void> {
-        if (!docs.length) throw new Error();
+        if (!docs.length) throw new PrettyError("No documents were given to delete", {
+            reference: "nekdis"
+        });
         await this.#client.del(this.#stringOrDocToString(docs));
     }
 
     public async exists(...docs: Array<string | number | Doc>): Promise<number> {
-        if (!docs.length) throw new Error();
+        if (!docs.length) throw new PrettyError("No documents were given to check", {
+            reference: "nekdis"
+        });
         return await this.#client.exists(this.#stringOrDocToString(docs));
     }
 
     public async expire(docs: Array<string | number | Doc>, seconds: number | Date, mode?: "NX" | "XX" | "GT" | "LT"): Promise<void> {
-        if (!docs.length) throw new Error();
+        if (!docs.length) throw new PrettyError("No documents were given to expire", {
+            reference: "nekdis"
+        });;
         docs = this.#stringOrDocToString(docs);
 
         if (seconds instanceof Date) seconds = Math.round((seconds.getTime() - Date.now()) / 1000);
@@ -197,7 +210,9 @@ export class Model<S extends Schema<any>> {
             if (this.#options.dataStructure === "JSON") {
                 if (value.type === "array") {
                     if (typeof value.elements !== "string") {
-                        throw new Error("Object definitions on `array` are not yet supported by the parser");
+                        throw new PrettyError("Object definitions on `array` are not yet supported by the parser", {
+                            reference: "nekdis"
+                        });
                     }
 
                     arrayPath = value.elements === "text" ? "[*]" : value.elements === "number" || value.elements === "date" || value.elements === "point" ? "" : "*";
@@ -298,7 +313,9 @@ export class Model<S extends Schema<any>> {
                 const suffix = this.#options.suffix;
 
                 if (typeof suffix === "function") {
-                    throw new PrettyError("Due to the use of dynamic suffixes you gave to pass in a full id");
+                    throw new PrettyError("Due to the use of dynamic suffixes you gave to pass in a full id", {
+                        reference: "nekdis"
+                    });
                 }
                 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 id = `${this.#options.globalPrefix}:${this.#options.prefix}:${this.name}:${suffix ? `${suffix}:` : ""}${el.toString()}`;
