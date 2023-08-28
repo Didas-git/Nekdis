@@ -208,7 +208,7 @@ Reference fields get skipped entirely and are not even passed to the function at
 
 Due to the nature of tuples they are not saved as arrays internally and are instead saved as a key-value pair.
 
-> **Note:**
+> **Note**
 > This behaviour will change and tuples will only be converted to key-value pairs if they are indexed or if you are using hashes
 
 So the following tuple:
@@ -269,7 +269,7 @@ If the data was fetched from the database it will go through some steps dependin
 
 ## Saving process
 
-> **Note:**
+> **Note**
 > `$id` and `$suffix` are saved to the database due to some limitations.
 
 ### Validation
