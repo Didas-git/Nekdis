@@ -169,7 +169,7 @@ testModel.search().where("vec").eq((vector) => vector
     .return(8))
 .returnAll();
 // Generates the following query
-// "*=>[KNN 8 @vec \x02\x05\x07]" DIALECT 2
+// "*=>[KNN 8 @vec $BLOB]" PARAMS 2 BLOB \x02\x05\x07 DIALECT 2
 ```
 
 ## Hybrid queries
@@ -182,7 +182,7 @@ testModel.search().where("age").between(18, 30)
         .return(8))
     .returnAll();
 // Generates the following query
-// "((@age:[18 30]))=>[KNN 8 @vec \x02\x05\x07]" DIALECT 2
+// "((@age:[18 30]))=>[KNN 8 @vec $BLOB]" BLOB \x02\x05\x07 DIALECT 2
 ```
 
 ## Range queries
@@ -193,7 +193,7 @@ testModel.search().where("vec").eq((vector) => vector
     .from([2, 5, 7]))
 .returnAll();
 // Generates the following query
-// "((@vec:[VECTOR_RANGE 5 \x02\x05\x07]))" DIALECT 2
+// "((@vec:[VECTOR_RANGE 5 $BLOB]))" BLOB \x02\x05\x07 DIALECT 2
 ```
 
 # Custom Methods
@@ -259,6 +259,7 @@ This proposal adds 4 new data types `array`, `object`, `tuple` & `reference` and
 | `object`    | This type allows you to nest forever using the `properties` property in the schema and what gets indexed are its properties, if none are given it will not be indexed not checked                                                                                                                                                                                                           |
 | `reference` | When using this type you will be given a `ReferenceArray` which is a normal array with a `reference` method that you can pass in another document or a record id to it, references can be auto fetched but auto fetched references cannot be changed                                                                                                                                        |
 | `tuple`     | Tuples will be presented as per-index type safe arrays but they are dealt with in a different way. They will be indexed as static props so you can search on a specific element only, this also affects the query builder instead of `where(arrayName)` it will be `where(arrayName.idx.prop)` but this has working intellisense just like all the other fields so it shouldn't be an issue |
+| `vector`    | A vector field that is an array but treated as a `VECTOR`                                                                                                                                                                                                                                                                                                                                   |
 
 # Field Properties
 
@@ -269,12 +270,14 @@ This proposal includes the addition of 2 new shared properties and some unique o
 | Property   | Description                                                                                                              |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `type`     | The type of the field                                                                                                    |
-| `required` | Defines whether the field is required to exist or not (this doesn't work if validation is disabled)                      |
+| `optional` | Defines whether the field is optional or not (this doesn't work if validation is disabled)                               |
 | `default`  | Chose a default value for the field making so that it will always exist even if it isn't required                        |
 | `index`    | Defines whether the field should be indexed or not (defaults to `true`)                                                  |
 | `sortable` | Defines whether the field is sortable or not (note that this doesn't exist nor work on object fields & reference fields) |
 
 ## Unique Properties
+
+Vector properties wont be documented here, check the types instead
 
 | Property     | Type        | Description                                                                                                                                                                  |
 | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
