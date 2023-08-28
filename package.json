@@ -40,7 +40,7 @@
   "devDependencies": {
     "@microsoft/tsdoc": "^0.14.2",
     "@microsoft/tsdoc-config": "^0.16.2",
-    "@types/node": "^20.5.6",
+    "@types/node": "^20.5.7",
     "@typescript-eslint/eslint-plugin": "^6.4.1",
     "@typescript-eslint/parser": "^6.4.1",
     "c8": "^8.0.1",
@@ -53,7 +53,7 @@
     "vitest": "^0.34.3"
   },
   "dependencies": {
-    "@infinite-fansub/logger": "^2.2.1",
+    "@infinite-fansub/logger": "^2.2.2",
     "colours.js": "^3.1.2",
     "redis": "^4.6.8",
     "tslib": "^2.6.2"
