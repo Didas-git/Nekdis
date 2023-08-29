@@ -1,7 +1,7 @@
-import type { FieldTypes, ObjectField, ReferenceField, TupleField } from "./schema-definition";
+import type { FieldType, ObjectField, ReferenceField, TupleField } from "./schema-definition";
 
 export interface Parsed {
-    value: Exclude<FieldTypes, TupleField | ObjectField | ReferenceField>;
+    value: Exclude<FieldType, TupleField | ObjectField | ReferenceField>;
     path: string;
 }
 

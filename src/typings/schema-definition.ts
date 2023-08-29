@@ -2,11 +2,16 @@ import type { FieldMap } from "./field-map";
 import type { Schema } from "../schema";
 import type { Point } from "./point";
 
-export type SchemaDefinition = Record<string, keyof Omit<FieldMap, "tuple" | "object" | "reference"> | FieldTypes>;
+export type SchemaDefinition = Record<string, keyof Omit<FieldMap, "tuple" | "object" | "reference"> | FieldType>;
 
-export type FieldTypes = StringField | NumberField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField | ReferenceField | VectorField;
+export interface ParsedSchemaDefinition {
+    data: Record<string, Exclude<FieldType, ReferenceField | TupleField | ObjectField> | ParsedTupleField | ParsedObjectField>;
+    references: Record<string, null>;
+}
 
-export type TupleElement = Exclude<keyof FieldMap, "tuple" | "reference" | "object"> | SchemaDefinition | undefined;
+export type FieldType = StringField | NumberField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField | ReferenceField | VectorField;
+
+export type TupleElement = Exclude<keyof FieldMap, "tuple" | "reference" | "object"> | SchemaDefinition;
 
 export interface BaseField {
     type: keyof FieldMap;
@@ -93,11 +98,23 @@ export interface TupleField extends Omit<BaseField, "sortable"> {
     default?: Array<unknown> | undefined;
 }
 
+export interface ParsedTupleField extends Omit<Required<BaseField>, "sortable"> {
+    type: "tuple";
+    elements: [FieldType, ...Array<FieldType>];
+    default: Array<unknown> | undefined;
+}
+
 // FALLBACK
 export interface ObjectField extends Omit<BaseField, "sortable"> {
     type: "object";
     properties?: SchemaDefinition | undefined;
     default?: Record<string, any> | undefined;
+}
+
+export interface ParsedObjectField extends Omit<Required<BaseField>, "sortable"> {
+    type: "object";
+    properties: Record<string, FieldType> | null;
+    default: Record<string, any> | undefined;
 }
 
 // NON EXISTENT HANDLE AS ARRAY OF STRINGS WITH AUTOFETCH TRANSFORMING INTO AN OBJECT

@@ -3,5 +3,6 @@
     "cSpell.words": [
         "HNSW",
         "nekdis"
-    ]
+    ],
+    "testing.automaticallyOpenPeekView": "never"
 }
