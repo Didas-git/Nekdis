@@ -19,28 +19,31 @@ export interface BaseField {
     default?: FieldMap<unknown>[keyof FieldMap] | undefined;
     sortable?: boolean;
     index?: boolean;
+    literal?: FieldMap<unknown>[keyof FieldMap] | Array<FieldMap<unknown>[keyof FieldMap]> | undefined;
 }
 
 // TAG
 export interface StringField extends BaseField {
     type: "string";
     default?: string | undefined;
+    literal?: string | Array<string> | undefined;
 }
 
 // NUMERIC
 export interface NumberField extends BaseField {
     type: "number";
     default?: number | undefined;
+    literal?: number | Array<number> | undefined;
 }
 
 // TAG
-export interface BooleanField extends BaseField {
+export interface BooleanField extends Omit<BaseField, "literal"> {
     type: "boolean";
     default?: boolean | undefined;
 }
 
 // TEXT
-export interface TextField extends BaseField {
+export interface TextField extends Omit<BaseField, "literal"> {
     type: "text";
     default?: string | undefined;
 }
@@ -49,16 +52,17 @@ export interface TextField extends BaseField {
 export interface DateField extends BaseField {
     type: "date";
     default?: Date | number | string | undefined;
+    literal?: Date | number | string | Array<Date | number | string> | undefined;
 }
 
 // GEO
-export interface PointField extends BaseField {
+export interface PointField extends Omit<BaseField, "literal"> {
     type: "point";
     default?: Point | undefined;
 }
 
 // VECTOR
-export interface BaseVector extends BaseField {
+export interface BaseVector extends Omit<BaseField, "literal"> {
     type: "vector";
     default?: Array<number> | Float32Array | Float64Array | undefined;
     algorithm: "FLAT" | "HNSW";
@@ -89,6 +93,7 @@ export interface ArrayField extends BaseField {
     elements?: Exclude<keyof FieldMap, "array" | "reference" | "object" | "tuple"> | SchemaDefinition | undefined;
     default?: Array<unknown> | undefined;
     separator?: string;
+    literal?: Array<unknown> | undefined;
 }
 
 //FALLBACK
@@ -96,12 +101,14 @@ export interface TupleField extends Omit<BaseField, "sortable"> {
     type: "tuple";
     elements: [TupleElement, ...Array<TupleElement>];
     default?: Array<unknown> | undefined;
+    literal?: Array<unknown> | undefined;
 }
 
 export interface ParsedTupleField extends Omit<Required<BaseField>, "sortable"> {
     type: "tuple";
     elements: [FieldType, ...Array<FieldType>];
     default: Array<unknown> | undefined;
+    literal: Array<unknown> | undefined;
 }
 
 // FALLBACK

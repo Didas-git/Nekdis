@@ -8,13 +8,14 @@ import type {
     ExtractSchemaMethods,
     MethodsDefinition,
     SchemaDefinition,
-    SchemaOptions,
-    WithModules,
     NodeRedisClient,
+    SchemaOptions,
+    ClientOptions,
     ExtractName,
+    WithModules,
     URLObject,
-    Module,
-    ClientOptions
+    Narrow,
+    Module
 } from "./typings";
 
 export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefinition<SD> = {}> {
@@ -71,7 +72,7 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
         return this;
     }
 
-    public schema<T extends SchemaDefinition, M extends MethodsDefinition<(T & SD)>>(definition: T, methods?: M, options?: SchemaOptions): Schema<
+    public schema<T extends Narrow<SchemaDefinition>, M extends MethodsDefinition<(T & SD)>>(definition: T, methods?: M, options?: SchemaOptions): Schema<
         { [K in keyof (T & SD)]: (T & SD)[K] },
         { [K in keyof (M & MD)]: (M & MD)[K] }
     > {
