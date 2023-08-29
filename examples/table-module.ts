@@ -14,17 +14,17 @@ class Table<T extends Model<any>> {
     readonly #oldSuffix: ModelOptions["suffix"];
 
     constructor(name: string, public model: T) {
-        const { suffix } = model.getOptions;
+        const { suffix } = model.options;
         this.#oldSuffix = suffix;
 
         if (typeof suffix !== "undefined") {
             if (typeof suffix === "function") throw new PrettyError("Using tables is not allowed with dynamic suffixes");
 
-            model.mutateOptions = {
+            model.options = {
                 suffix: `${suffix}:${name}`
             }
         } else {
-            model.mutateOptions = {
+            model.options = {
                 suffix: name
             }
         }
@@ -32,7 +32,7 @@ class Table<T extends Model<any>> {
 
     /** @internal */
     public _cleanUp(): void {
-        this.model.mutateOptions = {
+        this.model.options = {
             suffix: this.#oldSuffix
         }
     }

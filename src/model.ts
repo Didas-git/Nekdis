@@ -69,7 +69,7 @@ export class Model<S extends Schema<any>> {
         else this.#docType = JSONDocument;
     }
 
-    public async get<F extends boolean = false>(id: string | number, autoFetch?: F): Promise<ReturnDocument<S, F> | null> {
+    public async get<F extends boolean = false>(id: string | number, autoFetch?: F): Promise<ReturnDocument<S, F> | undefined> {
         if (typeof id === "undefined") throw new PrettyError("A valid id was not given", {
             reference: "nekdis"
         });
@@ -87,7 +87,7 @@ export class Model<S extends Schema<any>> {
 
         const data = this.#options.dataStructure === "JSON" ? await this.#client.json.get(id.toString()) : await this.#client.hGetAll(id.toString());
 
-        if (data === null) return null;
+        if (data === null) return void 0;
         if (autoFetch) {
             for (let i = 0, keys = Object.keys(this.#schema[schemaData].references), len = keys.length; i < len; i++) {
                 const key = keys[i];
@@ -335,11 +335,11 @@ export class Model<S extends Schema<any>> {
         }
     }
 
-    public get getOptions(): ModelOptions {
+    public get options(): ModelOptions {
         return this.#options;
     }
 
-    public set mutateOptions(options: Partial<ModelOptions>) {
+    public set options(options: Partial<ModelOptions>) {
         this.#options = { ...this.#options, ...options };
     }
 }
