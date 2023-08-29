@@ -16,7 +16,7 @@ import {
 } from "./search-builders";
 
 import type {
-    FieldTypes,
+    FieldType,
     NodeRedisClient,
     MapSearchField,
     ParseSchema,
@@ -37,7 +37,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     readonly #information: SearchInformation;
     // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
     readonly #docType: typeof JSONDocument | typeof HASHDocument;
-    #workingType!: FieldTypes["type"];
+    #workingType!: FieldType["type"];
 
     /**
      * LIMIT defaults to 0 10
@@ -134,7 +134,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                 }
             }
 
-            docs.push(new this.#docType(this.#schema, {
+            docs.push(new this.#docType(<never>this.#schema, {
                 globalPrefix: this.#information.globalPrefix,
                 prefix: this.#information.prefix,
                 name: this.#information.modelName
@@ -205,7 +205,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                     doc.value[key] = <never>await Promise.all(temp);
                 }
             }
-            docs.push(new this.#docType(this.#schema, {
+            docs.push(new this.#docType(<never>this.#schema, {
                 globalPrefix: this.#information.globalPrefix,
                 prefix: this.#information.prefix,
                 name: this.#information.modelName
@@ -286,7 +286,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
 
         if (data === null) return null;
 
-        return <never>new this.#docType(this.#schema, {
+        return <never>new this.#docType(<never>this.#schema, {
             globalPrefix: this.#information.globalPrefix,
             prefix: this.#information.prefix,
             name: this.#information.modelName
@@ -333,7 +333,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return <never>this.#defineReturn(path, value.type === "array" ? <never>value.elements : value.type);
     }
 
-    #defineReturn(field: string, type: Exclude<FieldTypes["type"], "tuple" | "array" | "reference">): BaseField {
+    #defineReturn(field: string, type: Exclude<FieldType["type"], "tuple" | "array" | "reference">): BaseField {
         switch (type) {
             case "string": {
                 this.#workingType = "string";

@@ -2,7 +2,7 @@ import { PrettyError } from "@infinite-fansub/logger";
 import { inspect } from "node:util";
 import { Color } from "colours.js";
 
-import type { ObjectField, ParseSchema } from "../../typings";
+import type { FieldType, ParsedSchemaDefinition } from "../../typings";
 import type { HASHDocument } from "../hash-document";
 import type { JSONDocument } from "../json-document";
 
@@ -32,9 +32,8 @@ export function stringsToObject(arr: Array<string>, val: unknown): Record<string
 }
 
 export function validateSchemaReferences(
-    this: HASHDocument | JSONDocument,
-    schema: ParseSchema<any>["references"],
-    data: JSONDocument | ParseSchema<any>["references"] = this
+    schema: ParsedSchemaDefinition["references"],
+    data: JSONDocument | HASHDocument
 ): void {
     for (let i = 0, keys = Object.keys(schema), len = keys.length; i < len; i++) {
         const key = keys[i];
@@ -60,9 +59,8 @@ export function validateSchemaReferences(
 }
 
 export function validateSchemaData(
-    this: HASHDocument | JSONDocument,
-    schema: ParseSchema<any>["data"],
-    data: HASHDocument | ParseSchema<any>["data"] = this,
+    schema: ParsedSchemaDefinition["data"] | FieldType,
+    data: JSONDocument | HASHDocument,
     isField: boolean = false
 ): void {
     for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
@@ -84,30 +82,25 @@ export function validateSchemaData(
         });
 
         if (value.type === "object") {
-            if (!(<ObjectField>value).properties) continue;
-            //@ts-expect-error Typescript is getting confused due to the union of array and object
+            if (value.properties === null) continue;
             validateSchemaData(value.properties, dataVal, true);
         } else if (value.type === "array") {
             dataVal.every((val: unknown) => {
                 if (typeof val === "object") return;
-                //@ts-expect-error Typescript is getting confused due to the union of array and object
                 if (value.elements === "text") {
                     if (typeof val !== "string") throw new PrettyError(`Invalid text received. Expected type: 'string' got '${typeof val}'`, {
                         reference: "nekdis"
                     });
                     return;
                 }
-                //@ts-expect-error Typescript is getting confused due to the union of array and object
                 if (typeof val !== value.elements) throw new PrettyError(`Got wrong type on array elements. Expected type: '${value.elements}' got '${typeof val}'`, {
                     reference: "nekdis"
                 });
             });
 
         } else if (value.type === "tuple") {
-            //@ts-expect-error Typescript is getting confused due to the union of array and object
             for (let j = 0, le = value.elements.length; j < le; j++) {
-                //@ts-expect-error Typescript is getting confused due to the union of array and object
-                validateSchemaData({ [j]: value.elements[j] }, { [j]: dataVal[j] });
+                validateSchemaData({ [j]: value.elements[j] }, <never>{ [j]: dataVal[j] });
             }
         } else if (value.type === "date") {
             if (!(dataVal instanceof Date) && typeof dataVal !== "number") throw new PrettyError(`Expected 'Date' or type 'number' but instead got ${typeof dataVal}`, {

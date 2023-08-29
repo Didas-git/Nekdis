@@ -1,6 +1,6 @@
 import { dateToNumber, numberToDate, stringsToObject } from "./general-helpers";
 
-import type { ArrayField, BaseField, ObjectField, Point } from "../../typings";
+import type { ArrayField, BaseField, FieldType, ParsedObjectField, Point } from "../../typings";
 
 export function booleanToString(val: boolean): string {
     return (+val).toString();
@@ -46,7 +46,7 @@ export function hashFieldToString(schema: BaseField, val: any): string {
 
 }
 
-export function objectToHashString(data: Record<string, any>, k: string, schema?: Record<string, any>): Array<string> {
+export function objectToHashString(data: Record<string, any>, k: string, schema?: Record<string, any> | null): Array<string> {
     const init: Array<string> = [];
     for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
         const [key, val] = entries[i];
@@ -67,14 +67,14 @@ export function objectToHashString(data: Record<string, any>, k: string, schema?
     return init;
 }
 
-export function convertUnknownToSchema(val: any): BaseField {
+export function convertUnknownToSchema(val: unknown): BaseField {
     if (Array.isArray(val)) return { type: "array" };
     if (val instanceof Date) return { type: "date" };
-    if (typeof val === "object" && "latitude" in val && "longitude" in val) return { type: "point" };
+    if (typeof val === "object" && val !== null && "latitude" in val && "longitude" in val) return { type: "point" };
     return { type: <"string" | "number" | "boolean" | "object">typeof val };
 }
 
-export function stringToHashField(schema: BaseField, val: string): any {
+export function stringToHashField(schema: FieldType, val: string): any {
     if (schema.type === "number") {
         return stringToNumber(val);
     } if (schema.type === "boolean") {
@@ -84,17 +84,15 @@ export function stringToHashField(schema: BaseField, val: string): any {
     } else if (schema.type === "point") {
         return stringToPoint(val);
     } else if (schema.type === "array") {
-        const temp = val.split((<ArrayField>schema).separator ?? ",");
+        const temp = val.split(schema.separator ?? ",");
         for (let i = 0, len = temp.length; i < len; i++) {
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-            temp[i] = stringToHashField({ type: <never>(<ArrayField>schema).elements ?? "string" }, temp[i]);
+            temp[i] = stringToHashField({ type: <never>schema.elements ?? "string" }, temp[i]);
         }
         return temp;
     } else if (schema.type === "vector") {
-        //@ts-expect-error Type overload
-        if (schema.vecType === "FLOAT32") return new Float32Array(val);
-        //@ts-expect-error Type overload
-        if (schema.vecType === "FLOAT64") return new Float64Array(val);
+        if (schema.vecType === "FLOAT32") return new Float32Array(Buffer.from(val));
+        return new Float64Array(Buffer.from(val));
     }
     return val;
 }
@@ -149,21 +147,20 @@ export function deepMerge(...objects: Array<Record<string, any>>): Record<string
     return newObject;
 }
 
-export function getLastKeyInSchema(data: Required<ObjectField>, key: string): BaseField | undefined {
-    if (!data.properties) return { type: "string" };
+export function getLastKeyInSchema(data: ParsedObjectField, key: string): FieldType | undefined {
+    if (typeof data.properties === "undefined" || data.properties === null) return { type: "string" };
+
     for (let i = 0, entries = Object.entries(data.properties), len = entries.length; i < len; i++) {
         const [k, value] = entries[i];
 
         if (key === k) {
-            return <BaseField>value;
+            return value;
         }
 
         if (typeof value === "undefined") continue;
 
-        //@ts-expect-error I dont have a proper type for this
         if (value.type === "object") {
-            //@ts-expect-error I dont have a proper type for this
-            return getLastKeyInSchema(value, key);
+            return getLastKeyInSchema(<ParsedObjectField>value, key);
         }
 
         continue;

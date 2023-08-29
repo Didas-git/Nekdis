@@ -18,7 +18,10 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
     /** @internal */
     public [methods]: M;
 
-    /** @internal */
+    /**
+     * @internal
+     * The real type is: {@link ParsedSchemaDefinition}
+    */
     public [schemaData]: P;
 
     public constructor(rawData: S, methodsData?: M, public readonly options: SchemaOptions = {}) {
@@ -156,15 +159,14 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
             } else if (value.type === "object") {
                 if (typeof value.default === "undefined") value.default = undefined;
                 if (typeof value.optional === "undefined") value.optional = false;
-                if (!value.properties) value.properties = undefined;
+                if (typeof value.properties === "undefined") value.properties = <never>null;
                 else value.properties = <never>this.#parse(value.properties).data;
             } else if (value.type === "tuple") {
                 if (typeof value.elements === "undefined") throw new PrettyError("Tuple needs to have at least 1 element", {
                     reference: "nekdis"
                 });
                 for (let j = 0, le = value.elements.length; j < le; j++) {
-                    //@ts-expect-error No comment
-                    value.elements[j] = this.#parse({ [j]: typeof value.elements[j] === "string" ? value.elements[j] : { type: "object", properties: value.elements[j] } }).data[j];
+                    value.elements[j] = <never>this.#parse(<T>{ [j]: typeof value.elements[j] === "string" ? value.elements[j] : { type: "object", properties: value.elements[j] } }).data[<keyof T>j];
                 }
                 value = this.#fill(value);
             } else if (value.type === "reference") {

@@ -1,8 +1,10 @@
 import { dateToNumber, numberToDate } from "./general-helpers";
 
-import type { ArrayField, BaseField, ObjectField } from "../../typings";
+import type { ArrayField, BaseField, FieldType, ParsedObjectField } from "../../typings";
 
-export function jsonFieldToDoc(schema: BaseField, val: any): any {
+export function jsonFieldToDoc(schema: FieldType | undefined, val: any): any {
+    if (typeof schema === "undefined") return val;
+
     if (schema.type === "date") {
         return numberToDate(val);
     } else if (schema.type === "point") {
@@ -13,14 +15,12 @@ export function jsonFieldToDoc(schema: BaseField, val: any): any {
         parseJsonObject(<never>schema, val);
     } else if (schema.type === "array") {
         for (let i = 0, le = val.length; i < le; i++) {
-            val[i] = jsonFieldToDoc({ type: <never>(<ArrayField>schema).elements }, val[i]);
+            val[i] = jsonFieldToDoc({ type: <never>schema.elements }, val[i]);
         }
         return val;
     } else if (schema.type === "vector") {
-        //@ts-expect-error Type overload
         if (schema.vecType === "FLOAT32") return new Float32Array(val);
-        //@ts-expect-error Type overload
-        if (schema.vecType === "FLOAT64") return new Float64Array(val);
+        return new Float64Array(val);
     }
 
     return val;
@@ -46,36 +46,29 @@ export function docToJson(schema: BaseField, val: any): any {
 
 }
 
-export function parseDoc(schema: Required<ObjectField>, val: any): any {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    for (let i = 0, entries = Object.entries((<ObjectField>schema).properties!), len = entries.length; i < len; i++) {
+export function parseDoc(schema: ParsedObjectField, val: any): any {
+    if (schema.properties === null) return val;
+    for (let i = 0, entries = Object.entries(schema.properties), len = entries.length; i < len; i++) {
         const [key, value] = entries[i];
 
-        //@ts-expect-error I dont have a proper type for this
         if (value.type === "object") {
-            //@ts-expect-error I dont have a proper type for this
-            val[key] = parseDoc(value, val[key]);
+            val[key] = parseDoc(<ParsedObjectField>value, val[key]);
         }
-
-        //@ts-expect-error I dont have a proper type for this
         val[key] = docToJson(value, val[key]);
     }
 
     return val;
 }
 
-export function parseJsonObject(schema: Required<ObjectField>, val: any): any {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    for (let i = 0, entries = Object.entries((<ObjectField>schema).properties!), len = entries.length; i < len; i++) {
+export function parseJsonObject(schema: ParsedObjectField, val: any): any {
+    if (schema.properties === null) return val;
+    for (let i = 0, entries = Object.entries(schema.properties), len = entries.length; i < len; i++) {
         const [key, value] = entries[i];
 
-        //@ts-expect-error I dont have a proper type for this
         if (value.type === "object") {
-            //@ts-expect-error I dont have a proper type for this
-            val[key] = parseJsonObject(value, val[key]);
+            val[key] = parseJsonObject(<ParsedObjectField>value, val[key]);
         }
 
-        //@ts-expect-error I dont have a proper type for this
         val[key] = jsonFieldToDoc(value, val[key]);
     }
 

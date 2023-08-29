@@ -15,11 +15,11 @@ import {
     deepMerge
 } from "./document-helpers";
 
-import type { DocumentShared, ObjectField, ParseSchema } from "../typings";
+import type { DocumentShared, ParsedTupleField, ObjectField, ParsedSchemaDefinition, ParsedObjectField } from "../typings";
 
 export class HASHDocument implements DocumentShared {
 
-    readonly #schema: ParseSchema<any>;
+    readonly #schema: ParsedSchemaDefinition;
     readonly #validate: boolean;
     readonly #autoFetch: boolean;
     #validateSchemaReferences = validateSchemaReferences;
@@ -40,7 +40,7 @@ export class HASHDocument implements DocumentShared {
     [key: string]: any;
 
     public constructor(
-        schema: ParseSchema<any>,
+        schema: ParsedSchemaDefinition,
         record: {
             globalPrefix: string,
             prefix: string,
@@ -73,31 +73,28 @@ export class HASHDocument implements DocumentShared {
                     const arr = key.split(".");
 
                     if (arr.length > 1) /* This is an object or tuple */ {
-                        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                        if (schema.data[arr[0]]?.type === "tuple") {
+                        if (schema.data[arr[0]].type === "tuple") {
                             // var name
                             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                             const temp = arr.shift()!;
 
                             if (arr.length === 1) {
                                 this[temp].push(stringToHashField(
-                                    //@ts-expect-error Type overload
-                                    schema.data[temp].elements[arr[0]],
+                                    (<ParsedTupleField>schema.data[temp]).elements[<`${number}`>arr[0]],
                                     <string>value
                                 ));
 
                                 continue;
                             }
 
-                            //@ts-expect-error Type overload
-                            this[temp].push(stringToHashArray(arr, schema.data[temp].elements, value));
+                            this[temp].push(stringToHashArray(arr, (<ParsedTupleField>schema.data[temp]).elements, value));
                         } else /*we assume its an object*/ {
                             this[arr[0]] = deepMerge(
                                 this[arr[0]],
                                 stringsToObject(
                                     arr,
                                     stringToHashField(
-                                        getLastKeyInSchema(<Required<ObjectField>>schema.data[arr[0]], <string>arr.at(-1)) ?? { type: "string" },
+                                        getLastKeyInSchema(<ParsedObjectField>schema.data[arr[0]], <string>arr.at(-1)) ?? { type: "string" },
                                         <string>value
                                     )
                                 )[arr[0]]
@@ -133,16 +130,12 @@ export class HASHDocument implements DocumentShared {
             const [key, value] = entries[i];
             this[key] = value.default ?? (value.type === "object"
                 ? {}
-                : value.type === "tuple"
+                : value.type === "tuple" || value.type === "array"
                     ? []
                     : value.type === "vector"
-                        //@ts-expect-error Type overload
                         ? value.vecType === "FLOAT32"
                             ? new Float32Array()
-                            //@ts-expect-error Type overload
-                            : value.vecType === "FLOAT64"
-                                ? new Float64Array()
-                                : []
+                            : new Float64Array()
                         : void 0);
         }
 
@@ -152,8 +145,9 @@ export class HASHDocument implements DocumentShared {
         }
     }
 
+    /** This is actually and array... eventually i change it */
     public toString(): string {
-        if (this.#validate) this.#validateSchemaData(this.#schema.data);
+        if (this.#validate) this.#validateSchemaData(this.#schema.data, this);
 
         const arr = [
             "$id",
@@ -168,7 +162,6 @@ export class HASHDocument implements DocumentShared {
             if (typeof this[key] === "undefined") continue;
 
             if (val.type === "object") {
-                //@ts-expect-error Typescript is getting confused due to the union of array and object
                 arr.push(...objectToHashString(this[key], key, val.properties));
                 continue;
             } else if (val.type === "tuple") {
@@ -176,14 +169,12 @@ export class HASHDocument implements DocumentShared {
                 for (let j = 0, le = temp.length; j < le; j++) {
                     const [k, value] = Object.entries(temp[j])[0];
 
-                    //@ts-expect-error Type Overload
                     if (val.elements[j].type === "object") {
-                        //@ts-expect-error Type Overload
-                        arr.push(...objectToHashString(value, k, val.elements[j].properties));
+                        arr.push(...objectToHashString(<Record<string, unknown>>value, k, (<ObjectField>val.elements[j]).properties));
                         continue;
                     }
 
-                    arr.push(k, hashFieldToString(<never>val, value));
+                    arr.push(k, hashFieldToString(val, value));
                 }
                 continue;
             }
@@ -193,7 +184,7 @@ export class HASHDocument implements DocumentShared {
         }
 
         if (!this.#autoFetch) {
-            if (this.#validate) this.#validateSchemaReferences(this.#schema.references);
+            if (this.#validate) this.#validateSchemaReferences(this.#schema.references, this);
             for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
                 const key = keys[i];
 
@@ -202,7 +193,7 @@ export class HASHDocument implements DocumentShared {
             }
         }
 
-        //@ts-expect-error pls dont question it
+        //@ts-expect-error pls don't question it
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return arr;
     }

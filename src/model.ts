@@ -43,7 +43,7 @@ export class Model<S extends Schema<any>> {
             version: ver
         };
 
-        this.#parsedSchema = parseSchemaToSearchIndex(this.#schema[schemaData].data);
+        this.#parsedSchema = parseSchemaToSearchIndex(<never>this.#schema[schemaData].data);
         this.#searchIndexName = `${globalPrefix}:${this.#options.prefix}:${this.name}:index`;
         this.#searchIndexHashName = `${globalPrefix}:${this.#options.prefix}:${this.name}:index:hash`;
         this.#searchIndex = [
@@ -104,7 +104,7 @@ export class Model<S extends Schema<any>> {
             }
         }
 
-        return <never>new this.#docType(this.#schema[schemaData], {
+        return <never>new this.#docType(<never>this.#schema[schemaData], {
             globalPrefix: this.#options.globalPrefix,
             prefix: this.#options.prefix,
             name: this.name
@@ -115,7 +115,7 @@ export class Model<S extends Schema<any>> {
     public create(data?: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true>): ReturnDocument<S>;
     public create(idOrData?: string | number | { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true>): ReturnDocument<S> {
         if (typeof idOrData === "object") {
-            return <never>new this.#docType(this.#schema[schemaData], {
+            return <never>new this.#docType(<never>this.#schema[schemaData], {
                 globalPrefix: this.#options.globalPrefix,
                 prefix: this.#options.prefix,
                 name: this.name,
@@ -123,7 +123,7 @@ export class Model<S extends Schema<any>> {
             }, idOrData, false, this.#options.skipDocumentValidation, false);
         }
 
-        return <never>new this.#docType(this.#schema[schemaData], {
+        return <never>new this.#docType(<never>this.#schema[schemaData], {
             globalPrefix: this.#options.globalPrefix,
             prefix: this.#options.prefix,
             name: this.name,
@@ -176,7 +176,7 @@ export class Model<S extends Schema<any>> {
     }
 
     public async createAndSave(data: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true>): Promise<void> {
-        const doc = new this.#docType(this.#schema[schemaData], {
+        const doc = new this.#docType(<never>this.#schema[schemaData], {
             globalPrefix: this.#options.globalPrefix,
             prefix: this.#options.prefix,
             name: this.name,
@@ -330,7 +330,7 @@ export class Model<S extends Schema<any>> {
     #defineMethods(): void {
         for (let i = 0, entries = Object.entries(this.#schema[methods]), len = entries.length; i < len; i++) {
             const [key, value] = entries[i];
-            //@ts-expect-error Pending fix on type notations
+            //@ts-expect-error shenanigans
             this[key] = value;
         }
     }

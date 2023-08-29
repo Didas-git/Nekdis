@@ -10,11 +10,11 @@ import {
     docToJson
 } from "./document-helpers";
 
-import type { DocumentShared, ParseSchema } from "../typings";
+import type { DocumentShared, ParsedTupleField, ParsedObjectField, ParsedSchemaDefinition } from "../typings";
 
 export class JSONDocument implements DocumentShared {
 
-    readonly #schema: ParseSchema<any>;
+    readonly #schema: ParsedSchemaDefinition;
     readonly #validate: boolean;
     readonly #autoFetch: boolean;
     #validateSchemaReferences = validateSchemaReferences;
@@ -35,7 +35,7 @@ export class JSONDocument implements DocumentShared {
     [key: string]: any;
 
     public constructor(
-        schema: ParseSchema<any>,
+        schema: ParsedSchemaDefinition,
         record: {
             globalPrefix: string,
             prefix: string,
@@ -74,13 +74,11 @@ export class JSONDocument implements DocumentShared {
                         const temp = arr.shift()!;
 
                         if (arr.length === 1) {
-                            //@ts-expect-error Type overload
-                            this[temp].push(jsonFieldToDoc(schema.data[temp].elements[arr[0]], value));
+                            this[temp].push(jsonFieldToDoc((<ParsedTupleField>schema.data[temp]).elements[<`${number}`>arr[0]], value));
                             continue;
                         }
 
-                        //@ts-expect-error Type overload
-                        this[temp].push({ [arr[1]]: jsonFieldToDoc(schema.data[temp].elements[arr[0]].properties[arr[1]], value) });
+                        this[temp].push({ [arr[1]]: jsonFieldToDoc((<ParsedObjectField>(<ParsedTupleField>schema.data[temp]).elements[<`${number}`>arr[0]]).properties?.[arr[1]], value) });
                         continue;
                     }
 
@@ -112,16 +110,12 @@ export class JSONDocument implements DocumentShared {
             const [key, value] = entries[i];
             this[key] = value.default ?? (value.type === "object"
                 ? {}
-                : value.type === "tuple"
+                : value.type === "tuple" || value.type === "array"
                     ? []
                     : value.type === "vector"
-                        //@ts-expect-error Type overload
                         ? value.vecType === "FLOAT32"
                             ? new Float32Array()
-                            //@ts-expect-error Type overload
-                            : value.vecType === "FLOAT64"
-                                ? new Float64Array()
-                                : []
+                            : new Float64Array()
                         : void 0);
         }
 
@@ -132,7 +126,7 @@ export class JSONDocument implements DocumentShared {
     }
 
     public toString(): string {
-        if (this.#validate) this.#validateSchemaData(this.#schema.data);
+        if (this.#validate) this.#validateSchemaData(this.#schema.data, this);
 
         const obj: Record<string, unknown> = {
             $suffix: this.$suffix,
@@ -149,10 +143,10 @@ export class JSONDocument implements DocumentShared {
                 for (let j = 0, le = temp.length; j < le; j++) {
                     const [k, value] = Object.entries(temp[j])[0];
 
-                    //@ts-expect-error Type overload
                     if (val.elements[j].type === "object") {
-                        //@ts-expect-error Type overload
-                        for (let u = 0, en = Object.entries(val.elements[j].properties), l = en.length; u < l; u++) {
+                        if ((<ParsedObjectField>val.elements[j]).properties === null) continue;
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        for (let u = 0, en = Object.entries((<ParsedObjectField>val.elements[j]).properties!), l = en.length; u < l; u++) {
                             const objV = en[u][1];
                             obj[k] = docToJson(<any>objV, value);
                         }
@@ -168,7 +162,7 @@ export class JSONDocument implements DocumentShared {
         }
 
         if (!this.#autoFetch) {
-            if (this.#validate) this.#validateSchemaReferences(this.#schema.references);
+            if (this.#validate) this.#validateSchemaReferences(this.#schema.references, this);
             for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
                 const key = keys[i];
                 obj[key] = this[key];
