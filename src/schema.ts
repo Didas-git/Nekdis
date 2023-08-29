@@ -31,7 +31,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
 
     }
 
-    public extends<T extends Schema<any>, SD = ExtractSchemaDefinition<T>>(schema: T): Schema<{ [K in keyof (S & SD)]: (S & SD)[K] }, MethodsDefinition<(S & SD)>> {
+    public extends<T extends Schema<any>, SD = ExtractSchemaDefinition<T>>(schema: T): Schema<Omit<SD, keyof S> & S> {
         this[schemaData] = <never>{
             data: {
                 ...schema[schemaData].data,
