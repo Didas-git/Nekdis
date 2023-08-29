@@ -23,7 +23,7 @@ type _MapSchemaData<T extends ParseSchema<any>["data"][number]> = T extends { pr
     : unknown
     : T extends { elements: unknown }
     ? T["elements"] extends [unknown, ...Array<unknown>]
-    ? Test<T["elements"]>
+    ? ParseTupleElements<T["elements"]>
     : T["elements"] extends object
     ? Array<MapSchemaData<T["elements"]>>
     : FieldMap<FieldMap[T["elements"]]>["array"]
@@ -47,6 +47,6 @@ type _MapSchemaReferences<T extends ParseSchema<any>["references"][number], AF e
     ? Array<MapSchema<T["schema"]>>
     : ReferenceArray;
 
-type Test<T> = {
+type ParseTupleElements<T> = {
     [K in keyof T]: T[K] extends ParseSchema<any>["data"][number] ? _MapSchemaData<T[K]> : never
 };
