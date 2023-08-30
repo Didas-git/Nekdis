@@ -5,11 +5,13 @@ import type { Point } from "./point";
 export type SchemaDefinition = Record<string, keyof Omit<FieldMap, "tuple" | "object" | "reference"> | FieldType>;
 
 export interface ParsedSchemaDefinition {
-    data: Record<string, Exclude<FieldType, ReferenceField | TupleField | ObjectField> | ParsedTupleField | ParsedObjectField>;
+    data: Record<string, Exclude<FieldType, ReferenceField | TupleField | ObjectField | StringField | NumberField> | ParsedFieldType>;
     references: Record<string, null>;
 }
 
 export type FieldType = StringField | NumberField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField | ReferenceField | VectorField;
+
+export type ParsedFieldType = ParsedStringField | ParsedNumberField | ParsedObjectField | ParsedTupleField;
 
 export type TupleElement = Exclude<keyof FieldMap, "tuple" | "reference" | "object"> | SchemaDefinition;
 
@@ -19,7 +21,6 @@ export interface BaseField {
     default?: FieldMap<unknown>[keyof FieldMap] | undefined;
     sortable?: boolean;
     index?: boolean;
-    literal?: FieldMap<unknown>[keyof FieldMap] | Array<FieldMap<unknown>[keyof FieldMap]> | undefined;
 }
 
 // TAG
@@ -29,6 +30,10 @@ export interface StringField extends BaseField {
     literal?: string | Array<string> | undefined;
 }
 
+export interface ParsedStringField extends Required<StringField> {
+    literal: Array<string> | undefined;
+}
+
 // NUMERIC
 export interface NumberField extends BaseField {
     type: "number";
@@ -36,14 +41,18 @@ export interface NumberField extends BaseField {
     literal?: number | Array<number> | undefined;
 }
 
+export interface ParsedNumberField extends Required<NumberField> {
+    literal: Array<number> | undefined;
+}
+
 // TAG
-export interface BooleanField extends Omit<BaseField, "literal"> {
+export interface BooleanField extends BaseField {
     type: "boolean";
     default?: boolean | undefined;
 }
 
 // TEXT
-export interface TextField extends Omit<BaseField, "literal"> {
+export interface TextField extends BaseField {
     type: "text";
     default?: string | undefined;
 }
@@ -52,17 +61,16 @@ export interface TextField extends Omit<BaseField, "literal"> {
 export interface DateField extends BaseField {
     type: "date";
     default?: Date | number | string | undefined;
-    literal?: Date | number | string | Array<Date | number | string> | undefined;
 }
 
 // GEO
-export interface PointField extends Omit<BaseField, "literal"> {
+export interface PointField extends BaseField {
     type: "point";
     default?: Point | undefined;
 }
 
 // VECTOR
-export interface BaseVector extends Omit<BaseField, "literal"> {
+export interface BaseVector extends BaseField {
     type: "vector";
     default?: Array<number> | Float32Array | Float64Array | undefined;
     algorithm: "FLAT" | "HNSW";
@@ -93,7 +101,6 @@ export interface ArrayField extends BaseField {
     elements?: Exclude<keyof FieldMap, "array" | "reference" | "object" | "tuple"> | SchemaDefinition | undefined;
     default?: Array<unknown> | undefined;
     separator?: string;
-    literal?: Array<unknown> | undefined;
 }
 
 //FALLBACK
@@ -101,14 +108,12 @@ export interface TupleField extends Omit<BaseField, "sortable"> {
     type: "tuple";
     elements: [TupleElement, ...Array<TupleElement>];
     default?: Array<unknown> | undefined;
-    literal?: Array<unknown> | undefined;
 }
 
 export interface ParsedTupleField extends Omit<Required<BaseField>, "sortable"> {
     type: "tuple";
     elements: [FieldType, ...Array<FieldType>];
     default: Array<unknown> | undefined;
-    literal: Array<unknown> | undefined;
 }
 
 // FALLBACK

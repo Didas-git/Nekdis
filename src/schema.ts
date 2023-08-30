@@ -10,7 +10,10 @@ import type {
     SchemaDefinition,
     SchemaOptions,
     ParseSchema,
-    BaseField
+    NumberField,
+    StringField,
+    BaseField,
+    FieldType
 } from "./typings";
 
 export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> = MethodsDefinition<S>, P extends ParseSchema<S> = ParseSchema<S>> {
@@ -112,7 +115,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                 } else if (value === "tuple") {
                     throw new PrettyError("Type 'tuple' needs to use its object definition");
                 } else if (value === "array") {
-                    value = { type: value, elements: "string", default: undefined, optional: false, sortable: false, index: true };
+                    value = { type: value, elements: "string", default: undefined, optional: false, sortable: false, index: true, separator: "," };
                 } else if (value === "vector") {
                     value = {
                         type: value,
@@ -127,6 +130,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                     };
                 } else {
                     value = { type: value, default: undefined, optional: false, sortable: false, index: true };
+                    if ((<FieldType>value).type === "string" || (<FieldType>value).type === "number") (<StringField | NumberField>value).literal = undefined;
                 }
 
                 data[key] = value;
@@ -222,6 +226,10 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                     if (typeof value.runtime === "undefined") value.runtime = undefined;
                     if (typeof value.epsilon === "undefined") value.epsilon = undefined;
                 }
+                value = this.#fill(value);
+            } else if (value.type === "string" || value.type === "number") {
+                if (typeof value.literal === "undefined") value.literal = undefined;
+                else if (!Array.isArray(value.literal)) value.literal = [<never>value.literal];
                 value = this.#fill(value);
             } else {
                 value = this.#fill(value);

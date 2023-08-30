@@ -2,7 +2,7 @@ import { PrettyError } from "@infinite-fansub/logger";
 import { inspect } from "node:util";
 import { Color } from "colours.js";
 
-import type { FieldType, ParsedSchemaDefinition } from "../../typings";
+import type { ParsedSchemaDefinition } from "../../typings";
 import type { HASHDocument } from "../hash-document";
 import type { JSONDocument } from "../json-document";
 
@@ -59,7 +59,7 @@ export function validateSchemaReferences(
 }
 
 export function validateSchemaData(
-    schema: ParsedSchemaDefinition["data"] | FieldType,
+    schema: ParsedSchemaDefinition["data"],
     data: JSONDocument | HASHDocument,
     isField: boolean = false
 ): void {
@@ -83,7 +83,7 @@ export function validateSchemaData(
 
         if (value.type === "object") {
             if (value.properties === null) continue;
-            validateSchemaData(value.properties, dataVal, true);
+            validateSchemaData(<ParsedSchemaDefinition["data"]>value.properties, dataVal, true);
         } else if (value.type === "array") {
             dataVal.every((val: unknown) => {
                 if (typeof val === "object") return;
@@ -100,7 +100,7 @@ export function validateSchemaData(
 
         } else if (value.type === "tuple") {
             for (let j = 0, le = value.elements.length; j < le; j++) {
-                validateSchemaData({ [j]: value.elements[j] }, <never>{ [j]: dataVal[j] });
+                validateSchemaData(<ParsedSchemaDefinition["data"]>{ [j]: value.elements[j] }, <never>{ [j]: dataVal[j] });
             }
         } else if (value.type === "date") {
             if (!(dataVal instanceof Date) && typeof dataVal !== "number") throw new PrettyError(`Expected 'Date' or type 'number' but instead got ${typeof dataVal}`, {
@@ -146,7 +146,19 @@ export function validateSchemaData(
             if (typeof dataVal !== "string") throw new PrettyError("Text field has to be a string");
         } else if (value.type === "vector") {
             if (!(dataVal instanceof Float32Array) && !(dataVal instanceof Float64Array) && !Array.isArray(dataVal)) throw new PrettyError("Got wrong vector format");
-        } else {
+        } else if (value.type === "string" || value.type === "number") {
+            if (typeof value.literal === "undefined") {
+                throw new PrettyError(`Got wrong value type. Expected type: '${value.type}' got '${typeof dataVal}'`, {
+                    reference: "nekdis"
+                });
+            } else {
+                if (!value.literal.includes(<never>dataVal)) {
+                    throw new PrettyError(`Got wrong value. Expected one of: '${value.literal}' got '${dataVal}'`, {
+                        reference: "nekdis"
+                    });
+                }
+            }
+        } else /* Handles `boolean` */ {
             // This handles `number`, `boolean` and `string` types
             if (typeof dataVal !== value.type) throw new PrettyError(`Got wrong value type. Expected type: '${value.type}' got '${typeof dataVal}'`);
         }

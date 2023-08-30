@@ -353,7 +353,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
             }
             case "date": {
                 this.#workingType = "date";
-                return <never>new DateField<T, Date | number | string>(this, field);
+                return <never>new DateField<T>(this, field);
             }
             case "point": {
                 this.#workingType = "point";

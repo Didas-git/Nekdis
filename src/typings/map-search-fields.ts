@@ -18,7 +18,7 @@ export type MapSearchField<K extends keyof T, S extends ParseSchema<any>, T exte
     : T[K][0] extends "text"
     ? TextField<S>
     : T[K][0] extends "date"
-    ? DateField<S, T[K][1] extends undefined ? (Date | number | string) : (T[K][1] & (Date | number | string))>
+    ? DateField<S>
     : T[K][0] extends "point"
     ? PointField<S>
     : T[K][0] extends "vector"
