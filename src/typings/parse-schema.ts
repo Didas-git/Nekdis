@@ -2,15 +2,17 @@ import type { ExtractParsedSchemaDefinition } from "./extract-generic";
 import type { Schema } from "../schema";
 
 import type {
+    SchemaDefinition,
+    ReferenceField,
+    ObjectField,
+    StringField,
+    NumberField,
+    VectorField,
     ArrayField,
-    BaseField,
+    TupleField,
     FlatVector,
     HNSWVector,
-    ObjectField,
-    ReferenceField,
-    SchemaDefinition,
-    TupleField,
-    VectorField
+    BaseField
 } from "./schema-definition";
 
 export type ParseSchema<T extends SchemaDefinition> = {
@@ -21,7 +23,10 @@ export type ParseSchema<T extends SchemaDefinition> = {
             ? T[K][P] extends {}
             ? T[K][P] extends Schema<any, any, infer U>
             ? U
-            : ParseSchema<T[K][P] & SchemaDefinition>["data"] : undefined
+            : T[K][P] extends SchemaDefinition
+            ? ParseSchema<T[K][P]>["data"]
+            : never
+            : undefined
             : T[K][P] extends {} ? T[K][P] : Fill<P>
         }
         : T[K] extends ArrayField
@@ -55,6 +60,14 @@ export type ParseSchema<T extends SchemaDefinition> = {
             [P in keyof Required<HNSWVector>]: T[K][P] extends {} ? T[K][P] : Fill<P>
         }
         : never
+        : T[K] extends StringField
+        ? {
+            [P in keyof Required<StringField>]: T[K][P] extends {} ? T[K][P] : Fill<P>
+        }
+        : T[K] extends NumberField
+        ? {
+            [P in keyof Required<NumberField>]: T[K][P] extends {} ? T[K][P] : Fill<P>
+        }
         : T[K] extends BaseField
         ? {
             [P in keyof Required<BaseField>]: T[K][P] extends {} ? T[K][P] : Fill<P>
@@ -86,6 +99,18 @@ export type CreateDefinitionFromString<T extends string> = T extends "vector"
         ? 128
         : K extends "distance"
         ? "L2"
+        : Fill<K>
+    }
+    : T extends "string"
+    ? {
+        [K in keyof Required<StringField>]: K extends "type"
+        ? T
+        : Fill<K>
+    }
+    : T extends "number"
+    ? {
+        [K in keyof Required<NumberField>]: K extends "type"
+        ? T
         : Fill<K>
     }
     : {
