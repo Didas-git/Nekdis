@@ -104,6 +104,7 @@ const client = new Client({
     await exampleModel.withTable("table1", async (table: ExampleTable) => {
         await table.model.createAndSave({
             $id: 1,
+            name: "DidaS",
             age: 21
         })
 
