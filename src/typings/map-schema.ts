@@ -1,12 +1,13 @@
 import type { ParseSchema } from "./parse-schema";
 import type { ReferenceArray } from "../utils";
 import type { FieldMap } from "./field-map";
+import type { Expand } from "./utils";
 
 export type MapSchema<
     T extends ParseSchema<any>,
     AF extends boolean = false,
     CAS extends boolean = false
-> = MapSchemaData<T["data"], CAS> & MapSchemaReferences<T["references"], AF, CAS>;
+> = Expand<MapSchemaData<T["data"], CAS> & MapSchemaReferences<T["references"], AF, CAS>>;
 
 type MapSchemaData<T extends ParseSchema<any>["data"], CAS extends boolean = false> = {
     [K in keyof T as T[K]["optional"] extends false
@@ -37,9 +38,9 @@ type MapSchemaData<T extends ParseSchema<any>["data"], CAS extends boolean = fal
 // eslint-disable-next-line @typescript-eslint/naming-convention
 type _MapSchemaData<T extends ParseSchema<any>["data"][number]> = T extends { properties: unknown }
     ? T["properties"] extends ParseSchema<any>
-    ? MapSchema<T["properties"]>
+    ? Expand<MapSchema<T["properties"]>>
     : T["properties"] extends ParseSchema<any>["data"]
-    ? MapSchemaData<T["properties"]>
+    ? Expand<MapSchemaData<T["properties"]>>
     : unknown
     : T extends { elements: unknown }
     ? T["elements"] extends [unknown, ...Array<unknown>]
@@ -74,4 +75,3 @@ type _MapSchemaReferences<T extends ParseSchema<any>["references"][number], AF e
 type ParseTupleElements<T> = {
     [K in keyof T]: T[K] extends ParseSchema<any>["data"][number] ? _MapSchemaData<T[K]> : never
 };
-

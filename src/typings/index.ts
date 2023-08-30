@@ -15,5 +15,5 @@ export type * from "./field-map";
 export type * from "./doc-base";
 export type * from "./modules";
 export type * from "./client";
-export type * from "./narrow";
+export type * from "./utils";
 export type * from "./point";

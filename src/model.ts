@@ -16,7 +16,7 @@ import type {
     VectorField,
     MapSchema,
     ParsedMap,
-    Doc
+    Document
 } from "./typings";
 
 export class Model<S extends Schema<any>> {
@@ -132,7 +132,7 @@ export class Model<S extends Schema<any>> {
         }, void 0, false, this.#options.skipDocumentValidation, false);
     }
 
-    public async save(doc: Doc): Promise<void> {
+    public async save(doc: Document): Promise<void> {
         if (typeof doc === "undefined") throw new PrettyError("No document was passed to be save", {
             reference: "nekdis"
         });
@@ -143,21 +143,21 @@ export class Model<S extends Schema<any>> {
         else await this.#client.sendCommand(["JSON.SET", doc.$record_id, "$", doc.toString()]);
     }
 
-    public async delete(...docs: Array<string | number | Doc>): Promise<void> {
+    public async delete(...docs: Array<string | number | Document>): Promise<void> {
         if (!docs.length) throw new PrettyError("No documents were given to delete", {
             reference: "nekdis"
         });
         await this.#client.del(this.#stringOrDocToString(docs));
     }
 
-    public async exists(...docs: Array<string | number | Doc>): Promise<number> {
+    public async exists(...docs: Array<string | number | Document>): Promise<number> {
         if (!docs.length) throw new PrettyError("No documents were given to check", {
             reference: "nekdis"
         });
         return await this.#client.exists(this.#stringOrDocToString(docs));
     }
 
-    public async expire(docs: Array<string | number | Doc>, seconds: number | Date, mode?: "NX" | "XX" | "GT" | "LT"): Promise<void> {
+    public async expire(docs: Array<string | number | Document>, seconds: number | Date, mode?: "NX" | "XX" | "GT" | "LT"): Promise<void> {
         if (!docs.length) throw new PrettyError("No documents were given to expire", {
             reference: "nekdis"
         });
@@ -300,7 +300,7 @@ export class Model<S extends Schema<any>> {
         return count.toString();
     }
 
-    #stringOrDocToString(stringOrNumOrDoc: Array<string | number | Doc>): Array<string> {
+    #stringOrDocToString(stringOrNumOrDoc: Array<string | number | Document>): Array<string> {
         const temp = [];
 
         for (let i = 0, len = stringOrNumOrDoc.length; i < len; i++) {
