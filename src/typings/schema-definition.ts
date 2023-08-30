@@ -119,7 +119,7 @@ export interface ParsedTupleField extends Omit<Required<BaseField>, "sortable"> 
 // FALLBACK
 export interface ObjectField extends Omit<BaseField, "sortable"> {
     type: "object";
-    properties?: SchemaDefinition | undefined;
+    properties?: Schema<any> | SchemaDefinition | undefined;
     default?: Record<string, any> | undefined;
 }
 

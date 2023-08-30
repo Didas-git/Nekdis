@@ -164,6 +164,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                 if (typeof value.default === "undefined") value.default = undefined;
                 if (typeof value.optional === "undefined") value.optional = false;
                 if (typeof value.properties === "undefined") value.properties = <never>null;
+                else if (value.properties instanceof Schema) value.properties = <never>value.properties[schemaData].data;
                 else value.properties = <never>this.#parse(value.properties).data;
             } else if (value.type === "tuple") {
                 if (typeof value.elements === "undefined") throw new PrettyError("Tuple needs to have at least 1 element", {
