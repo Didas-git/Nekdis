@@ -82,10 +82,6 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return this;
     }
 
-    // else(_value: unknown) {
-
-    // }
-
     public sortBy<F extends keyof P>(field: F, order: "ASC" | "DESC" = "ASC"): SearchSortReturn<Search<T>> {
         this.#options.SORTBY = { BY: <string>field, DIRECTION: order };
         return <never>this;

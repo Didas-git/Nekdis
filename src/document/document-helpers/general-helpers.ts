@@ -159,7 +159,6 @@ export function validateSchemaData(
                 }
             }
         } else /* Handles `boolean` */ {
-            // This handles `number`, `boolean` and `string` types
             if (typeof dataVal !== value.type) throw new PrettyError(`Got wrong value type. Expected type: '${value.type}' got '${typeof dataVal}'`);
         }
     }
