@@ -80,7 +80,7 @@ export class HASHDocument implements DocumentShared {
 
                             if (arr.length === 1) {
                                 this[temp].push(stringToHashField(
-                                    (<ParsedTupleField>schema.data[temp]).elements[<`${number}`>arr[0]],
+                                    <never>(<ParsedTupleField>schema.data[temp]).elements[<`${number}`>arr[0]],
                                     <string>value
                                 ));
 

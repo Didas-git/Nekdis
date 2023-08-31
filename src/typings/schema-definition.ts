@@ -5,13 +5,13 @@ import type { Point } from "./point";
 export type SchemaDefinition = Record<string, keyof Omit<FieldMap, "tuple" | "object" | "reference"> | FieldType>;
 
 export interface ParsedSchemaDefinition {
-    data: Record<string, Exclude<FieldType, ReferenceField | TupleField | ObjectField | StringField | NumberField> | ParsedFieldType>;
+    data: Record<string, ParsedFieldType>;
     references: Record<string, null>;
 }
 
 export type FieldType = StringField | NumberField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField | ReferenceField | VectorField;
 
-export type ParsedFieldType = ParsedStringField | ParsedNumberField | ParsedObjectField | ParsedTupleField;
+export type ParsedFieldType = Exclude<FieldType, ReferenceField | TupleField | ObjectField | StringField | NumberField> | ParsedStringField | ParsedNumberField | ParsedObjectField | ParsedTupleField;
 
 export type TupleElement = Exclude<keyof FieldMap, "tuple" | "reference" | "object"> | SchemaDefinition;
 
@@ -112,7 +112,7 @@ export interface TupleField extends Omit<BaseField, "sortable"> {
 
 export interface ParsedTupleField extends Omit<Required<BaseField>, "sortable"> {
     type: "tuple";
-    elements: [FieldType, ...Array<FieldType>];
+    elements: [ParsedFieldType, ...Array<ParsedFieldType>];
     default: Array<unknown> | undefined;
 }
 
@@ -125,7 +125,7 @@ export interface ObjectField extends Omit<BaseField, "sortable"> {
 
 export interface ParsedObjectField extends Omit<Required<BaseField>, "sortable"> {
     type: "object";
-    properties: Record<string, FieldType> | null;
+    properties: Record<string, ParsedFieldType> | null;
     default: Record<string, any> | undefined;
 }
 

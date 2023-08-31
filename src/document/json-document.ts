@@ -74,11 +74,11 @@ export class JSONDocument implements DocumentShared {
                         const temp = arr.shift()!;
 
                         if (arr.length === 1) {
-                            this[temp].push(jsonFieldToDoc((<ParsedTupleField>schema.data[temp]).elements[<`${number}`>arr[0]], value));
+                            this[temp].push(jsonFieldToDoc(<never>(<ParsedTupleField>schema.data[temp]).elements[<`${number}`>arr[0]], value));
                             continue;
                         }
 
-                        this[temp].push({ [arr[1]]: jsonFieldToDoc((<ParsedObjectField>(<ParsedTupleField>schema.data[temp]).elements[<`${number}`>arr[0]]).properties?.[arr[1]], value) });
+                        this[temp].push({ [arr[1]]: jsonFieldToDoc(<never>(<ParsedObjectField>(<ParsedTupleField>schema.data[temp]).elements[<`${number}`>arr[0]]).properties?.[arr[1]], value) });
                         continue;
                     }
 

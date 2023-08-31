@@ -52,7 +52,7 @@ export function parseDoc(schema: ParsedObjectField, val: any): any {
         const [key, value] = entries[i];
 
         if (value.type === "object") {
-            val[key] = parseDoc(<ParsedObjectField>value, val[key]);
+            val[key] = parseDoc(value, val[key]);
         }
         val[key] = docToJson(value, val[key]);
     }
@@ -66,10 +66,10 @@ export function parseJsonObject(schema: ParsedObjectField, val: any): any {
         const [key, value] = entries[i];
 
         if (value.type === "object") {
-            val[key] = parseJsonObject(<ParsedObjectField>value, val[key]);
+            val[key] = parseJsonObject(value, val[key]);
         }
 
-        val[key] = jsonFieldToDoc(value, val[key]);
+        val[key] = jsonFieldToDoc(<never>value, val[key]);
     }
 
     return val;

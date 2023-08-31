@@ -154,13 +154,13 @@ export function getLastKeyInSchema(data: ParsedObjectField, key: string): FieldT
         const [k, value] = entries[i];
 
         if (key === k) {
-            return value;
+            return <never>value;
         }
 
         if (typeof value === "undefined") continue;
 
         if (value.type === "object") {
-            return getLastKeyInSchema(<ParsedObjectField>value, key);
+            return getLastKeyInSchema(value, key);
         }
 
         continue;
