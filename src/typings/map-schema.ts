@@ -55,9 +55,11 @@ type _MapSchemaData<T extends ParseSchema<any>["data"][number]> = T extends { pr
     ? Float64Array | Array<number>
     : unknown
     : T extends { literal: unknown }
+    ? T["literal"] extends {}
     ? T["literal"] extends Array<unknown>
     ? T["literal"][number]
     : T["literal"]
+    : FieldMap[T["type"]]
     : FieldMap[T["type"]]
     ;
 
