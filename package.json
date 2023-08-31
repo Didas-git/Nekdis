@@ -1,6 +1,6 @@
 {
   "name": "nekdis",
-  "version": "0.11.3",
+  "version": "0.11.4",
   "description": "Object mapping, and more, for Redis and Node.js. Written in TypeScript.",
   "main": "dist/index.js",
   "exports": {

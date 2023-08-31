@@ -20,12 +20,12 @@ export class JSONDocument implements DocumentShared {
     #validateSchemaReferences = validateSchemaReferences;
     #validateSchemaData = validateSchemaData;
 
-    public readonly $global_prefix: string;
-    public readonly $prefix: string;
-    public readonly $model_name: string;
-    public readonly $suffix: string | undefined;
-    public readonly $id: string;
-    public readonly $record_id: string;
+    readonly #global_prefix: string;
+    readonly #prefix: string;
+    readonly #model_name: string;
+    readonly #suffix: string | undefined;
+    readonly #id: string;
+    readonly #record_id: string;
 
     /*
     * Using any so everything works as intended
@@ -48,12 +48,12 @@ export class JSONDocument implements DocumentShared {
         validate: boolean = true,
         wasAutoFetched: boolean = false
     ) {
-        this.$global_prefix = record.globalPrefix;
-        this.$prefix = record.prefix;
-        this.$model_name = record.name;
-        this.$suffix = data?.$suffix ?? (typeof record.suffix === "function" ? record.suffix() : record.suffix);
-        this.$id = data?.$id ?? record.id ?? randomUUID();
-        this.$record_id = `${this.$global_prefix}:${this.$prefix}:${this.$model_name}:${this.$suffix ? `${this.$suffix}:` : ""}${this.$id}`;
+        this.#global_prefix = record.globalPrefix;
+        this.#prefix = record.prefix;
+        this.#model_name = record.name;
+        this.#suffix = data?.$suffix ?? (typeof record.suffix === "function" ? record.suffix() : record.suffix);
+        this.#id = data?.$id ?? record.id ?? randomUUID();
+        this.#record_id = `${this.#global_prefix}:${this.#prefix}:${this.#model_name}:${this.#suffix ? `${this.#suffix}:` : ""}${this.#id}`;
         this.#schema = schema;
         this.#validate = validate;
         this.#autoFetch = wasAutoFetched;
@@ -129,8 +129,8 @@ export class JSONDocument implements DocumentShared {
         if (this.#validate) this.#validateSchemaData(this.#schema.data, this);
 
         const obj: Record<string, unknown> = {
-            $suffix: this.$suffix,
-            $id: this.$id
+            $suffix: this.#suffix,
+            $id: this.#id
         };
 
         for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
@@ -169,5 +169,29 @@ export class JSONDocument implements DocumentShared {
             }
         }
         return JSON.stringify(obj, null);
+    }
+
+    public get $globalPrefix(): string {
+        return this.#global_prefix;
+    }
+
+    public get $prefix(): string {
+        return this.#prefix;
+    }
+
+    public get $model_name(): string {
+        return this.#model_name;
+    }
+
+    public get $suffix(): string | undefined {
+        return this.#suffix;
+    }
+
+    public get $id(): string {
+        return this.#id;
+    }
+
+    public get $record_id(): string {
+        return this.#record_id;
     }
 }
