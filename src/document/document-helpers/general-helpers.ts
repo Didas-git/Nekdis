@@ -148,7 +148,7 @@ export function validateSchemaData(
             if (!(dataVal instanceof Float32Array) && !(dataVal instanceof Float64Array) && !Array.isArray(dataVal)) throw new PrettyError("Got wrong vector format");
         } else if (value.type === "string" || value.type === "number") {
             if (typeof value.literal === "undefined") {
-                throw new PrettyError(`Got wrong value type. Expected type: '${value.type}' got '${typeof dataVal}'`, {
+                if (typeof dataVal !== value.type) throw new PrettyError(`Got wrong value type. Expected type: '${value.type}' got '${typeof dataVal}'`, {
                     reference: "nekdis"
                 });
             } else {

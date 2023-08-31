@@ -52,7 +52,7 @@ export class JSONDocument implements DocumentShared {
         this.#prefix = record.prefix;
         this.#model_name = record.name;
         this.#suffix = data?.$suffix ?? (typeof record.suffix === "function" ? record.suffix() : record.suffix);
-        this.#id = data?.$id ?? record.id ?? randomUUID();
+        this.#id = data?.$id?.toString() ?? record.id ?? randomUUID();
         this.#record_id = `${this.#global_prefix}:${this.#prefix}:${this.#model_name}:${this.#suffix ? `${this.#suffix}:` : ""}${this.#id}`;
         this.#schema = schema;
         this.#validate = validate;
