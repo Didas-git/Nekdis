@@ -312,7 +312,7 @@ Vector properties wont be documented here, check the types instead
 
 # Nekdis VS Redis-OM
 
-In this part of the document im going to cover how this proposal compares to the current redis-om (0.4.0-beta.3) and the major differences.
+In this part of the document im going to cover how this proposal compares to the current redis-om (0.4.2) and the major differences.
 
 ## Client
 
@@ -632,4 +632,4 @@ function between(min: number, max: number) {
 
 ## Benchmarks
 
-There were a lot of benchmarks made this past week and they can be found [here](./BENCHRESULTS.md)
+There were a lot of benchmarks made and they can be found [here](./BENCHRESULTS.md)
