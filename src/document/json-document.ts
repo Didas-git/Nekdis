@@ -135,27 +135,28 @@ export class JSONDocument implements DocumentShared {
 
         for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
             const [key, val] = entries[i];
-
             if (typeof this[key] === "undefined") continue;
 
-            if (val.type === "tuple") {
-                const temp = tupleToObjStrings(<never>this[key], key);
-                for (let j = 0, le = temp.length; j < le; j++) {
-                    const [k, value] = Object.entries(temp[j])[0];
+            if (val.index) {
+                if (val.type === "tuple") {
+                    const temp = tupleToObjStrings(<never>this[key], key);
+                    for (let j = 0, le = temp.length; j < le; j++) {
+                        const [k, value] = Object.entries(temp[j])[0];
 
-                    if (val.elements[j].type === "object") {
-                        if ((<ParsedObjectField>val.elements[j]).properties === null) continue;
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        for (let u = 0, en = Object.entries((<ParsedObjectField>val.elements[j]).properties!), l = en.length; u < l; u++) {
-                            const objV = en[u][1];
-                            obj[k] = docToJson(<any>objV, value);
+                        if (val.elements[j].type === "object") {
+                            if ((<ParsedObjectField>val.elements[j]).properties === null) continue;
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            for (let u = 0, en = Object.entries((<ParsedObjectField>val.elements[j]).properties!), l = en.length; u < l; u++) {
+                                const objV = en[u][1];
+                                obj[k] = docToJson(<any>objV, value);
+                            }
+                            continue;
                         }
-                        continue;
-                    }
 
-                    obj[k] = value;
+                        obj[k] = value;
+                    }
+                    continue;
                 }
-                continue;
             }
 
             obj[key] = docToJson(<never>val, this[key]);

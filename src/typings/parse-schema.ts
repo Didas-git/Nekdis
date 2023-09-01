@@ -127,5 +127,5 @@ export type Fill<T> = T extends "optional"
     : T extends "sortable"
     ? false
     : T extends "index"
-    ? true
+    ? false
     : undefined;

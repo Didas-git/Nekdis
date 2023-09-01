@@ -23,6 +23,7 @@ export class Model<S extends Schema<any>> {
     readonly #client: NodeRedisClient;
     readonly #searchIndexName: string;
     readonly #searchIndexHashName: string;
+    readonly #searchIndexBase: Array<string>;
     readonly #searchIndex: Array<string>;
     readonly #searchIndexHash: string;
     readonly #parsedSchema: ParsedMap;
@@ -47,7 +48,7 @@ export class Model<S extends Schema<any>> {
         this.#parsedSchema = map;
         this.#searchIndexName = `${globalPrefix}:${this.#options.prefix}:${this.name}:index`;
         this.#searchIndexHashName = `${globalPrefix}:${this.#options.prefix}:${this.name}:index:hash`;
-        this.#searchIndex = [
+        this.#searchIndexBase = [
             "FT.CREATE",
             this.#searchIndexName,
             "ON",
@@ -56,9 +57,10 @@ export class Model<S extends Schema<any>> {
             "PREFIX",
             "1",
             `${globalPrefix}:${this.#options.prefix}:${this.name}:`,
-            "SCHEMA",
-            ...index
+            "SCHEMA"
         ];
+
+        this.#searchIndex = index;
         this.#searchIndexHash = createHash("sha1").update(JSON.stringify({
             name,
             structure: this.#options.dataStructure,
@@ -200,11 +202,16 @@ export class Model<S extends Schema<any>> {
         const currentIndexHash = await this.#client.get(this.#searchIndexHashName);
         if (currentIndexHash === this.#searchIndexHash) return;
 
+        if (this.#searchIndex.length === 0) {
+            if (!this.#options.noLogs) console.log("Nothing to index... Skipping");
+            return;
+        }
+
         await this.deleteIndex();
 
         await Promise.all([
             this.#client.set(this.#searchIndexHashName, this.#searchIndexHash),
-            this.#client.sendCommand(this.#searchIndex)
+            this.#client.sendCommand([...this.#searchIndexBase, ...this.#searchIndex])
         ]);
     }
 
