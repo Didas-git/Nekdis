@@ -5,9 +5,9 @@ import { ReferenceArray } from "../utils";
 import {
     validateSchemaReferences,
     validateSchemaData,
-    tupleToObjStrings,
     jsonFieldToDoc,
-    docToJson
+    docToJson,
+    // expandTuple
 } from "./document-helpers";
 
 import type { DocumentShared, ParsedTupleField, ParsedObjectField, ParsedSchemaDefinition } from "../typings";
@@ -137,29 +137,9 @@ export class JSONDocument implements DocumentShared {
             const [key, val] = entries[i];
             if (typeof this[key] === "undefined") continue;
 
-            if (val.index) {
-                if (val.type === "tuple") {
-                    const temp = tupleToObjStrings(<never>this[key], key);
-                    for (let j = 0, le = temp.length; j < le; j++) {
-                        const [k, value] = Object.entries(temp[j])[0];
-
-                        if (val.elements[j].type === "object") {
-                            if ((<ParsedObjectField>val.elements[j]).properties === null) continue;
-                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                            for (let u = 0, en = Object.entries((<ParsedObjectField>val.elements[j]).properties!), l = en.length; u < l; u++) {
-                                const objV = en[u][1];
-                                obj[k] = docToJson(<any>objV, value);
-                            }
-                            continue;
-                        }
-
-                        obj[k] = value;
-                    }
-                    continue;
-                }
-            }
-
-            obj[key] = docToJson(<never>val, this[key]);
+            //@ts-expect-error
+            if (val.index && val.type === "tuple") Object.assign(obj, expandTuple(val, this[key]));
+            else obj[key] = docToJson(<never>val, this[key]);
         }
 
         if (!this.#autoFetch) {

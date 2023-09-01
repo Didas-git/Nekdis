@@ -13,7 +13,7 @@ export type FieldType = StringField | NumberField | BooleanField | TextField | D
 
 export type ParsedFieldType = ParsedStringField | ParsedNumberField | BooleanField | TextField | DateField | PointField | ParsedArrayField | ParsedTupleField | ParsedObjectField | VectorField;
 
-export type TupleElement = Exclude<keyof FieldMap, "tuple" | "reference" | "object"> | SchemaDefinition;
+export type TupleElement = Exclude<keyof FieldMap, "tuple" | "reference" | "object"> | FieldType;
 
 export interface BaseField {
     type: keyof FieldMap;
