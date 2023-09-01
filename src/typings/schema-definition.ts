@@ -11,7 +11,7 @@ export interface ParsedSchemaDefinition {
 
 export type FieldType = StringField | NumberField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField | ReferenceField | VectorField;
 
-export type ParsedFieldType = Exclude<FieldType, ReferenceField | TupleField | ObjectField | StringField | NumberField> | ParsedStringField | ParsedNumberField | ParsedObjectField | ParsedTupleField;
+export type ParsedFieldType = ParsedStringField | ParsedNumberField | BooleanField | TextField | DateField | PointField | ParsedArrayField | ParsedTupleField | ParsedObjectField | VectorField;
 
 export type TupleElement = Exclude<keyof FieldMap, "tuple" | "reference" | "object"> | SchemaDefinition;
 
@@ -101,6 +101,15 @@ export interface ArrayField extends BaseField {
     elements?: Exclude<keyof FieldMap, "array" | "reference" | "object" | "tuple"> | SchemaDefinition | undefined;
     default?: Array<unknown> | undefined;
     separator?: string;
+}
+
+export interface ParsedArrayField extends Required<BaseField> {
+    type: "array";
+    elements: Exclude<keyof FieldMap, "array" | "reference" | "object" | "tuple"> | ParsedSchemaDefinition["data"];
+    default: Array<unknown> | undefined;
+
+    /** Default: `","` */
+    separator: string;
 }
 
 //FALLBACK

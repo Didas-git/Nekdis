@@ -324,9 +324,9 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         const parsedField = this.#parsedSchema.get(field);
         if (!parsedField) throw new PrettyError(`'${field}' doesn't exist on the schema`);
 
-        const { path, value } = parsedField;
+        const { type, searchPath } = parsedField;
 
-        return <never>this.#defineReturn(path, value.type === "array" ? <never>value.elements : value.type);
+        return <never>this.#defineReturn(searchPath, type);
     }
 
     #defineReturn(field: string, type: Exclude<FieldType["type"], "tuple" | "array" | "reference">): BaseField {

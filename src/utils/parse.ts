@@ -1,64 +1,27 @@
-import type { ParsedFieldType, ParsedMap, ParsedSchemaDefinition } from "../typings";
+import type { ParsedArrayField, ParsedFieldType, ParsedMap, ParsedSchemaDefinition, ParsedSchemaToSearch, VectorField } from "../typings";
 
-export function parseSchemaToSearchIndex(schema: ParsedSchemaDefinition, k?: string, p?: string): ParsedMap {
+export function parseSchemaToSearchIndex(
+    schema: ParsedSchemaDefinition["data"],
+    structure: "JSON" | "HASH",
+    { previousKey, previousPath, arrayKey }: { previousKey?: string, previousPath?: string, arrayKey?: string } = {}
+): ParsedSchemaToSearch {
     let objs: ParsedMap = new Map();
-
-    for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
-        const [key, value] = entries[i];
-
-        if (value.type === "object") {
-            if (typeof value.properties === "undefined") continue;
-            const parsed = parseSchemaToSearchIndex(value.properties, k ? `${k}.${key}` : key, p ? `${k}_${key}` : key);
-            objs = new Map([...objs, ...parsed]);
-            continue;
-        }
-
-        if (!value.index) continue;
-
-        if (value.type === "array" && typeof value.elements === "object") continue;
-        if (value.type === "tuple") {
-            for (let j = 0, le = value.elements.length; j < le; j++) {
-                const temp = value.elements[j];
-
-                const parsed = parseSchemaToSearchIndex(<never>{ [j]: temp }, k ? `${k}.${key}` : key, p ? `${k}_${key}` : key);
-                objs = new Map([...objs, ...parsed]);
-
-            }
-            continue;
-        }
-        objs.set(k ? `${k}.${key}` : key, { value: value, path: p ? `${p}_${key}` : key });
-    }
-
-    return objs;
-}
-
-type TestMap = Map<string, {
-    value: ParsedFieldType,
-    finalPath: "[*]" | "*" | "",
-    searchType: "TAG" | "NUMERIC" | "TEXT" | "GEO" | "VECTOR",
-    path: string
-}>;
-
-/**
- * Key: `${string}.${string}`
- * Path: `${string}_${string}`
- */
-export function parseSchemaToSearchIndex2(schema: ParsedSchemaDefinition["data"], previousKey?: string, previousPath?: string): {
-    map: TestMap,
-    index?: Array<string>
-} {
-    let objs: TestMap = new Map();
     let index: Array<string> = [];
 
     for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
         const [key, value] = entries[i];
+        const withPreviousKey = previousKey ? `${previousKey}.${key}` : key;
+        const withPreviousPath = previousPath ? `${previousPath}_${key}` : key;
 
         if (value.type === "object") {
             if (value.properties === null) continue;
-            const parsed = parseSchemaToSearchIndex2(
+            const parsed = parseSchemaToSearchIndex(
                 value.properties,
-                previousKey ? `${previousKey}.${key}` : key,
-                previousPath ? `${previousPath}_${key}` : key
+                structure,
+                {
+                    previousKey: withPreviousKey,
+                    previousPath: withPreviousPath
+                }
             );
 
             objs = new Map([...objs, ...parsed.map]);
@@ -67,15 +30,35 @@ export function parseSchemaToSearchIndex2(schema: ParsedSchemaDefinition["data"]
 
         if (!value.index) continue;
 
-        if (value.type === "array" && typeof value.elements === "object") continue;
+        if (value.type === "array") {
+            if (typeof value.elements === "object") {
+                const parsed = parseSchemaToSearchIndex(
+                    value.elements,
+                    structure,
+                    {
+                        previousKey: withPreviousKey,
+                        previousPath: withPreviousPath,
+                        arrayKey: previousKey ? `${previousKey}.${key}${getArrayModifier(value.elements)}` : `${key}${getArrayModifier(value.elements)}`
+                    }
+                );
+                objs = new Map([...objs, ...parsed.map]);
+                continue;
+            }
+
+            arrayKey = `${arrayKey ? `${arrayKey}.${key}` : withPreviousKey}${getArrayModifier(value.elements)}`;
+        }
+
         if (value.type === "tuple") {
             for (let j = 0, length = value.elements.length; j < length; j++) {
                 const indexValue = value.elements[j];
 
-                const parsed = parseSchemaToSearchIndex2(
+                const parsed = parseSchemaToSearchIndex(
                     { [j.toString()]: indexValue },
-                    previousKey ? `${previousKey}.${key}` : key,
-                    previousPath ? `${previousPath}_${key}` : key
+                    structure,
+                    {
+                        previousKey: withPreviousKey,
+                        previousPath: withPreviousPath
+                    }
                 );
 
                 objs = new Map([...objs, ...parsed.map]);
@@ -83,31 +66,82 @@ export function parseSchemaToSearchIndex2(schema: ParsedSchemaDefinition["data"]
             }
             continue;
         }
-        objs.set(
-            previousKey ? `${previousKey}.${key}` : key,
-            {
-                value: value,
-                finalPath: value.type === "array"
-                    ? value.elements === "text"
-                        ? "[*]"
-                        : value.elements === "number" || value.elements === "date" || value.elements === "point"
-                            ? ""
-                            : "*"
-                    : "",
-                searchType: value.type === "text"
-                    ? "TEXT"
-                    : value.type === "number" || value.type === "date"
-                        ? "NUMERIC"
-                        : value.type === "point"
-                            ? "GEO"
-                            : value.type === "vector"
-                                ? "VECTOR"
-                                : "TAG",
-                path: previousPath ? `${previousPath}_${key}` : key
-            }
+
+        const actualType = value.type === "array"
+            // We are handling it already so we can cast
+            ? <Exclude<ParsedArrayField["elements"], ParsedSchemaDefinition["data"]>>value.elements
+            : value.type;
+
+        objs.set(withPreviousKey, {
+            type: actualType,
+            searchPath: withPreviousPath
+        });
+
+        const prefix = structure === "JSON" ? "$." : "";
+
+        index.push(
+            `${prefix}${arrayKey ? arrayKey : withPreviousKey}`,
+            "AS",
+            withPreviousPath,
+            getSearchType(actualType)
         );
+
+        if (value.type === "vector") {
+            index.push(
+                value.algorithm,
+                getCount(value),
+                "TYPE",
+                value.vecType,
+                "DIM",
+                value.dim.toString(),
+                "DISTANCE_METRIC",
+                value.distance
+            );
+
+            if (value.cap) index.push("INITIAL_CAP", value.cap.toString());
+
+            if (value.algorithm === "FLAT") {
+                if (value.size) index.push("BLOCK_SIZE", value.size.toString());
+            } else {
+                if (value.m) index.push("M", value.m.toString());
+                if (value.construction) index.push("EF_CONSTRUCTION", value.construction.toString());
+                if (value.runtime) index.push("EF_RUNTIME", value.runtime.toString());
+                if (value.epsilon) index.push("EPSILON", value.epsilon.toString());
+            }
+        }
+
+        if (value.sortable) index.push("SORTABLE");
     }
 
     return { map: objs, index };
 }
 
+function getArrayModifier(elements: ParsedArrayField["elements"]): "*" | "[*]" | "" {
+    if (typeof elements === "object" || elements === "vector") return "[*]";
+    if (elements === "string" || elements === "boolean") return "*";
+    return "";
+}
+
+function getSearchType(type: ParsedFieldType["type"]): "TAG" | "NUMERIC" | "TEXT" | "GEO" | "VECTOR" {
+    if (type === "text") return "TEXT";
+    if (type === "number" || type === "date") return "NUMERIC";
+    if (type === "point") return "GEO";
+    if (type === "vector") return "VECTOR";
+    return "TAG";
+}
+
+function getCount(value: VectorField): string {
+    let count = 6;
+
+    if (value.cap) count += 2;
+    if (value.algorithm === "FLAT") {
+        if (value.size) count += 2;
+    } else {
+        if (value.m) count += 2;
+        if (value.construction) count += 2;
+        if (value.runtime) count += 2;
+        if (value.epsilon) count += 2;
+    }
+
+    return count.toString();
+}

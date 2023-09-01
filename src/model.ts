@@ -13,9 +13,8 @@ import type {
     ReturnDocument,
     NodeRedisClient,
     ModelOptions,
-    VectorField,
-    MapSchema,
     ParsedMap,
+    MapSchema,
     Document
 } from "./typings";
 
@@ -43,7 +42,9 @@ export class Model<S extends Schema<any>> {
             version: ver
         };
 
-        this.#parsedSchema = parseSchemaToSearchIndex(<never>this.#schema[schemaData].data);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const { map, index } = parseSchemaToSearchIndex(<never>this.#schema[schemaData].data, this.#options.dataStructure!);
+        this.#parsedSchema = map;
         this.#searchIndexName = `${globalPrefix}:${this.#options.prefix}:${this.name}:index`;
         this.#searchIndexHashName = `${globalPrefix}:${this.#options.prefix}:${this.name}:index:hash`;
         this.#searchIndex = [
@@ -55,7 +56,8 @@ export class Model<S extends Schema<any>> {
             "PREFIX",
             "1",
             `${globalPrefix}:${this.#options.prefix}:${this.name}:`,
-            "SCHEMA"
+            "SCHEMA",
+            ...index
         ];
         this.#searchIndexHash = createHash("sha1").update(JSON.stringify({
             name,
@@ -200,67 +202,6 @@ export class Model<S extends Schema<any>> {
 
         await this.deleteIndex();
 
-        const prefix = this.#options.dataStructure === "JSON" ? "$." : "";
-
-        for (let i = 0, len = this.#parsedSchema.size, entries = [...this.#parsedSchema.entries()]; i < len; i++) {
-            const [key, val] = entries[i];
-            const { path, value } = val;
-            let arrayPath = "";
-
-            if (this.#options.dataStructure === "JSON") {
-                if (value.type === "array") {
-                    if (typeof value.elements !== "string") {
-                        throw new PrettyError("Object definitions on `array` are not yet supported by the parser", {
-                            reference: "nekdis"
-                        });
-                    }
-
-                    arrayPath = value.elements === "text" ? "[*]" : value.elements === "number" || value.elements === "date" || value.elements === "point" ? "" : "*";
-                }
-            }
-
-            this.#searchIndex.push(
-                `${prefix}${key}${arrayPath}`,
-                "AS",
-                path,
-                value.type === "text"
-                    ? "TEXT"
-                    : value.type === "number" || value.type === "date"
-                        ? "NUMERIC"
-                        : value.type === "point"
-                            ? "GEO"
-                            : value.type === "vector"
-                                ? "VECTOR"
-                                : "TAG"
-            );
-
-            if (value.type === "vector") {
-                this.#searchIndex.push(
-                    value.algorithm,
-                    this.#getCount(value),
-                    "TYPE",
-                    value.vecType,
-                    "DIM",
-                    value.dim.toString(),
-                    "DISTANCE_METRIC",
-                    value.distance
-                );
-
-                if (value.cap) this.#searchIndex.push("INITIAL_CAP", value.cap.toString());
-
-                if (value.algorithm === "FLAT") {
-                    if (value.size) this.#searchIndex.push("BLOCK_SIZE", value.size.toString());
-                } else {
-                    if (value.m) this.#searchIndex.push("M", value.m.toString());
-                    if (value.construction) this.#searchIndex.push("EF_CONSTRUCTION", value.construction.toString());
-                    if (value.runtime) this.#searchIndex.push("EF_RUNTIME", value.runtime.toString());
-                    if (value.epsilon) this.#searchIndex.push("EPSILON", value.epsilon.toString());
-                }
-            }
-
-            if (value.sortable) this.#searchIndex.push("SORTABLE");
-        }
-
         await Promise.all([
             this.#client.set(this.#searchIndexHashName, this.#searchIndexHash),
             this.#client.sendCommand(this.#searchIndex)
@@ -282,22 +223,6 @@ export class Model<S extends Schema<any>> {
 
     public async rawSearch(...args: Array<string>): Promise<ReturnType<NodeRedisClient["ft"]["search"]>> {
         return await this.#client.ft.search(this.#searchIndexName, args.join(" "));
-    }
-
-    #getCount(value: VectorField): string {
-        let count = 6;
-
-        if (value.cap) count += 2;
-        if (value.algorithm === "FLAT") {
-            if (value.size) count += 2;
-        } else {
-            if (value.m) count += 2;
-            if (value.construction) count += 2;
-            if (value.runtime) count += 2;
-            if (value.epsilon) count += 2;
-        }
-
-        return count.toString();
     }
 
     #stringOrDocToString(stringOrNumOrDoc: Array<string | number | Document>): Array<string> {
