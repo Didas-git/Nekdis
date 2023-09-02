@@ -116,11 +116,16 @@ export class JSONDocument implements DocumentShared {
             $id: this.#id
         };
 
-        for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
+        for (let i = 0, entries = Object.entries(this), length = entries.length; i < length; i++) {
             const [key, val] = entries[i];
-            if (typeof this[key] === "undefined") continue;
+            const schema = this.#schema.data[key];
 
-            obj[key] = documentFieldToJSONValue(val, this[key]);
+            if (typeof schema !== "undefined") {
+                obj[key] = documentFieldToJSONValue(schema, val);
+                continue;
+            }
+
+            obj[key] = val;
         }
 
         if (!this.#autoFetch) {
@@ -130,6 +135,7 @@ export class JSONDocument implements DocumentShared {
                 obj[key] = this[key];
             }
         }
+
         return JSON.stringify(obj, null);
     }
 
