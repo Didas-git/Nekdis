@@ -4,13 +4,12 @@ import { randomUUID } from "node:crypto";
 import { ReferenceArray } from "../utils";
 import {
     validateSchemaReferences,
-    validateSchemaData,
-    jsonFieldToDoc,
-    docToJson,
-    // expandTuple
+    documentFieldToJSONValue,
+    JSONValueToDocumentField,
+    validateSchemaData
 } from "./document-helpers";
 
-import type { DocumentShared, ParsedTupleField, ParsedObjectField, ParsedSchemaDefinition } from "../typings";
+import type { DocumentShared, ParsedSchemaDefinition } from "../typings";
 
 export class JSONDocument implements DocumentShared {
 
@@ -65,25 +64,9 @@ export class JSONDocument implements DocumentShared {
                 for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
                     const [key, value] = entries[i];
                     if (key.startsWith("$")) continue;
-                    const arr = key.split(".");
-
-                    if (arr.length > 1) /* This is a tuple */ {
-
-                        // var name
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        const temp = arr.shift()!;
-
-                        if (arr.length === 1) {
-                            this[temp].push(jsonFieldToDoc(<never>(<ParsedTupleField>schema.data[temp]).elements[<`${number}`>arr[0]], value));
-                            continue;
-                        }
-
-                        this[temp].push({ [arr[1]]: jsonFieldToDoc(<never>(<ParsedObjectField>(<ParsedTupleField>schema.data[temp]).elements[<`${number}`>arr[0]]).properties?.[arr[1]], value) });
-                        continue;
-                    }
 
                     if (typeof schema.data[key] !== "undefined") {
-                        this[key] = jsonFieldToDoc(<never>schema.data[key], value);
+                        this[key] = JSONValueToDocumentField(schema.data[key], value);
                         continue;
                     }
 
@@ -137,9 +120,7 @@ export class JSONDocument implements DocumentShared {
             const [key, val] = entries[i];
             if (typeof this[key] === "undefined") continue;
 
-            //@ts-expect-error
-            if (val.index && val.type === "tuple") Object.assign(obj, expandTuple(val, this[key]));
-            else obj[key] = docToJson(<never>val, this[key]);
+            obj[key] = documentFieldToJSONValue(val, this[key]);
         }
 
         if (!this.#autoFetch) {
