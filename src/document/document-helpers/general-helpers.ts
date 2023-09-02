@@ -48,7 +48,7 @@ export function validateSchemaReferences(
                 reference: "nekdis",
                 lines: [
                     {
-                        marker: { text: "Content:" },
+                        marker: { text: "Content: " },
                         error: `Reference 'ids' must be strings.\nFound type: '${typeof dataVal[i]}'`
                     }
                 ]
@@ -76,14 +76,17 @@ export function validateSchemaData(
             reference: "nekdis"
         });
 
-        if (typeof dataVal === "undefined" && value.optional) continue;
-        if (typeof dataVal === "undefined" && !value.optional && typeof value.default === "undefined") throw new PrettyError(`'${key}' is required but was not given a value`, {
-            reference: "nekdis"
-        });
+        if (typeof dataVal === "undefined" || dataVal.length === 0) {
+            if (value.optional) continue;
+            if (typeof value.default === "undefined") throw new PrettyError(`'${key}' is required but was not given a value`, {
+                reference: "nekdis"
+            });
+
+        }
 
         if (value.type === "object") {
             if (value.properties === null) continue;
-            validateSchemaData(<ParsedSchemaDefinition["data"]>value.properties, dataVal, true);
+            validateSchemaData(value.properties, dataVal, true);
         } else if (value.type === "array") {
             dataVal.every((val: unknown) => {
                 if (typeof val === "object") return;
@@ -93,6 +96,7 @@ export function validateSchemaData(
                     });
                     return;
                 }
+                // eslint-disable-next-line @typescript-eslint/no-base-to-string
                 if (typeof val !== value.elements) throw new PrettyError(`Got wrong type on array elements. Expected type: '${value.elements}' got '${typeof val}'`, {
                     reference: "nekdis"
                 });

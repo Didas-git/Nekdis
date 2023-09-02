@@ -471,6 +471,7 @@ export async function benchFullHASHCreateAndSave(iter: number, amt: number): Pro
                 aDate: new Date(),
                 aPoint: { longitude: 139.7745, latitude: 35.7023 },
                 aStringArray: ["A", "B", "C"],
+                aNumberArray: [3, 3, 5],
                 anObject: {
                     aBooleanArray: [false, true, false],
                     anotherObject: {

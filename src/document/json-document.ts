@@ -125,7 +125,8 @@ export class JSONDocument implements DocumentShared {
                 continue;
             }
 
-            obj[key] = val;
+            if (typeof this.#schema.references[key] === "undefined") obj[key] = val;
+
         }
 
         if (!this.#autoFetch) {

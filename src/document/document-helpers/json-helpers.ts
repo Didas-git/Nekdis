@@ -3,26 +3,6 @@ import { dateToNumber, numberToDate } from "./general-helpers";
 import type { ParsedFieldType, ParsedSchemaDefinition } from "../../typings";
 import { PrettyError } from "@infinite-fansub/logger";
 
-export function tupleToObjStrings(value: Array<unknown>, key: string): Array<Record<string, unknown>> {
-    const arr: Array<Record<string, unknown>> = [];
-
-    for (let i = 0, length = value.length; i < length; i++) {
-        const val = value[i];
-
-        if (typeof val === "object") {
-            for (let j = 0, entries = Object.entries(<never>val), len = entries.length; j < len; j++) {
-                const [k, v] = entries[j];
-                arr.push({ [`${key}.${i}.${k}`]: v });
-            }
-            continue;
-        }
-
-        arr.push({ [`${key}.${i}`]: value });
-    }
-
-    return arr;
-}
-
 export function documentFieldToJSONValue(field: ParsedFieldType | { type: ParsedFieldType["type"] }, value: any): unknown {
     if (field.type === "date") return dateToNumber(value);
     if (field.type === "point") return `${value.longitude},${value.latitude}`;
@@ -82,7 +62,7 @@ function transformParsedDefinition(
         const [key, val] = entries[i];
         if (typeof value[key] === "undefined") continue;
 
-        temp[key] = transformer(field[key], val);
+        temp[key] = transformer(val, value[key]);
     }
 
     return temp;

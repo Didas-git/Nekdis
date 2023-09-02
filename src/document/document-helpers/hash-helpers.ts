@@ -1,14 +1,10 @@
 import { dateToNumber, numberToDate, stringsToObject } from "./general-helpers";
 
-import type { ArrayField, BaseField, FieldType, ParsedObjectField, Point } from "../../typings";
+import type { FieldType, ParsedFieldType, ParsedObjectField, ParsedSchemaDefinition, Point } from "../../typings";
+import { PrettyError } from "@infinite-fansub/logger";
 
 export function booleanToString(val: boolean): string {
     return (+val).toString();
-}
-
-export function pointToString(val: Point): string {
-    const { longitude, latitude } = val;
-    return `${longitude},${latitude}`;
 }
 
 export function stringToBoolean(val: string): boolean {
@@ -22,56 +18,6 @@ export function stringToPoint(val: string): Point {
 
 export function stringToNumber(val: string): number {
     return parseFloat(val);
-}
-
-export function hashFieldToString(schema: BaseField, val: any): string {
-    if (schema.type === "boolean") {
-        return booleanToString(val);
-    } else if (schema.type === "date") {
-        return dateToNumber(val).toString();
-    } else if (schema.type === "point") {
-        return pointToString(val);
-    } else if (schema.type === "array") {
-        const temp = [];
-        for (let i = 0, len = (<Array<unknown>>val).length; i < len; i++) {
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-            temp.push(hashFieldToString({ type: <never>(<ArrayField>schema).elements ?? "string" }, val[i]));
-        }
-        return temp.join((<ArrayField>schema).separator);
-    } else if (schema.type === "vector") {
-        return Buffer.from(val).toString();
-    }
-
-    return <string>val.toString();
-
-}
-
-export function objectToHashString(data: Record<string, any>, k: string, schema?: Record<string, any> | null): Array<string> {
-    const init: Array<string> = [];
-    for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
-        const [key, val] = entries[i];
-
-        if (typeof val === "object" && !Array.isArray(val) && !(val instanceof Date)) {
-            if (typeof schema?.[key]?.properties !== "undefined") {
-                init.push(...objectToHashString(val, `${k}.${key}`, schema[key].properties));
-                continue;
-            }
-            init.push(...objectToHashString(val, `${k}.${key}`));
-            continue;
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        init.push(`${k}.${key}`, hashFieldToString(<BaseField>schema?.[key] ?? convertUnknownToSchema(val), val) ?? "");
-    }
-
-    return init;
-}
-
-export function convertUnknownToSchema(val: unknown): BaseField {
-    if (Array.isArray(val)) return { type: "array" };
-    if (val instanceof Date) return { type: "date" };
-    if (typeof val === "object" && val !== null && "latitude" in val && "longitude" in val) return { type: "point" };
-    return { type: <"string" | "number" | "boolean" | "object">typeof val };
 }
 
 export function stringToHashField(schema: FieldType, val: string): any {
@@ -167,4 +113,106 @@ export function getLastKeyInSchema(data: ParsedObjectField, key: string): FieldT
     }
 
     return void 0;
+}
+
+export function documentFieldToHASHValue(field: ParsedFieldType | { type: ParsedFieldType["type"] }, value: any, key?: string): Array<string> {
+    if (field.type === "boolean") return keyExists(booleanToString(value), key);
+    if (field.type === "date") return keyExists(dateToNumber(value).toString(), key);
+    if (field.type === "point") return keyExists(`${value.longitude},${value.latitude}`, key);
+    if (field.type === "vector") return keyExists(Buffer.from(value).toString(), key);
+    if (field.type === "object") {
+        if (!("properties" in field) || field.properties === null) return keyExists(JSON.stringify(value), key);
+        if (!key) throw new PrettyError("Something went terribly wrong");
+        return flatten(field.properties, value, key);
+    }
+
+    if (field.type === "array") {
+        if (!("elements" in field)) return keyExists(value.toString(), key);
+        for (let i = 0, length = value.length; i < length; i++) {
+            if (typeof field.elements === "object") {
+                value[i] = flatten(field.elements, value[i]);
+                continue;
+            }
+
+            value[i] = documentFieldToHASHValue({ type: field.elements }, value[i]);
+        }
+
+        return keyExists(value.join(field.separator), key);
+    }
+
+    if (field.type === "tuple") {
+        if (!("elements" in field)) return keyExists(value.toString(), key);
+
+        const tempField: Record<`${number}`, ParsedFieldType> = { ...field.elements };
+        const tempValue = { ...value };
+
+        for (let i = 0, entries = Object.entries(tempField), length = entries.length; i < length; i++) {
+            const val = entries[i][1];
+
+            tempValue[i] = documentFieldToHASHValue(val, tempValue[i]);
+        }
+
+        return flatten(tempField, tempValue, key);
+    }
+
+    return keyExists(value.toString(), key);
+
+}
+
+function flatten(field: ParsedSchemaDefinition["data"], value: any, key?: string): Array<string> {
+    const temp: Array<string> = [];
+
+    for (let i = 0, entries = Object.entries(field), length = entries.length; i < length; i++) {
+        const [k, val] = entries[i];
+
+        temp.push(...documentFieldToHASHValue(val, value[k], key ? `${key}.${k}` : k));
+    }
+
+    return temp;
+}
+
+function keyExists(value: string, key: string | undefined): Array<string> {
+    return key ? [key, value] : [value];
+}
+
+export function HASHValueToDocumentField(field: ParsedFieldType | { type: ParsedFieldType["type"] }, value: any, existingValue?: unknown): unknown {
+    if (field.type === "number") return parseFloat(value);
+    if (field.type === "boolean") return stringToBoolean(value);
+    if (field.type === "date") return numberToDate(parseFloat(value));
+    if (field.type === "point") {
+        const [longitude, latitude] = value.split(",");
+        return { longitude: +longitude, latitude: +latitude };
+    }
+
+    if (field.type === "vector") {
+        if (!("vecType" in field)) throw new PrettyError("Something went terribly wrong");
+        if (field.vecType === "FLOAT32") return new Float32Array(Buffer.from(value));
+        return new Float64Array(Buffer.from(value));
+    }
+
+    if (field.type === "object") {
+        // How to un-flatten??
+    }
+
+    if (field.type === "array") {
+        if (!("elements" in field)) return value;
+        const temp = value.split(field.separator);
+
+        for (let i = 0, length = temp.length; i < length; i++) {
+            if (typeof field.elements === "object") {
+                // How to un-flatten??
+                continue;
+            }
+            temp[i] = HASHValueToDocumentField({ type: field.elements }, temp[i]);
+        }
+        return temp;
+    }
+
+    if (field.type === "tuple") {
+        if (!("elements" in field)) return value;
+        // How to un-flatten??
+    }
+
+    return value;
+
 }
