@@ -49,13 +49,13 @@ export function documentFieldToJSONValue(field: ParsedFieldType | { type: Parsed
     if (field.type === "tuple") {
         if (!("elements" in field)) return value;
         if (field.index) {
-            const tempField = { ...field.elements };
+            const tempField: Record<number, ParsedFieldType> = { ...field.elements };
             const tempValue = { ...value };
 
             for (let i = 0, entries = Object.entries(tempField), length = entries.length; i < length; i++) {
-                const val = entries[i][1];
+                const val: ParsedFieldType = entries[i][1];
 
-                tempValue[i] = documentFieldToJSONValue(tempField[i], val);
+                tempValue[i] = documentFieldToJSONValue(val, tempValue[i]);
             }
 
             return tempValue;
