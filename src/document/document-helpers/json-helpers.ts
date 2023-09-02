@@ -53,7 +53,7 @@ export function documentFieldToJSONValue(field: ParsedFieldType | { type: Parsed
             const tempValue = { ...value };
 
             for (let i = 0, entries = Object.entries(tempField), length = entries.length; i < length; i++) {
-                const val: ParsedFieldType = entries[i][1];
+                const val = entries[i][1];
 
                 tempValue[i] = documentFieldToJSONValue(val, tempValue[i]);
             }
