@@ -78,7 +78,8 @@ function validate(
         reference: "nekdis"
     });
 
-    if (typeof value === "undefined" || value.length === 0 || Object.keys(value).length === 0) {
+    if (value.length === 0 || Object.keys(value).length === 0) {
+        if (typeof value !== "undefined") return;
         if (field.optional) return;
         if (typeof field.default === "undefined") throw new PrettyError(`'${workingKey}' is required but was not given a value`, {
             reference: "nekdis"
