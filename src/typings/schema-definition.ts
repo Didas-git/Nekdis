@@ -11,14 +11,23 @@ export interface ParsedSchemaDefinition {
 
 export type FieldType = StringField | NumberField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField | ReferenceField | VectorField;
 
-export type ParsedFieldType = ParsedStringField | ParsedNumberField | BooleanField | TextField | DateField | PointField | ParsedArrayField | ParsedTupleField | ParsedObjectField | VectorField;
+export type ParsedFieldType = ParsedStringField
+    | ParsedNumberField
+    | ParsedObjectField
+    | ParsedArrayField
+    | ParsedTupleField
+    | Required<BooleanField>
+    | Required<VectorField>
+    | Required<PointField>
+    | Required<TextField>
+    | Required<DateField>;
 
 export type TupleElement = Exclude<keyof FieldMap, "tuple" | "reference" | "object"> | FieldType;
 
 export interface BaseField {
     type: keyof FieldMap;
-    optional?: boolean | undefined;
     default?: FieldMap<unknown>[keyof FieldMap] | undefined;
+    optional?: boolean;
     sortable?: boolean;
     index?: boolean;
 }
