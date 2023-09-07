@@ -12,7 +12,8 @@ import type {
     TupleField,
     FlatVector,
     HNSWVector,
-    BaseField
+    BaseField,
+    FieldType
 } from "./schema-definition";
 
 export type ParseSchema<T extends SchemaDefinition> = {
@@ -43,8 +44,8 @@ export type ParseSchema<T extends SchemaDefinition> = {
             ? {
                 [U in keyof V]: V[U] extends string
                 ? CreateDefinitionFromString<V[U]>
-                : V[U] extends SchemaDefinition
-                ? ParseSchema<{ $: { type: "object", properties: V[U] } }>["data"]["$"]
+                : V[U] extends FieldType
+                ? GetTupleObject<V[U]>
                 : never
             }
             : never
@@ -129,3 +130,5 @@ export type Fill<T> = T extends "optional"
     : T extends "index"
     ? false
     : undefined;
+
+type GetTupleObject<T extends FieldType, P = ParseSchema<{ $: T }>["data"]> = P extends { $: unknown } ? P["$"] : never;

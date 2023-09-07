@@ -117,7 +117,7 @@ export interface ParsedArrayField extends Required<BaseField> {
     elements: Exclude<keyof FieldMap, "array" | "reference" | "object" | "tuple"> | ParsedSchemaDefinition["data"];
     default: Array<unknown> | undefined;
 
-    /** Default: `","` */
+    /** Default: `|` */
     separator: string;
 }
 

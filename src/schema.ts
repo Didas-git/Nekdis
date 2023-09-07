@@ -117,7 +117,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                 } else if (value === "tuple") {
                     throw new PrettyError("Type 'tuple' needs to use its object definition");
                 } else if (value === "array") {
-                    value = { type: value, elements: "string", default: undefined, optional: false, sortable: false, index: false, separator: "," };
+                    value = { type: value, elements: "string", default: undefined, optional: false, sortable: false, index: false, separator: "|" };
                 } else if (value === "vector") {
                     value = {
                         type: value,
@@ -152,7 +152,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
 
             if (value.type === "array") {
                 if (typeof value.elements === "undefined") value.elements = "string";
-                if (typeof value.separator === "undefined") value.separator = ",";
+                if (typeof value.separator === "undefined") value.separator = "|";
                 if (typeof value.elements === "object") {
                     value.elements = <never>this.#parse(value.elements).data;
                 }
@@ -172,7 +172,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                     reference: "nekdis"
                 });
                 for (let j = 0, le = value.elements.length; j < le; j++) {
-                    value.elements[j] = <never>this.#parse(<never>{ [j]: typeof value.elements[j] === "string" ? value.elements[j] : { type: "object", properties: value.elements[j] } }).data[j];
+                    value.elements[j] = <never>this.#parse({ [j]: value.elements[j] }).data[j];
                 }
                 value = this.#fill(value);
             } else if (value.type === "reference") {
