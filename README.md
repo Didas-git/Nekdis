@@ -291,7 +291,6 @@ Vector properties wont be documented here, check the types instead
 
 # Missing features
 
-- Field weight.
 - Custom alias for a field[^3].
 
 # Todo

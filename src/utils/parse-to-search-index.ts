@@ -119,7 +119,10 @@ export function parseSchemaToSearchIndex(
 
         if (value.sortable) index.push("SORTABLE");
         if (value.type === "string" && value.caseSensitive) index.push("CASESENSITIVE");
-        if (value.type === "text" && typeof value.phonetic !== "undefined") index.push("PHONETIC", value.phonetic);
+        if (value.type === "text") {
+            if (typeof value.phonetic !== "undefined") index.push("PHONETIC", value.phonetic);
+            if (typeof value.weight !== "undefined") index.push("WEIGTH", value.weight.toString());
+        }
     }
 
     return { map: objs, index };
