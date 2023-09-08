@@ -15,6 +15,7 @@ const JSONBenchSchema = new Schema("JSONBench", {
     aDate: { type: "date" },
     aPoint: { type: "point" },
     aStringArray: { type: "string[]" },
+    aNumberArray: { type: "number[]" },
     anotherBoolean: { type: "boolean", path: "$.anObject.anotherBoolean" },
     anotherText: { type: "text", path: "$.anObject.anotherObject.anotherText" }
 });

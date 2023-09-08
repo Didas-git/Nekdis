@@ -12,7 +12,9 @@ import type {
     TupleField,
     FlatVector,
     HNSWVector,
-    BaseField
+    BaseField,
+    FieldType,
+    BigIntField
 } from "./schema-definition";
 
 export type ParseSchema<T extends SchemaDefinition> = {
@@ -43,8 +45,8 @@ export type ParseSchema<T extends SchemaDefinition> = {
             ? {
                 [U in keyof V]: V[U] extends string
                 ? CreateDefinitionFromString<V[U]>
-                : V[U] extends SchemaDefinition
-                ? ParseSchema<{ $: { type: "object", properties: V[U] } }>["data"]["$"]
+                : V[U] extends FieldType
+                ? GetTupleObject<V[U]>
                 : never
             }
             : never
@@ -67,6 +69,10 @@ export type ParseSchema<T extends SchemaDefinition> = {
         : T[K] extends NumberField
         ? {
             [P in keyof Required<NumberField>]: T[K][P] extends {} ? T[K][P] : Fill<P>
+        }
+        : T[K] extends BigIntField
+        ? {
+            [P in keyof Required<BigIntField>]: T[K][P] extends {} ? T[K][P] : Fill<P>
         }
         : T[K] extends BaseField
         ? {
@@ -113,6 +119,12 @@ export type CreateDefinitionFromString<T extends string> = T extends "vector"
         ? T
         : Fill<K>
     }
+    : T extends "bigint"
+    ? {
+        [K in keyof Required<BigIntField>]: K extends "type"
+        ? T
+        : Fill<K>
+    }
     : {
         [K in keyof Required<BaseField>]: K extends "type"
         ? T
@@ -127,5 +139,7 @@ export type Fill<T> = T extends "optional"
     : T extends "sortable"
     ? false
     : T extends "index"
-    ? true
+    ? false
     : undefined;
+
+type GetTupleObject<T extends FieldType, P = ParseSchema<{ $: T }>["data"]> = P extends { $: unknown } ? P["$"] : never;

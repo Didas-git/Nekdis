@@ -12,4 +12,4 @@ export type Narrow<T = unknown> =
 // eslint-disable-next-line @typescript-eslint/naming-convention
 type _Narrow<T, U> = [U] extends [T] ? U : Extract<T, U>;
 
-export type Expand<T> = T extends T ? { [k in keyof T]: T[k] } : never;
+export type Expand<T> = T extends T ? { [K in keyof T]: T[K] } : never;

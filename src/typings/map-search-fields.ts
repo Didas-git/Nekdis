@@ -1,18 +1,21 @@
 import type { ParseSchema } from "./parse-schema";
 import type {
     BooleanField,
-    DateField,
-    NumberField,
-    PointField,
     StringField,
+    NumberField,
+    BigIntField,
+    VectorField,
+    PointField,
     TextField,
-    VectorField
+    DateField
 } from "../search/search-builders";
 
 export type MapSearchField<K extends keyof T, S extends ParseSchema<any>, T extends ParseSearchSchema<S["data"]>> = T[K][0] extends "string"
     ? StringField<S, T[K][1] extends undefined ? string : (T[K][1] & string)>
     : T[K][0] extends "number"
     ? NumberField<S, T[K][1] extends undefined ? number : (T[K][1] & number)>
+    : T[K][0] extends "bigint"
+    ? BigIntField<S, T[K][1] extends undefined ? bigint : (T[K][1] & bigint)>
     : T[K][0] extends "boolean"
     ? BooleanField<S>
     : T[K][0] extends "text"

@@ -20,6 +20,7 @@ export async function benchJSONSave(iter: number, amt: number): Promise<void> {
                 aDate: new Date(),
                 aPoint: { longitude: 139.7745, latitude: 35.7023 },
                 aStringArray: ["A", "B", "C"],
+                aNumberArray: [1, 2, 3],
                 anObject: {
                     anotherBoolean: false,
                     anotherObject: {
@@ -66,6 +67,7 @@ export async function benchBatchJSONSave(iter: number, amt: number): Promise<voi
                 aDate: new Date(),
                 aPoint: { longitude: 139.7745, latitude: 35.7023 },
                 aStringArray: ["A", "B", "C"],
+                aNumberArray: [1, 2, 3],
                 anObject: {
                     anotherBoolean: false,
                     anotherObject: {

@@ -4,13 +4,12 @@ import { randomUUID } from "node:crypto";
 import { ReferenceArray } from "../utils";
 import {
     validateSchemaReferences,
-    validateSchemaData,
-    tupleToObjStrings,
-    jsonFieldToDoc,
-    docToJson
+    documentFieldToJSONValue,
+    JSONValueToDocumentField,
+    validateSchemaData
 } from "./document-helpers";
 
-import type { DocumentShared, ParsedTupleField, ParsedObjectField, ParsedSchemaDefinition } from "../typings";
+import type { DocumentShared, ParsedSchemaDefinition } from "../typings";
 
 export class JSONDocument implements DocumentShared {
 
@@ -65,25 +64,9 @@ export class JSONDocument implements DocumentShared {
                 for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
                     const [key, value] = entries[i];
                     if (key.startsWith("$")) continue;
-                    const arr = key.split(".");
-
-                    if (arr.length > 1) /* This is a tuple */ {
-
-                        // var name
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        const temp = arr.shift()!;
-
-                        if (arr.length === 1) {
-                            this[temp].push(jsonFieldToDoc((<ParsedTupleField>schema.data[temp]).elements[<`${number}`>arr[0]], value));
-                            continue;
-                        }
-
-                        this[temp].push({ [arr[1]]: jsonFieldToDoc((<ParsedObjectField>(<ParsedTupleField>schema.data[temp]).elements[<`${number}`>arr[0]]).properties?.[arr[1]], value) });
-                        continue;
-                    }
 
                     if (typeof schema.data[key] !== "undefined") {
-                        this[key] = jsonFieldToDoc(<never>schema.data[key], value);
+                        this[key] = JSONValueToDocumentField(schema.data[key], value);
                         continue;
                     }
 
@@ -133,41 +116,27 @@ export class JSONDocument implements DocumentShared {
             $id: this.#id
         };
 
-        for (let i = 0, entries = Object.entries(this.#schema.data), len = entries.length; i < len; i++) {
+        for (let i = 0, entries = Object.entries(this), length = entries.length; i < length; i++) {
             const [key, val] = entries[i];
+            const schema = this.#schema.data[key];
 
-            if (typeof this[key] === "undefined") continue;
-
-            if (val.type === "tuple") {
-                const temp = tupleToObjStrings(<never>this[key], key);
-                for (let j = 0, le = temp.length; j < le; j++) {
-                    const [k, value] = Object.entries(temp[j])[0];
-
-                    if (val.elements[j].type === "object") {
-                        if ((<ParsedObjectField>val.elements[j]).properties === null) continue;
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        for (let u = 0, en = Object.entries((<ParsedObjectField>val.elements[j]).properties!), l = en.length; u < l; u++) {
-                            const objV = en[u][1];
-                            obj[k] = docToJson(<any>objV, value);
-                        }
-                        continue;
-                    }
-
-                    obj[k] = value;
-                }
+            if (typeof schema !== "undefined") {
+                obj[key] = documentFieldToJSONValue(schema, val);
                 continue;
             }
 
-            obj[key] = docToJson(<never>val, this[key]);
+            if (typeof this.#schema.references[key] === "undefined") obj[key] = val;
+
         }
 
         if (!this.#autoFetch) {
             if (this.#validate) this.#validateSchemaReferences(this.#schema.references, this);
             for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
                 const key = keys[i];
-                obj[key] = this[key];
+                if (this[key].length > 0) obj[key] = this[key];
             }
         }
+
         return JSON.stringify(obj, null);
     }
 
