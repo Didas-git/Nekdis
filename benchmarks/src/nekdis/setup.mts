@@ -5,34 +5,151 @@ await client.connect().then(() => console.log(colorConsole.uniform("Nekdis Conne
 await client.raw.flushAll();
 
 export const FullJSONBenchSchema = client.schema({
-    aString: "string",
-    aNumber: "number",
-    aBoolean: "boolean",
-    someText: "text",
-    aDate: "date",
-    aPoint: "point",
-    aStringArray: "array",
-    aNumberArray: { type: "array", elements: "number" },
-    anObject: {
+    string: { type: "string", index: true },
+    number: "number",
+    boolean: "boolean",
+    date: "date",
+    point: "point",
+    bigint: "bigint",
+    text: "text",
+    vector: "vector",
+    stringArray: { type: "array", elements: "string" },
+    numberArray: { type: "array", elements: "number" },
+    booleanArray: { type: "array", elements: "boolean" },
+    dateArray: { type: "array", elements: "date" },
+    pointArray: { type: "array", elements: "point" },
+    bigintArray: { type: "array", elements: "bigint" },
+    textArray: { type: "array", elements: "text" },
+    vectorArray: { type: "array", elements: "vector" },
+    objectArray: { type: "array", elements: { a: "number" } },
+    object: {
         type: "object",
         properties: {
-            aBooleanArray: { type: "array", elements: "boolean" },
-            anotherObject: {
-                type: "object",
-                properties: {
-                    aTextArray: { type: "array", elements: 'text' }
+            string: "string",
+            number: "number",
+            boolean: "boolean",
+            date: "date",
+            point: "point",
+            bigint: "bigint",
+            text: "text",
+            vector: "vector",
+            stringArray: { type: "array", elements: "string" },
+            numberArray: { type: "array", elements: "number" },
+            booleanArray: { type: "array", elements: "boolean" },
+            dateArray: { type: "array", elements: "date" },
+            pointArray: { type: "array", elements: "point" },
+            bigintArray: { type: "array", elements: "bigint" },
+            textArray: { type: "array", elements: "text" },
+            vectorArray: { type: "array", elements: "vector" },
+            nestedObject: {
+                type: "object", properties: {
+                    nestedTuple: { type: "tuple", elements: ["boolean"] }
                 }
             }
         }
     },
-    aTuple: { type: "tuple", elements: ["string", "string", "number"] },
-    aReference: { type: "reference", schema: "self" }
+    tuple: {
+        type: "tuple",
+        elements: [
+            "string",
+            "number",
+            "boolean",
+            "date",
+            "point",
+            "bigint",
+            "text",
+            "vector",
+            { type: "array", elements: "string" },
+            { type: "array", elements: "number" },
+            { type: "array", elements: "boolean" },
+            { type: "array", elements: "date" },
+            { type: "array", elements: "point" },
+            { type: "array", elements: "bigint" },
+            { type: "array", elements: "text" },
+            { type: "array", elements: "vector" },
+            { type: "tuple", elements: ["string", "number"] },
+            { type: "object", properties: { a: "boolean" } }
+        ]
+    },
+    reference: { type: "reference", schema: "self" },
 });
 
 client.model("FullJSONBench", FullJSONBenchSchema);
 
 export const FullHASHBenchSchema = client.schema({
-    aString: "string",
+    string: { type: "string", index: true },
+    number: "number",
+    boolean: "boolean",
+    date: "date",
+    point: "point",
+    bigint: "bigint",
+    text: "text",
+    vector: "vector",
+    stringArray: { type: "array", elements: "string" },
+    numberArray: { type: "array", elements: "number" },
+    booleanArray: { type: "array", elements: "boolean" },
+    dateArray: { type: "array", elements: "date" },
+    pointArray: { type: "array", elements: "point" },
+    bigintArray: { type: "array", elements: "bigint" },
+    textArray: { type: "array", elements: "text" },
+    vectorArray: { type: "array", elements: "vector" },
+    objectArray: { type: "array", elements: { a: "number" } },
+    object: {
+        type: "object",
+        properties: {
+            string: "string",
+            number: "number",
+            boolean: "boolean",
+            date: "date",
+            point: "point",
+            bigint: "bigint",
+            text: "text",
+            vector: "vector",
+            stringArray: { type: "array", elements: "string" },
+            numberArray: { type: "array", elements: "number" },
+            booleanArray: { type: "array", elements: "boolean" },
+            dateArray: { type: "array", elements: "date" },
+            pointArray: { type: "array", elements: "point" },
+            bigintArray: { type: "array", elements: "bigint" },
+            textArray: { type: "array", elements: "text" },
+            vectorArray: { type: "array", elements: "vector" },
+            nestedObject: {
+                type: "object", properties: {
+                    nestedTuple: { type: "tuple", elements: ["boolean"] }
+                }
+            }
+        }
+    },
+    tuple: {
+        type: "tuple",
+        elements: [
+            "string",
+            "number",
+            "boolean",
+            "date",
+            "point",
+            "bigint",
+            "text",
+            "vector",
+            { type: "array", elements: "string" },
+            { type: "array", elements: "number" },
+            { type: "array", elements: "boolean" },
+            { type: "array", elements: "date" },
+            { type: "array", elements: "point" },
+            { type: "array", elements: "bigint" },
+            { type: "array", elements: "text" },
+            { type: "array", elements: "vector" },
+            { type: "tuple", elements: ["string", "number"] },
+            { type: "object", properties: { a: "boolean" } }
+        ]
+    },
+    reference: { type: "reference", schema: "self" },
+}, {}, { dataStructure: "HASH" });
+
+client.model("FullHASHBench", FullHASHBenchSchema);
+
+export const JSONBenchSchema = client.schema({
+    aString: { type: "string", index: true },
     aNumber: "number",
     aBoolean: "boolean",
     someText: "text",
@@ -40,32 +157,6 @@ export const FullHASHBenchSchema = client.schema({
     aPoint: "point",
     aStringArray: "array",
     aNumberArray: { type: "array", elements: "number" },
-    anObject: {
-        type: "object",
-        properties: {
-            aBooleanArray: { type: "array", elements: "boolean" },
-            anotherObject: {
-                type: "object",
-                properties: {
-                    aTextArray: { type: "array", elements: 'text' }
-                }
-            }
-        }
-    },
-    aTuple: { type: "tuple", elements: ["string", "string", "number"] },
-    aReference: { type: "reference", schema: "self" }
-}, {}, { dataStructure: "HASH" });
-
-client.model("FullHASHBench", FullHASHBenchSchema);
-
-export const JSONBenchSchema = client.schema({
-    aString: "string",
-    aNumber: "number",
-    aBoolean: "boolean",
-    someText: "text",
-    aDate: "date",
-    aPoint: "point",
-    aStringArray: "array",
     anObject: {
         type: "object",
         properties: {
@@ -83,7 +174,7 @@ export const JSONBenchSchema = client.schema({
 client.model("JSONBench", JSONBenchSchema);
 
 export const HASHBenchSchema = client.schema({
-    aString: "string",
+    aString: { type: "string", index: true },
     aNumber: "number",
     aBoolean: "boolean",
     someText: "text",
@@ -95,34 +186,151 @@ export const HASHBenchSchema = client.schema({
 client.model("HASHBench", HASHBenchSchema);
 
 export const NoValidationFullJSONBenchSchema = client.schema({
-    aString: "string",
-    aNumber: "number",
-    aBoolean: "boolean",
-    someText: "text",
-    aDate: "date",
-    aPoint: "point",
-    aStringArray: "array",
-    aNumberArray: { type: "array", elements: "number" },
-    anObject: {
+    string: { type: "string", index: true },
+    number: "number",
+    boolean: "boolean",
+    date: "date",
+    point: "point",
+    bigint: "bigint",
+    text: "text",
+    vector: "vector",
+    stringArray: { type: "array", elements: "string" },
+    numberArray: { type: "array", elements: "number" },
+    booleanArray: { type: "array", elements: "boolean" },
+    dateArray: { type: "array", elements: "date" },
+    pointArray: { type: "array", elements: "point" },
+    bigintArray: { type: "array", elements: "bigint" },
+    textArray: { type: "array", elements: "text" },
+    vectorArray: { type: "array", elements: "vector" },
+    objectArray: { type: "array", elements: { a: "number" } },
+    object: {
         type: "object",
         properties: {
-            aBooleanArray: { type: "array", elements: "boolean" },
-            anotherObject: {
-                type: "object",
-                properties: {
-                    aTextArray: { type: "array", elements: 'text' }
+            string: "string",
+            number: "number",
+            boolean: "boolean",
+            date: "date",
+            point: "point",
+            bigint: "bigint",
+            text: "text",
+            vector: "vector",
+            stringArray: { type: "array", elements: "string" },
+            numberArray: { type: "array", elements: "number" },
+            booleanArray: { type: "array", elements: "boolean" },
+            dateArray: { type: "array", elements: "date" },
+            pointArray: { type: "array", elements: "point" },
+            bigintArray: { type: "array", elements: "bigint" },
+            textArray: { type: "array", elements: "text" },
+            vectorArray: { type: "array", elements: "vector" },
+            nestedObject: {
+                type: "object", properties: {
+                    nestedTuple: { type: "tuple", elements: ["boolean"] }
                 }
             }
         }
     },
-    aTuple: { type: "tuple", elements: ["string", "string", "number"] },
-    aReference: { type: "reference", schema: "self" }
+    tuple: {
+        type: "tuple",
+        elements: [
+            "string",
+            "number",
+            "boolean",
+            "date",
+            "point",
+            "bigint",
+            "text",
+            "vector",
+            { type: "array", elements: "string" },
+            { type: "array", elements: "number" },
+            { type: "array", elements: "boolean" },
+            { type: "array", elements: "date" },
+            { type: "array", elements: "point" },
+            { type: "array", elements: "bigint" },
+            { type: "array", elements: "text" },
+            { type: "array", elements: "vector" },
+            { type: "tuple", elements: ["string", "number"] },
+            { type: "object", properties: { a: "boolean" } }
+        ]
+    },
+    reference: { type: "reference", schema: "self" },
 }, {}, { skipDocumentValidation: true });
 
 client.model("NoValFullJSONBench", NoValidationFullJSONBenchSchema);
 
 export const NoValidationFullHASHBenchSchema = client.schema({
-    aString: "string",
+    string: { type: "string", index: true },
+    number: "number",
+    boolean: "boolean",
+    date: "date",
+    point: "point",
+    bigint: "bigint",
+    text: "text",
+    vector: "vector",
+    stringArray: { type: "array", elements: "string" },
+    numberArray: { type: "array", elements: "number" },
+    booleanArray: { type: "array", elements: "boolean" },
+    dateArray: { type: "array", elements: "date" },
+    pointArray: { type: "array", elements: "point" },
+    bigintArray: { type: "array", elements: "bigint" },
+    textArray: { type: "array", elements: "text" },
+    vectorArray: { type: "array", elements: "vector" },
+    objectArray: { type: "array", elements: { a: "number" } },
+    object: {
+        type: "object",
+        properties: {
+            string: "string",
+            number: "number",
+            boolean: "boolean",
+            date: "date",
+            point: "point",
+            bigint: "bigint",
+            text: "text",
+            vector: "vector",
+            stringArray: { type: "array", elements: "string" },
+            numberArray: { type: "array", elements: "number" },
+            booleanArray: { type: "array", elements: "boolean" },
+            dateArray: { type: "array", elements: "date" },
+            pointArray: { type: "array", elements: "point" },
+            bigintArray: { type: "array", elements: "bigint" },
+            textArray: { type: "array", elements: "text" },
+            vectorArray: { type: "array", elements: "vector" },
+            nestedObject: {
+                type: "object", properties: {
+                    nestedTuple: { type: "tuple", elements: ["boolean"] }
+                }
+            }
+        }
+    },
+    tuple: {
+        type: "tuple",
+        elements: [
+            "string",
+            "number",
+            "boolean",
+            "date",
+            "point",
+            "bigint",
+            "text",
+            "vector",
+            { type: "array", elements: "string" },
+            { type: "array", elements: "number" },
+            { type: "array", elements: "boolean" },
+            { type: "array", elements: "date" },
+            { type: "array", elements: "point" },
+            { type: "array", elements: "bigint" },
+            { type: "array", elements: "text" },
+            { type: "array", elements: "vector" },
+            { type: "tuple", elements: ["string", "number"] },
+            { type: "object", properties: { a: "boolean" } }
+        ]
+    },
+    reference: { type: "reference", schema: "self" },
+}, {}, { dataStructure: "HASH", skipDocumentValidation: true });
+
+client.model("NoValFullHASHBench", NoValidationFullHASHBenchSchema);
+
+export const NoValidationJSONBenchSchema = client.schema({
+    aString: { type: "string", index: true },
     aNumber: "number",
     aBoolean: "boolean",
     someText: "text",
@@ -130,32 +338,6 @@ export const NoValidationFullHASHBenchSchema = client.schema({
     aPoint: "point",
     aStringArray: "array",
     aNumberArray: { type: "array", elements: "number" },
-    anObject: {
-        type: "object",
-        properties: {
-            aBooleanArray: { type: "array", elements: "boolean" },
-            anotherObject: {
-                type: "object",
-                properties: {
-                    aTextArray: { type: "array", elements: 'text' }
-                }
-            }
-        }
-    },
-    aTuple: { type: "tuple", elements: ["string", "string", "number"] },
-    aReference: { type: "reference", schema: "self" }
-}, {}, { dataStructure: "HASH", skipDocumentValidation: true });
-
-client.model("NoValFullHASHBench", NoValidationFullHASHBenchSchema);
-
-export const NoValidationJSONBenchSchema = client.schema({
-    aString: "string",
-    aNumber: "number",
-    aBoolean: "boolean",
-    someText: "text",
-    aDate: "date",
-    aPoint: "point",
-    aStringArray: "array",
     anObject: {
         type: "object",
         properties: {
@@ -173,7 +355,7 @@ export const NoValidationJSONBenchSchema = client.schema({
 client.model("NoValJSONBench", NoValidationJSONBenchSchema);
 
 export const NoValidationHASHBenchSchema = client.schema({
-    aString: "string",
+    aString: { type: "string", index: true },
     aNumber: "number",
     aBoolean: "boolean",
     someText: "text",

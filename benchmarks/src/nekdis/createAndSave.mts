@@ -32,6 +32,7 @@ export async function benchJSONCreateAndSave(iter: number, amt: number): Promise
                 aDate: new Date(),
                 aPoint: { longitude: 139.7745, latitude: 35.7023 },
                 aStringArray: ["A", "B", "C"],
+                aNumberArray: [1, 2, 3],
                 anObject: {
                     anotherBoolean: false,
                     anotherObject: {
@@ -79,6 +80,7 @@ export async function benchBatchJSONCreateAndSave(iter: number, amt: number): Pr
                 aDate: new Date(),
                 aPoint: { longitude: 139.7745, latitude: 35.7023 },
                 aStringArray: ["A", "B", "C"],
+                aNumberArray: [1, 2, 3],
                 anObject: {
                     anotherBoolean: false,
                     anotherObject: {
@@ -200,6 +202,7 @@ export async function benchNoValJSONCreateAndSave(iter: number, amt: number): Pr
                 aDate: new Date(),
                 aPoint: { longitude: 139.7745, latitude: 35.7023 },
                 aStringArray: ["A", "B", "C"],
+                aNumberArray: [1, 2, 3],
                 anObject: {
                     anotherBoolean: false,
                     anotherObject: {
@@ -246,6 +249,7 @@ export async function benchBatchNoValJSONCreateAndSave(iter: number, amt: number
                 aDate: new Date(),
                 aPoint: { longitude: 139.7745, latitude: 35.7023 },
                 aStringArray: ["A", "B", "C"],
+                aNumberArray: [1, 2, 3],
                 anObject: {
                     anotherBoolean: false,
                     anotherObject: {
@@ -366,23 +370,77 @@ export async function benchFullJSONCreateAndSave(iter: number, amt: number): Pro
 
             await model.createAndSave({
                 $id: j,
-                aString: "ABC",
-                aNumber: 3,
-                aBoolean: true,
-                someText: "Full Text",
-                aDate: new Date(),
-                aPoint: { longitude: 139.7745, latitude: 35.7023 },
-                aStringArray: ["A", "B", "C"],
-                aNumberArray: [1, 2, 3, 4, 5],
-                anObject: {
-                    aBooleanArray: [false, true, false],
-                    anotherObject: {
-                        aTextArray: ["Lovely", "Full Text", "Search"]
+                string: "s",
+                number: 3,
+                boolean: true,
+                date: Date.now(),
+                point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                bigint: 1n,
+                text: "some text",
+                vector: [3, 2, 4],
+                stringArray: ["a", "b", "c"],
+                numberArray: [1, 2, 3],
+                booleanArray: [true, false, true],
+                dateArray: [Date.now(), Date.now(), Date.now()],
+                objectArray: [{ a: 2 }],
+                pointArray: [
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                ],
+                bigintArray: [1n, 2n, 3n],
+                textArray: ["this is a", "this is b", "this is c"],
+                vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                object: {
+                    string: "s",
+                    number: 3,
+                    boolean: true,
+                    date: Date.now(),
+                    point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    bigint: 1n,
+                    text: "some text",
+                    vector: [3, 2, 4],
+                    stringArray: ["a", "b", "c"],
+                    numberArray: [1, 2, 3],
+                    booleanArray: [true, false, true],
+                    dateArray: [Date.now(), Date.now(), Date.now()],
+                    pointArray: [
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                    ],
+                    bigintArray: [1n, 2n, 3n],
+                    textArray: ["this is a", "this is b", "this is c"],
+                    vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                    nestedObject: {
+                        nestedTuple: [true]
                     }
                 },
-                aTuple: ["A", "B", 3],
-                // In this test they will reference themselves just for my sake
-                aReference: [`Nekdis:FullJSONBench:${j}`]
+                tuple: [
+                    "s",
+                    3,
+                    true,
+                    Date.now(),
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    1n,
+                    "some text",
+                    [3, 2, 4],
+                    ["a", "b", "c"],
+                    [1, 2, 3],
+                    [true, false, true],
+                    [Date.now(), Date.now(), Date.now()],
+                    [
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                    ],
+                    [1n, 2n, 3n],
+                    ["this is a", "this is b", "this is c"],
+                    [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                    ["a", 1],
+                    { a: true }
+                ],
+                reference: [`Nekdis:FullJSONBench:${j}`]
             })
 
             const end = performance.now();
@@ -417,22 +475,77 @@ export async function benchBatchFullJSONCreateAndSave(iter: number, amt: number)
         for (let j = 0; j < amt; j++) {
             temp.push(model.createAndSave({
                 $id: j,
-                aString: "ABC",
-                aNumber: 3,
-                aBoolean: true,
-                someText: "Full Text",
-                aDate: new Date(),
-                aPoint: { longitude: 139.7745, latitude: 35.7023 },
-                aStringArray: ["A", "B", "C"],
-                anObject: {
-                    aBooleanArray: [false, true, false],
-                    anotherObject: {
-                        aTextArray: ["Lovely", "Full Text", "Search"]
+                string: "s",
+                number: 3,
+                boolean: true,
+                date: Date.now(),
+                point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                bigint: 1n,
+                text: "some text",
+                vector: [3, 2, 4],
+                stringArray: ["a", "b", "c"],
+                numberArray: [1, 2, 3],
+                booleanArray: [true, false, true],
+                dateArray: [Date.now(), Date.now(), Date.now()],
+                objectArray: [{ a: 2 }],
+                pointArray: [
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                ],
+                bigintArray: [1n, 2n, 3n],
+                textArray: ["this is a", "this is b", "this is c"],
+                vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                object: {
+                    string: "s",
+                    number: 3,
+                    boolean: true,
+                    date: Date.now(),
+                    point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    bigint: 1n,
+                    text: "some text",
+                    vector: [3, 2, 4],
+                    stringArray: ["a", "b", "c"],
+                    numberArray: [1, 2, 3],
+                    booleanArray: [true, false, true],
+                    dateArray: [Date.now(), Date.now(), Date.now()],
+                    pointArray: [
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                    ],
+                    bigintArray: [1n, 2n, 3n],
+                    textArray: ["this is a", "this is b", "this is c"],
+                    vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                    nestedObject: {
+                        nestedTuple: [true]
                     }
                 },
-                aTuple: ["A", "B", 3],
-                // In this test they will reference themselves just for my sake
-                aReference: [`Nekdis:FullJSONBench:${j}`]
+                tuple: [
+                    "s",
+                    3,
+                    true,
+                    Date.now(),
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    1n,
+                    "some text",
+                    [3, 2, 4],
+                    ["a", "b", "c"],
+                    [1, 2, 3],
+                    [true, false, true],
+                    [Date.now(), Date.now(), Date.now()],
+                    [
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                    ],
+                    [1n, 2n, 3n],
+                    ["this is a", "this is b", "this is c"],
+                    [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                    ["a", 1],
+                    { a: true }
+                ],
+                reference: [`Nekdis:FullJSONBench:${j}`]
             }))
         }
         await Promise.all(temp);
@@ -464,23 +577,77 @@ export async function benchFullHASHCreateAndSave(iter: number, amt: number): Pro
 
             await model.createAndSave({
                 $id: j,
-                aString: "ABC",
-                aNumber: 3,
-                aBoolean: true,
-                someText: "Full Text",
-                aDate: new Date(),
-                aPoint: { longitude: 139.7745, latitude: 35.7023 },
-                aStringArray: ["A", "B", "C"],
-                aNumberArray: [3, 3, 5],
-                anObject: {
-                    aBooleanArray: [false, true, false],
-                    anotherObject: {
-                        aTextArray: ["Lovely", "Full Text", "Search"]
+                string: "s",
+                number: 3,
+                boolean: true,
+                date: Date.now(),
+                point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                bigint: 1n,
+                text: "some text",
+                vector: [3, 2, 4],
+                stringArray: ["a", "b", "c"],
+                numberArray: [1, 2, 3],
+                booleanArray: [true, false, true],
+                dateArray: [Date.now(), Date.now(), Date.now()],
+                objectArray: [{ a: 2 }],
+                pointArray: [
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                ],
+                bigintArray: [1n, 2n, 3n],
+                textArray: ["this is a", "this is b", "this is c"],
+                vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                object: {
+                    string: "s",
+                    number: 3,
+                    boolean: true,
+                    date: Date.now(),
+                    point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    bigint: 1n,
+                    text: "some text",
+                    vector: [3, 2, 4],
+                    stringArray: ["a", "b", "c"],
+                    numberArray: [1, 2, 3],
+                    booleanArray: [true, false, true],
+                    dateArray: [Date.now(), Date.now(), Date.now()],
+                    pointArray: [
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                    ],
+                    bigintArray: [1n, 2n, 3n],
+                    textArray: ["this is a", "this is b", "this is c"],
+                    vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                    nestedObject: {
+                        nestedTuple: [true]
                     }
                 },
-                aTuple: ["A", "B", 3],
-                // In this test they will reference themselves just for my sake
-                aReference: [`Nekdis:FullHASHBench:${j}`]
+                tuple: [
+                    "s",
+                    3,
+                    true,
+                    Date.now(),
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    1n,
+                    "some text",
+                    [3, 2, 4],
+                    ["a", "b", "c"],
+                    [1, 2, 3],
+                    [true, false, true],
+                    [Date.now(), Date.now(), Date.now()],
+                    [
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                    ],
+                    [1n, 2n, 3n],
+                    ["this is a", "this is b", "this is c"],
+                    [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                    ["a", 1],
+                    { a: true }
+                ],
+                reference: [`Nekdis:FullJSONBench:${j}`]
             })
 
             const end = performance.now();
@@ -515,22 +682,77 @@ export async function benchBatchFullHASHCreateAndSave(iter: number, amt: number)
         for (let j = 0; j < amt; j++) {
             temp.push(model.createAndSave({
                 $id: j,
-                aString: "ABC",
-                aNumber: 3,
-                aBoolean: true,
-                someText: "Full Text",
-                aDate: new Date(),
-                aPoint: { longitude: 139.7745, latitude: 35.7023 },
-                aStringArray: ["A", "B", "C"],
-                anObject: {
-                    aBooleanArray: [false, true, false],
-                    anotherObject: {
-                        aTextArray: ["Lovely", "Full Text", "Search"]
+                string: "s",
+                number: 3,
+                boolean: true,
+                date: Date.now(),
+                point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                bigint: 1n,
+                text: "some text",
+                vector: [3, 2, 4],
+                stringArray: ["a", "b", "c"],
+                numberArray: [1, 2, 3],
+                booleanArray: [true, false, true],
+                dateArray: [Date.now(), Date.now(), Date.now()],
+                objectArray: [{ a: 2 }],
+                pointArray: [
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                ],
+                bigintArray: [1n, 2n, 3n],
+                textArray: ["this is a", "this is b", "this is c"],
+                vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                object: {
+                    string: "s",
+                    number: 3,
+                    boolean: true,
+                    date: Date.now(),
+                    point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    bigint: 1n,
+                    text: "some text",
+                    vector: [3, 2, 4],
+                    stringArray: ["a", "b", "c"],
+                    numberArray: [1, 2, 3],
+                    booleanArray: [true, false, true],
+                    dateArray: [Date.now(), Date.now(), Date.now()],
+                    pointArray: [
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                    ],
+                    bigintArray: [1n, 2n, 3n],
+                    textArray: ["this is a", "this is b", "this is c"],
+                    vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                    nestedObject: {
+                        nestedTuple: [true]
                     }
                 },
-                aTuple: ["A", "B", 3],
-                // In this test they will reference themselves just for my sake
-                aReference: [`Nekdis:FullHASHBench:${j}`]
+                tuple: [
+                    "s",
+                    3,
+                    true,
+                    Date.now(),
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    1n,
+                    "some text",
+                    [3, 2, 4],
+                    ["a", "b", "c"],
+                    [1, 2, 3],
+                    [true, false, true],
+                    [Date.now(), Date.now(), Date.now()],
+                    [
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                    ],
+                    [1n, 2n, 3n],
+                    ["this is a", "this is b", "this is c"],
+                    [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                    ["a", 1],
+                    { a: true }
+                ],
+                reference: [`Nekdis:FullJSONBench:${j}`]
             }))
         }
         await Promise.all(temp);
@@ -561,23 +783,77 @@ export async function benchNoValFullJSONCreateAndSave(iter: number, amt: number)
 
             await model.createAndSave({
                 $id: j,
-                aString: "ABC",
-                aNumber: 3,
-                aBoolean: true,
-                someText: "Full Text",
-                aDate: new Date(),
-                aPoint: { longitude: 139.7745, latitude: 35.7023 },
-                aStringArray: ["A", "B", "C"],
-                aNumberArray: [1, 2, 3, 4, 5],
-                anObject: {
-                    aBooleanArray: [false, true, false],
-                    anotherObject: {
-                        aTextArray: ["Lovely", "Full Text", "Search"]
+                string: "s",
+                number: 3,
+                boolean: true,
+                date: Date.now(),
+                point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                bigint: 1n,
+                text: "some text",
+                vector: [3, 2, 4],
+                stringArray: ["a", "b", "c"],
+                numberArray: [1, 2, 3],
+                booleanArray: [true, false, true],
+                dateArray: [Date.now(), Date.now(), Date.now()],
+                objectArray: [{ a: 2 }],
+                pointArray: [
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                ],
+                bigintArray: [1n, 2n, 3n],
+                textArray: ["this is a", "this is b", "this is c"],
+                vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                object: {
+                    string: "s",
+                    number: 3,
+                    boolean: true,
+                    date: Date.now(),
+                    point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    bigint: 1n,
+                    text: "some text",
+                    vector: [3, 2, 4],
+                    stringArray: ["a", "b", "c"],
+                    numberArray: [1, 2, 3],
+                    booleanArray: [true, false, true],
+                    dateArray: [Date.now(), Date.now(), Date.now()],
+                    pointArray: [
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                    ],
+                    bigintArray: [1n, 2n, 3n],
+                    textArray: ["this is a", "this is b", "this is c"],
+                    vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                    nestedObject: {
+                        nestedTuple: [true]
                     }
                 },
-                aTuple: ["A", "B", 3],
-                // In this test they will reference themselves just for my sake
-                aReference: [`Nekdis:FullJSONBench:${j}`]
+                tuple: [
+                    "s",
+                    3,
+                    true,
+                    Date.now(),
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    1n,
+                    "some text",
+                    [3, 2, 4],
+                    ["a", "b", "c"],
+                    [1, 2, 3],
+                    [true, false, true],
+                    [Date.now(), Date.now(), Date.now()],
+                    [
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                    ],
+                    [1n, 2n, 3n],
+                    ["this is a", "this is b", "this is c"],
+                    [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                    ["a", 1],
+                    { a: true }
+                ],
+                reference: [`Nekdis:FullJSONBench:${j}`]
             })
 
             const end = performance.now();
@@ -612,22 +888,77 @@ export async function benchBatchNoValFullJSONCreateAndSave(iter: number, amt: nu
         for (let j = 0; j < amt; j++) {
             temp.push(model.createAndSave({
                 $id: j,
-                aString: "ABC",
-                aNumber: 3,
-                aBoolean: true,
-                someText: "Full Text",
-                aDate: new Date(),
-                aPoint: { longitude: 139.7745, latitude: 35.7023 },
-                aStringArray: ["A", "B", "C"],
-                anObject: {
-                    aBooleanArray: [false, true, false],
-                    anotherObject: {
-                        aTextArray: ["Lovely", "Full Text", "Search"]
+                string: "s",
+                number: 3,
+                boolean: true,
+                date: Date.now(),
+                point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                bigint: 1n,
+                text: "some text",
+                vector: [3, 2, 4],
+                stringArray: ["a", "b", "c"],
+                numberArray: [1, 2, 3],
+                booleanArray: [true, false, true],
+                dateArray: [Date.now(), Date.now(), Date.now()],
+                objectArray: [{ a: 2 }],
+                pointArray: [
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                ],
+                bigintArray: [1n, 2n, 3n],
+                textArray: ["this is a", "this is b", "this is c"],
+                vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                object: {
+                    string: "s",
+                    number: 3,
+                    boolean: true,
+                    date: Date.now(),
+                    point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    bigint: 1n,
+                    text: "some text",
+                    vector: [3, 2, 4],
+                    stringArray: ["a", "b", "c"],
+                    numberArray: [1, 2, 3],
+                    booleanArray: [true, false, true],
+                    dateArray: [Date.now(), Date.now(), Date.now()],
+                    pointArray: [
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                    ],
+                    bigintArray: [1n, 2n, 3n],
+                    textArray: ["this is a", "this is b", "this is c"],
+                    vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                    nestedObject: {
+                        nestedTuple: [true]
                     }
                 },
-                aTuple: ["A", "B", 3],
-                // In this test they will reference themselves just for my sake
-                aReference: [`Nekdis:FullJSONBench:${j}`]
+                tuple: [
+                    "s",
+                    3,
+                    true,
+                    Date.now(),
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    1n,
+                    "some text",
+                    [3, 2, 4],
+                    ["a", "b", "c"],
+                    [1, 2, 3],
+                    [true, false, true],
+                    [Date.now(), Date.now(), Date.now()],
+                    [
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                    ],
+                    [1n, 2n, 3n],
+                    ["this is a", "this is b", "this is c"],
+                    [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                    ["a", 1],
+                    { a: true }
+                ],
+                reference: [`Nekdis:FullJSONBench:${j}`]
             }))
         }
         await Promise.all(temp);
@@ -661,22 +992,77 @@ export async function benchNoValFullHASHCreateAndSave(iter: number, amt: number)
 
             await model.createAndSave({
                 $id: j,
-                aString: "ABC",
-                aNumber: 3,
-                aBoolean: true,
-                someText: "Full Text",
-                aDate: new Date(),
-                aPoint: { longitude: 139.7745, latitude: 35.7023 },
-                aStringArray: ["A", "B", "C"],
-                anObject: {
-                    aBooleanArray: [false, true, false],
-                    anotherObject: {
-                        aTextArray: ["Lovely", "Full Text", "Search"]
+                string: "s",
+                number: 3,
+                boolean: true,
+                date: Date.now(),
+                point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                bigint: 1n,
+                text: "some text",
+                vector: [3, 2, 4],
+                stringArray: ["a", "b", "c"],
+                numberArray: [1, 2, 3],
+                booleanArray: [true, false, true],
+                dateArray: [Date.now(), Date.now(), Date.now()],
+                objectArray: [{ a: 2 }],
+                pointArray: [
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                ],
+                bigintArray: [1n, 2n, 3n],
+                textArray: ["this is a", "this is b", "this is c"],
+                vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                object: {
+                    string: "s",
+                    number: 3,
+                    boolean: true,
+                    date: Date.now(),
+                    point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    bigint: 1n,
+                    text: "some text",
+                    vector: [3, 2, 4],
+                    stringArray: ["a", "b", "c"],
+                    numberArray: [1, 2, 3],
+                    booleanArray: [true, false, true],
+                    dateArray: [Date.now(), Date.now(), Date.now()],
+                    pointArray: [
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                    ],
+                    bigintArray: [1n, 2n, 3n],
+                    textArray: ["this is a", "this is b", "this is c"],
+                    vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                    nestedObject: {
+                        nestedTuple: [true]
                     }
                 },
-                aTuple: ["A", "B", 3],
-                // In this test they will reference themselves just for my sake
-                aReference: [`Nekdis:FullHASHBench:${j}`]
+                tuple: [
+                    "s",
+                    3,
+                    true,
+                    Date.now(),
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    1n,
+                    "some text",
+                    [3, 2, 4],
+                    ["a", "b", "c"],
+                    [1, 2, 3],
+                    [true, false, true],
+                    [Date.now(), Date.now(), Date.now()],
+                    [
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                    ],
+                    [1n, 2n, 3n],
+                    ["this is a", "this is b", "this is c"],
+                    [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                    ["a", 1],
+                    { a: true }
+                ],
+                reference: [`Nekdis:FullJSONBench:${j}`]
             })
 
             const end = performance.now();
@@ -711,22 +1097,77 @@ export async function benchBatchNoValFullHASHCreateAndSave(iter: number, amt: nu
         for (let j = 0; j < amt; j++) {
             temp.push(model.createAndSave({
                 $id: j,
-                aString: "ABC",
-                aNumber: 3,
-                aBoolean: true,
-                someText: "Full Text",
-                aDate: new Date(),
-                aPoint: { longitude: 139.7745, latitude: 35.7023 },
-                aStringArray: ["A", "B", "C"],
-                anObject: {
-                    aBooleanArray: [false, true, false],
-                    anotherObject: {
-                        aTextArray: ["Lovely", "Full Text", "Search"]
+                string: "s",
+                number: 3,
+                boolean: true,
+                date: Date.now(),
+                point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                bigint: 1n,
+                text: "some text",
+                vector: [3, 2, 4],
+                stringArray: ["a", "b", "c"],
+                numberArray: [1, 2, 3],
+                booleanArray: [true, false, true],
+                dateArray: [Date.now(), Date.now(), Date.now()],
+                objectArray: [{ a: 2 }],
+                pointArray: [
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                ],
+                bigintArray: [1n, 2n, 3n],
+                textArray: ["this is a", "this is b", "this is c"],
+                vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                object: {
+                    string: "s",
+                    number: 3,
+                    boolean: true,
+                    date: Date.now(),
+                    point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    bigint: 1n,
+                    text: "some text",
+                    vector: [3, 2, 4],
+                    stringArray: ["a", "b", "c"],
+                    numberArray: [1, 2, 3],
+                    booleanArray: [true, false, true],
+                    dateArray: [Date.now(), Date.now(), Date.now()],
+                    pointArray: [
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                    ],
+                    bigintArray: [1n, 2n, 3n],
+                    textArray: ["this is a", "this is b", "this is c"],
+                    vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                    nestedObject: {
+                        nestedTuple: [true]
                     }
                 },
-                aTuple: ["A", "B", 3],
-                // In this test they will reference themselves just for my sake
-                aReference: [`Nekdis:FullHASHBench:${j}`]
+                tuple: [
+                    "s",
+                    3,
+                    true,
+                    Date.now(),
+                    { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                    1n,
+                    "some text",
+                    [3, 2, 4],
+                    ["a", "b", "c"],
+                    [1, 2, 3],
+                    [true, false, true],
+                    [Date.now(), Date.now(), Date.now()],
+                    [
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 },
+                        { latitude: 35.69959561887533, longitude: 139.77083086508688 }
+                    ],
+                    [1n, 2n, 3n],
+                    ["this is a", "this is b", "this is c"],
+                    [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
+                    ["a", 1],
+                    { a: true }
+                ],
+                reference: [`Nekdis:FullJSONBench:${j}`]
             }))
         }
         await Promise.all(temp);

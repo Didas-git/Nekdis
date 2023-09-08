@@ -58,7 +58,8 @@ Redis Stack (v7.2.0-v0) Docker Image Running on Windows WSL Ubuntu.
 
 # Running the tests
 
-**Warning:** Be aware that the tests will wipe the entire DB they run on so please be careful and run them on a new docker instance or dev db.
+> **Warning**
+> Be aware that the tests will wipe the entire DB they run on so please be careful and run them on a new docker instance or dev db.
 
 To run the tests its pretty simples, just clone the repository, build the library using `pnpm run build` and run the benchmarks by doing `pnpm run bench`.
 
@@ -86,37 +87,37 @@ A few notes on the tests, to make them as close as possible to reality the Nekdi
 
 ##### JSON
 
-| Current               | 10    | 100    | 1000    | 10000    | 100000    |
-| --------------------- | ----- | ------ | ------- | -------- | --------- |
-| Total Time Running    | 2.8ms | 29.3ms | 225.2ms | 2133.4ms | 23778.6ms |
-| Request Time Average  | 0.3ms | 0.3ms  | 0.2ms   | 0.2ms    | 0.2ms     |
-| Batch Request Average | 0.5ms | 1.6ms  | 10.3ms  | 110.3ms  | 1172.8ms  |
+| Current               | 10     | 100     | 1000     | 10000     | 100000     |
+| --------------------- | ------ | ------- | -------- | --------- | ---------- |
+| Total Time Running    | 3.12ms | 27.27ms | 231.66ms | 2279.39ms | 22653.80ms |
+| Request Time Average  | 0.29ms | 0.25ms  | 0.22ms   | 0.21ms    | 0.21ms     |
+| Batch Request Average | 0.76ms | 1.90ms  | 14.99ms  | 142.01ms  | 1511.94ms  |
 
 ##### HASH
 
-| Current               | 10    | 100    | 1000    | 10000    | 100000    |
-| --------------------- | ----- | ------ | ------- | -------- | --------- |
-| Total Time Running    | 2.6ms | 23.5ms | 201.8ms | 2023.4ms | 22442.3ms |
-| Request Time Average  | 0.2ms | 0.2ms  | 0.2ms   | 0.2ms    | 0.2ms     |
-| Batch Request Average | 0.5ms | 1.2ms  | 6.6ms   | 84ms     | 889ms     |
+| Current               | 10     | 100     | 1000     | 10000     | 100000     |
+| --------------------- | ------ | ------- | -------- | --------- | ---------- |
+| Total Time Running    | 2.94ms | 23.93ms | 221.72ms | 2111.97ms | 21596.66ms |
+| Request Time Average  | 0.27ms | 0.22ms  | 0.21ms   | 0.20      | 0.20ms     |
+| Batch Request Average | 0.51ms | 1.41ms  | 9.70ms   | 105.37ms  | 1081.66ms  |
 
 #### Full Feature
 
 ##### JSON
 
-| Current               | 10    | 100    | 1000    | 10000    | 100000    |
-| --------------------- | ----- | ------ | ------- | -------- | --------- |
-| Total Time Running    | 2.7ms | 24.8ms | 228.5ms | 2255.9ms | 25033.6ms |
-| Request Time Average  | 0.3ms | 0.2ms  | 0.2ms   | 0.2ms    | 0.2ms     |
-| Batch Request Average | 0.6ms | 1.9ms  | 15.9ms  | 171.1ms  | 1836.4ms  |
+| Current               | 10     | 100     | 1000     | 10000     | 100000     |
+| --------------------- | ------ | ------- | -------- | --------- | ---------- |
+| Total Time Running    | 3.79ms | 30.94ms | 295.54ms | 2985.83ms | 30473.53ms |
+| Request Time Average  | 0.35ms | 0.29ms  | 0.28ms   | 0.28ms    | 0.29ms     |
+| Batch Request Average | 1.09ms | 6.64ms  | 64.22ms  | 648.15ms  | 7014.24ms  |
 
 ##### HASH
 
-| Current               | 10    | 100    | 1000    | 10000    | 100000   |
-| --------------------- | ----- | ------ | ------- | -------- | -------- |
-| Total Time Running    | 2.7ms | 23.1ms | 220.8ms | 2175.3ms | 24172ms  |
-| Request Time Average  | 0.2ms | 0.2ms  | 0.2ms   | 0.2ms    | 0.2ms    |
-| Batch Request Average | 0.6ms | 1.7ms  | 15.6ms  | 160ms    | 1752.4ms |
+| Current               | 10     | 100     | 1000     | 10000     | 100000     |
+| --------------------- | ------ | ------- | -------- | --------- | ---------- |
+| Total Time Running    | 3.81ms | 31.20ms | 301.04ms | 3033.35ms | 32393.78ms |
+| Request Time Average  | 0.36ms | 0.29ms  | 0.28ms   | 0.28ms    | 0.30ms     |
+| Batch Request Average | 1.25ms | 8.24ms  | 81.19ms  | 780.81ms  | 8735.30ms  |
 
 ### Without Validation
 
@@ -124,38 +125,37 @@ A few notes on the tests, to make them as close as possible to reality the Nekdi
 
 ##### JSON
 
-| Current               | 10    | 100    | 1000    | 10000    | 100000    |
-| --------------------- | ----- | ------ | ------- | -------- | --------- |
-| Total Time Running    | 2.5ms | 20.8ms | 212.7ms | 2173.9ms | 24038.4ms |
-| Request Time Average  | 0.2ms | 0.2ms  | 0.2ms   | 0.2ms    | 0.2ms     |
-| Batch Request Average | 0.4ms | 1.3ms  | 10.3ms  | 116.2ms  | 1231.6ms  |
+| Current               | 10     | 100     | 1000     | 10000     | 100000     |
+| --------------------- | ------ | ------- | -------- | --------- | ---------- |
+| Total Time Running    | 2.72ms | 22.35ms | 218.83ms | 2214.90ms | 23443.50ms |
+| Request Time Average  | 0.25ms | 0.21ms  | 0.20ms   | 0.21ms    | 0.22ms     |
+| Batch Request Average | 0.44ms | 1.33ms  | 10.40ms  | 121.94ms  | 1346.60ms  |
 
 ##### HASH
 
-| Current               | 10    | 100    | 1000    | 10000    | 100000    |
-| --------------------- | ----- | ------ | ------- | -------- | --------- |
-| Total Time Running    | 2.4ms | 20.6ms | 197.8ms | 2038.3ms | 22486.2ms |
-| Request Time Average  | 0.2ms | 0.2ms  | 0.2ms   | 0.2ms    | 0.2ms     |
-| Batch Request Average | 0.4ms | 1ms    | 7.3ms   | 99ms     | 1039.2ms  |
+| Current               | 10     | 100     | 1000     | 10000     | 100000     |
+| --------------------- | ------ | ------- | -------- | --------- | ---------- |
+| Total Time Running    | 2.44ms | 21.22ms | 200.82ms | 2077.87ms | 21732.12ms |
+| Request Time Average  | 0.23ms | 0.20ms  | 0.19ms   | 0.19ms    | 0.20ms     |
+| Batch Request Average | 0.39ms | 1.05ms  | 7.19ms   | 102.95ms  | 1100.54ms  |
 
 #### Full Feature
 
 ##### JSON
 
-| Current               | 10    | 100    | 1000    | 10000    | 100000    |
-| --------------------- | ----- | ------ | ------- | -------- | --------- |
-| Total Time Running    | 2.5ms | 21.8ms | 223.5ms | 2253.2ms | 24776.3ms |
-| Request Time Average  | 0.2ms | 0.2ms  | 0.2ms   | 0.2ms    | 0.2ms     |
-| Batch Request Average | 0.5ms | 1.5ms  | 14.3ms  | 146.3ms  | 1584.7ms  |
+| Current               | 10     | 100     | 1000     | 10000     | 100000     |
+| --------------------- | ------ | ------- | -------- | --------- | ---------- |
+| Total Time Running    | 3.22ms | 29.84ms | 278.71ms | 2746.65ms | 29267.87ms |
+| Request Time Average  | 0.30ms | 0.28ms  | 0.26ms   | 0.26ms    | 0.27ms     |
+| Batch Request Average | 0.76ms | 4.40ms  | 41.74ms  | 422.19ms  | 4561.44ms  |
 
 ##### HASH
 
-| Current               | 10    | 100    | 1000    | 10000    | 100000    |
-| --------------------- | ----- | ------ | ------- | -------- | --------- |
-| Total Time Running    | 2.3ms | 20.4ms | 215.1ms | 2157.1ms | 23688.4ms |
-| Request Time Average  | 0.2ms | 0.2ms  | 0.2ms   | 0.2ms    | 0.2ms     |
-| Batch Request Average | 0.5ms | 1.3ms  | 13.2ms  | 137.2ms  | 1491ms    |
-
+| Current               | 10     | 100     | 1000     | 10000     | 100000     |
+| --------------------- | ------ | ------- | -------- | --------- | ---------- |
+| Total Time Running    | 3.12ms | 27.89ms | 274.24ms | 2796.04ms | 28593.87ms |
+| Request Time Average  | 0.29ms | 0.26ms  | 0.26ms   | 0.26ms    | 0.27ms     |
+| Batch Request Average | 0.84ms | 5.93ms  | 57.43ms  | 542.91ms  | 6120.16ms  |
 
 
 ## Model.get
@@ -164,37 +164,36 @@ A few notes on the tests, to make them as close as possible to reality the Nekdi
 
 #### JSON
 
-| Current               | 10    | 100    | 1000  | 10000    | 100000    |
-| --------------------- | ----- | ------ | ----- | -------- | --------- |
-| Total Time Running    | 2.5ms | 23.3ms | 212ms | 2128.5ms | 23744.2ms |
-| Request Time Average  | 0.2ms | 0.2ms  | 0.2ms | 0.2ms    | 0.2ms     |
-| Batch Request Average | 0.4ms | 1.1ms  | 7.4ms | 96.6ms   | 1032.8ms  |
+| Current               | 10     | 100     | 1000     | 10000     | 100000     |
+| --------------------- | ------ | ------- | -------- | --------- | ---------- |
+| Total Time Running    | 2.54ms | 24.67ms | 224.43ms | 2174.31ms | 22505.80ms |
+| Request Time Average  | 0.24ms | 0.23ms  | 0.21ms   | 0.20ms    | 0.21ms     |
+| Batch Request Average | 0.40ms | 1.21ms  | 7.68ms   | 97.58ms   | 1028.53ms  |
 
 #### HASH
 
-| Current               | 10    | 100    | 1000    | 10000    | 100000    |
-| --------------------- | ----- | ------ | ------- | -------- | --------- |
-| Total Time Running    | 2.5ms | 21.9ms | 212.3ms | 2069.1ms | 23211.6ms |
-| Request Time Average  | 0.2ms | 0.2ms  | 0.2ms   | 0.2ms    | 0.2ms     |
-| Batch Request Average | 0.4ms | 1.3ms  | 9.2ms   | 113.1ms  | 1206.4ms  |
+| Current               | 10     | 100     | 1000     | 10000     | 100000     |
+| --------------------- | ------ | ------- | -------- | --------- | ---------- |
+| Total Time Running    | 2.63ms | 24.21ms | 221.36ms | 2146.55ms | 22454.33ms |
+| Request Time Average  | 0.25ms | 0.23ms  | 0.21ms   | 0.20ms    | 0.21ms     |
+| Batch Request Average | 0.44ms | 1.32ms  | 9.04ms   | 117.72ms  | 1265.95ms  |
 
 ### Full Feature
 
 #### JSON
-
-| Current               | 10    | 100    | 1000    | 10000    | 100000    |
-| --------------------- | ----- | ------ | ------- | -------- | --------- |
-| Total Time Running    | 2.4ms | 22.1ms | 219.6ms | 2233.1ms | 24176.8ms |
-| Request Time Average  | 0.2ms | 0.2ms  | 0.2ms   | 0.2ms    | 0.2ms     |
-| Batch Request Average | 0.4ms | 1.4ms  | 10.2ms  | 124.7ms  | 1336.2ms  |
+| Current               | 10     | 100     | 1000     | 10000    | 100000     |
+| --------------------- | ------ | ------- | -------- | -------- | ---------- |
+| Total Time Running    | 2.91ms | 26.59ms | 266.08ms | 2655ms   | 27013.13ms |
+| Request Time Average  | 0.27ms | 0.25ms  | 0.25ms   | 0.25ms   | 0.25ms     |
+| Batch Request Average | 0.68ms | 3.50ms  | 34ms     | 344.74ms | 3981.83ms  |
 
 #### HASH
 
-| Current               | 10    | 100    | 1000    | 10000    | 100000    |
-| --------------------- | ----- | ------ | ------- | -------- | --------- |
-| Total Time Running    | 2.5ms | 23.3ms | 232.2ms | 2288.1ms | 24798.2ms |
-| Request Time Average  | 0.2ms | 0.2ms  | 0.2ms   | 0.2ms    | 0.2ms     |
-| Batch Request Average | 0.6ms | 2.3ms  | 19.2ms  | 213.8ms  | 2270.3ms  |
+| Current               | 10     | 100     | 1000     | 10000     | 100000     |
+| --------------------- | ------ | ------- | -------- | --------- | ---------- |
+| Total Time Running    | 3.61ms | 30.25ms | 303.23ms | 3094.38ms | 32080.72ms |
+| Request Time Average  | 0.34ms | 0.28ms  | 0.28ms   | 0.29ms    | 0.3ms      |
+| Batch Request Average | 1.09ms | 7.19ms  | 76.38ms  | 791.16ms  | 8992.06ms  |
 
 ## Model.search().returnPage(0, 1000)
 
@@ -204,72 +203,71 @@ Due to the limitations of redis with the default config we cannot fetch 10K or m
 
 #### JSON
 
-| Current | 10    | 100   | 1000   | 10000 |
-| ------- | ----- | ----- | ------ | ----- |
-|         | 0.5ms | 1.3ms | 10.4ms | 100ms |
+| Current | 10     | 100    | 1000    | 10000    |
+| ------- | ------ | ------ | ------- | -------- |
+|         | 0.53ms | 1.69ms | 10.18ms | 100.95ms |
 
 #### HASH
 
-| Current | 10    | 100   | 1000   | 10000 |
-| ------- | ----- | ----- | ------ | ----- |
-|         | 0.5ms | 1.4ms | 10.1ms | 101ms |
+| Current | 10     | 100    | 1000    | 10000    |
+| ------- | ------ | ------ | ------- | -------- |
+|         | 0.51ms | 1.70ms | 10.54ms | 102.04ms |
 
 ### Full Feature
 
 #### JSON
 
-| Current | 10    | 100 | 1000   | 10000 |
-| ------- | ----- | --- | ------ | ----- |
-|         | 0.6ms | 2ms | 13.7ms | 142ms |
+| Current | 10     | 100    | 1000    | 10000    |
+| ------- | ------ | ------ | ------- | -------- |
+|         | 0.85ms | 5.07ms | 43.93ms | 459.16ms |
 
 #### HASH
 
-| Current | 10    | 100 | 1000   | 10000   |
-| ------- | ----- | --- | ------ | ------- |
-|         | 0.8ms | 3ms | 21.2ms | 209.4ms |
+| Current | 10     | 100    | 1000    | 10000    |
+| ------- | ------ | ------ | ------- | -------- |
+|         | 1.72ms | 9.84ms | 86.49ms | 910.23ms |
 
 # Redis-OM
 
 There is something to remember about this tests:
 - Redis-OM does not have as many array methods (its only has strings)
 - Redis-OM does not have references
-- Redis-OM does not have nested objects on hashes
 
 ## Repository.save
 
 ### JSON
 
-| Current               | 10    | 100    | 1000    | 10000    | 100000    |
-| --------------------- | ----- | ------ | ------- | -------- | --------- |
-| Total Time Running    | 3.9ms | 30.5ms | 285.9ms | 2824.5ms | 30343.1ms |
-| Request Time Average  | 0.4ms | 0.3ms  | 0.3ms   | 0.3ms    | 0.3ms     |
-| Batch Request Average | 0.9ms | 3.1ms  | 24.2ms  | 226.7ms  | 2479.5ms  |
+| Current               | 10     | 100     | 1000     | 10000     | 100000     |
+| --------------------- | ------ | ------- | -------- | --------- | ---------- |
+| Total Time Running    | 3.82ms | 32.69ms | 302.09ms | 2948.73ms | 30010.52ms |
+| Request Time Average  | 0.36ms | 0.31ms  | 0.28ms   | 0.28ms    | 0.28ms     |
+| Batch Request Average | 0.95ms | 3.10ms  | 28.46ms  | 266.44ms  | 2838.49ms  |
 
 ### HASH
 
-| Current               | 10    | 100    | 1000    | 10000    | 100000    |
-| --------------------- | ----- | ------ | ------- | -------- | --------- |
-| Total Time Running    | 3.3ms | 28.4ms | 281.9ms | 2764.6ms | 29676.7ms |
-| Request Time Average  | 0.3ms | 0.3ms  | 0.3ms   | 0.3ms    | 0.3ms     |
-| Batch Request Average | 0.7ms | 2.4ms  | 25.8ms  | 278.2ms  | 3273.6ms  |
+| Current               | 10     | 100     | 1000     | 10000     | 100000     |
+| --------------------- | ------ | ------- | -------- | --------- | ---------- |
+| Total Time Running    | 3.39ms | 29.24ms | 283.67ms | 2859.38ms | 28624.78ms |
+| Request Time Average  | 0.32ms | 0.27ms  | 0.27ms   | 0.27ms    | 0.27ms     |
+| Batch Request Average | 0.73ms | 2.44ms  | 25.43ms  | 289.84ms  | 3210.21ms  |
 
 ## Repository.fetch
 
 ### JSON
 
-| Current               | 10    | 100    | 1000    | 10000    | 100000    |
-| --------------------- | ----- | ------ | ------- | -------- | --------- |
-| Total Time Running    | 3ms   | 24.5ms | 243.2ms | 2655.5ms | 26300.1ms |
-| Request Time Average  | 0.3ms | 0.2ms  | 0.2ms   | 0.2ms    | 0.2ms     |
-| Batch Request Average | 0.5ms | 2.3ms  | 22.7ms  | 238.8ms  | 2569.8ms  |
+| Current               | 10     | 100     | 1000     | 10000     | 100000     |
+| --------------------- | ------ | ------- | -------- | --------- | ---------- |
+| Total Time Running    | 2.89ms | 24.91ms | 247.19ms | 2533.28ms | 26183.07ms |
+| Request Time Average  | 0.27ms | 0.23ms  | 0.23ms   | 0.24ms    | 0.25ms     |
+| Batch Request Average | 0.59ms | 2.64ms  | 24.84ms  | 261.48ms  | 2733.04ms  |
 
 ### HASH
 
-| Current               | 10    | 100    | 1000    | 10000    | 100000    |
-| --------------------- | ----- | ------ | ------- | -------- | --------- |
-| Total Time Running    | 2.6ms | 21.4ms | 216.5ms | 2323.7ms | 23255.1ms |
-| Request Time Average  | 0.2ms | 0.2ms  | 0.2ms   | 0.2ms    | 0.2ms     |
-| Batch Request Average | 0.4ms | 1.4ms  | 11.1ms  | 129.5ms  | 1398.3ms  |
+| Current               | 10     | 100     | 1000     | 10000     | 100000     |
+| --------------------- | ------ | ------- | -------- | --------- | ---------- |
+| Total Time Running    | 2.46ms | 22.49ms | 218.73ms | 2222.15ms | 23965.37ms |
+| Request Time Average  | 0.23ms | 0.21ms  | 0.20ms   | 0.21ms    | 0.22ms     |
+| Batch Request Average | 0.39ms | 1.31ms  | 10.80ms  | 127.13ms  | 1321.98ms  |
 
 ## Repository.search().returnPage(0, 10000)
 
@@ -277,12 +275,12 @@ Due to the limitations of redis with the default config we cannot fetch 10K or m
 
 ### JSON
 
-| Current | 10    | 100   | 1000   | 10000   |
-| ------- | ----- | ----- | ------ | ------- |
-|         | 0.7ms | 2.8ms | 22.1ms | 208.1ms |
+| Current | 10     | 100    | 1000    | 10000    |
+| ------- | ------ | ------ | ------- | -------- |
+|         | 0.82ms | 3.36ms | 24.27ms | 234.73ms |
 
 ### HASH
 
-| Current | 10    | 100   | 1000   | 10000   |
-| ------- | ----- | ----- | ------ | ------- |
-|         | 0.5ms | 1.6ms | 11.1ms | 113.5ms |
+| Current | 10     | 100    | 1000    | 10000    |
+| ------- | ------ | ------ | ------- | -------- |
+|         | 0.54ms | 1.57ms | 10.89ms | 110.49ms |
