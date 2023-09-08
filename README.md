@@ -280,14 +280,17 @@ This proposal includes the addition of 2 new shared properties and some unique o
 
 Vector properties wont be documented here, check the types instead
 
-| Property     | Type                             | Description                                                                                                                                                                  |
-| ------------ | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `elements`   | `array`                          | Defines the type of the array                                                                                                                                                |
-| `elements`   | `tuple`                          | Even tho it has the same name this field is required in tuples and there are no ways to define infinite length tuples (just use normal arrays)                               |
-| `separator`  | `array`                          | This defines the separator that will be used for arrays on hash fields                                                                                                       |
-| `properties` | `object`                         | The properties the object contains, if this isn't defined the object wont be type checked nor indexed                                                                        |
-| `schema`     | `reference`                      | This is a required property when using references and it allows for intellisense to give the types on auto fetch and later on for certain type checking to also work as well |
-| `literal`    | `string` \| `number` \| `bigint` | Make it so that the saved value has to be exactly one of the literal values                                                                                                  |
+| Property        | Type                             | Description                                                                                                                                                                  |
+| --------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `elements`      | `array`                          | Defines the type of the array                                                                                                                                                |
+| `elements`      | `tuple`                          | Even tho it has the same name this field is required in tuples and there are no ways to define infinite length tuples (just use normal arrays)                               |
+| `separator`     | `array`                          | This defines the separator that will be used for arrays on hash fields                                                                                                       |
+| `properties`    | `object`                         | The properties the object contains, if this isn't defined the object wont be type checked nor indexed                                                                        |
+| `schema`        | `reference`                      | This is a required property when using references and it allows for intellisense to give the types on auto fetch and later on for certain type checking to also work as well |
+| `literal`       | `string` \| `number` \| `bigint` | Make it so that the saved value has to be exactly one of the literal values                                                                                                  |
+| `caseSensitive` | `string`                         | Defines whether the string is case sensitive or not                                                                                                                          |
+| `phonetic`      | `text`                           | Choose the phonetic matcher the field will use                                                                                                                               |
+| `weight`        | `text`                           | Declare the importance of the field                                                                                                                                          |
 
 # Missing features
 
