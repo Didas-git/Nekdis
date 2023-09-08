@@ -75,12 +75,21 @@ export class HASHDocument implements DocumentShared {
                         if (typeof workingField !== "undefined") {
                             if (workingField.type === "tuple") {
                                 if (!Array.isArray(this[keyName])) this[keyName] = [];
-                                this[keyName][+arr[0]] = HASHValueToDocumentField(
-                                    workingField.elements[+arr[0]],
-                                    value,
-                                    this[keyName][+arr[0]],
-                                    arr
-                                );
+                                if (workingField.elements[+arr[0]].type === "object") {
+                                    this[keyName][+arr[0]] = (<never>HASHValueToDocumentField(
+                                        workingField.elements[+arr[0]],
+                                        value,
+                                        this[keyName][+arr[0]],
+                                        arr
+                                    ))[+arr[0]];
+                                } else {
+                                    this[keyName][+arr[0]] = HASHValueToDocumentField(
+                                        workingField.elements[+arr[0]],
+                                        value,
+                                        this[keyName][+arr[0]],
+                                        arr
+                                    );
+                                }
                             } else if (workingField.type === "object") {
                                 if (workingField.properties === null) throw new PrettyError("Something went terribly wrong");
                                 if (typeof this[keyName] === "undefined") this[keyName] = {};
@@ -90,6 +99,15 @@ export class HASHDocument implements DocumentShared {
                                     this[keyName][arr[0]],
                                     arr
                                 );
+                            } else if (workingField.type === "array") {
+                                if (!Array.isArray(this[keyName])) this[keyName] = [];
+                                if (typeof workingField.elements !== "object") throw new PrettyError("Something went terribly wrong processing an array");
+                                this[keyName] = Object.values(<never>HASHValueToDocumentField(
+                                    { type: "object", properties: workingField.elements },
+                                    value,
+                                    this[keyName],
+                                    arr
+                                ));
                             }
                             continue;
                         }
@@ -167,8 +185,7 @@ export class HASHDocument implements DocumentShared {
             for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
                 const key = keys[i];
 
-                if (!this[key]?.length) continue;
-                arr.push(key, this[key].join(" | "));
+                if (this[key].length > 0) arr.push(key, this[key].join(" | "));
             }
         }
 

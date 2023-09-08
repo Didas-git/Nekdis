@@ -1,7 +1,6 @@
 import { dateToNumber, numberToDate } from "./general-helpers";
 
 import type { ParsedFieldType, ParsedSchemaDefinition } from "../../typings";
-import { PrettyError } from "@infinite-fansub/logger";
 
 export function documentFieldToJSONValue(field: ParsedFieldType | { type: ParsedFieldType["type"] }, value: any): unknown {
     if (field.type === "bigint") return value.toString();
@@ -78,8 +77,7 @@ export function JSONValueToDocumentField(field: ParsedFieldType | { type: Parsed
     }
 
     if (field.type === "vector") {
-        if (!("vecType" in field)) throw new PrettyError("Something went terribly wrong");
-        if (field.vecType === "FLOAT32") return new Float32Array(value);
+        if (!("vecType" in field) || field.vecType === "FLOAT32") return new Float32Array(value);
         return new Float64Array(value);
     }
 

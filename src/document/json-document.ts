@@ -133,7 +133,7 @@ export class JSONDocument implements DocumentShared {
             if (this.#validate) this.#validateSchemaReferences(this.#schema.references, this);
             for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
                 const key = keys[i];
-                obj[key] = this[key];
+                if (this[key].length > 0) obj[key] = this[key];
             }
         }
 

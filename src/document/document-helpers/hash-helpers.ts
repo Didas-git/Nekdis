@@ -27,16 +27,20 @@ export function documentFieldToHASHValue(field: ParsedFieldType | { type: Parsed
         if (!("elements" in field)) return keyExists(value.toString(), key);
         const temp: Array<string> = [];
 
-        for (let i = 0, length = value.length; i < length; i++) {
-            if (typeof field.elements === "object") {
+        if (typeof field.elements === "object") {
+            for (let i = 0, length = value.length; i < length; i++) {
                 temp.push(...flatten(field.elements, value[i], `${key}.${i}`));
-                continue;
             }
 
-            temp.push(...documentFieldToHASHValue({ type: field.elements }, value[i], `${key}.${i}`));
+            return temp;
         }
 
-        return temp;
+        for (let i = 0, length = value.length; i < length; i++) {
+            const parsed = documentFieldToHASHValue({ type: field.elements }, value[i], `${key}.${i}`);
+            temp.push(parsed.length > 1 ? parsed[1] : parsed[0]);
+        }
+
+        return keyExists(temp.join(field.separator), key);
     }
 
     if (field.type === "tuple") {
@@ -83,45 +87,56 @@ export function HASHValueToDocumentField(
     }
 
     if (field.type === "vector") {
-        if (!("vecType" in field)) throw new PrettyError("Something went terribly wrong");
-        if (field.vecType === "FLOAT32") return new Float32Array(Buffer.from(value));
+        if (!("vecType" in field) || field.vecType === "FLOAT32") return new Float32Array(Buffer.from(value));
         return new Float64Array(Buffer.from(value));
     }
 
     if (field.type === "object") {
         if (!("properties" in field) || field.properties === null) return JSON.parse(value);
-        if (!existingValue || !keysList) throw new PrettyError("Something went terribly wrong");
+        if (!existingValue && !keysList) throw new PrettyError("Something went terribly wrong");
 
-        return deepMerge(existingValue, arrayOfKeysToObject(keysList, value));
+        return deepMerge(existingValue ?? {}, arrayOfKeysToObject(keysList, value));
     }
 
     if (field.type === "array") {
         if (!("elements" in field)) return value;
-        const temp = value.split(field.separator);
+        if (typeof field.elements === "object") {
+            const temp: Array<unknown> = [];
+            if (!existingValue || !keysList) throw new PrettyError("Something went terribly wrong");
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const index = keysList.shift()!;
 
-        for (let i = 0, length = temp.length; i < length; i++) {
-            if (typeof field.elements === "object") {
-                if (!existingValue || !keysList) throw new PrettyError("Something went terribly wrong");
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                const index = keysList.shift()!;
-
+            for (let i = 0, length = temp.length; i < length; i++) {
                 temp[i] = HASHValueToDocumentField(field.elements[+index], value, existingValue, keysList);
-                continue;
             }
 
-            temp[i] = HASHValueToDocumentField({ type: field.elements }, temp[i]);
+            return temp;
+        } else {
+            const splitValue = value.split(field.separator);
+            for (let i = 0, length = splitValue.length; i < length; i++) {
+                splitValue[i] = HASHValueToDocumentField({ type: field.elements }, splitValue[i]);
+            }
+
+            return splitValue;
         }
-        return temp;
     }
 
     if (field.type === "tuple") {
         if (!("elements" in field)) return value;
-        if (!existingValue || !keysList) throw new PrettyError("Something went terribly wrong");
+        if (!existingValue && !keysList) throw new PrettyError("Something went terribly wrong");
+        if (typeof existingValue === "undefined") existingValue = new Array(field.elements.length);
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const index = keysList.shift()!;
+        let index = +(keysList?.shift() ?? 0);
+        let currentField = field.elements[index];
 
-        return HASHValueToDocumentField(field.elements[+index], value, existingValue, keysList);
+        if (typeof currentField === "undefined") {
+            index = +(keysList?.shift() ?? 0);
+            currentField = field.elements[index];
+        }
+
+        existingValue[index] = HASHValueToDocumentField(currentField, value, existingValue, keysList);
+
+        return existingValue;
     }
 
     return value;
@@ -153,9 +168,9 @@ function deepMerge(...objects: Array<Record<string, any>>): Record<string, any> 
 }
 
 // This also needs to be optimized
-export function arrayOfKeysToObject(arr: Array<string>, val: unknown): Record<string, unknown> {
+export function arrayOfKeysToObject(arr: Array<string> | undefined, val: unknown): Record<string, unknown> {
     const obj: Record<string, unknown> = {};
-    arr.reduce((object, accessor, i) => {
+    arr?.reduce((object, accessor, i) => {
         object[accessor] = {};
 
         if (arr.length - 1 === i) {
