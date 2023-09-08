@@ -4,14 +4,6 @@ import { dateToNumber, numberToDate } from "./general-helpers";
 
 import type { ParsedFieldType, ParsedSchemaDefinition } from "../../typings";
 
-export function booleanToString(val: boolean): string {
-    return (+val).toString();
-}
-
-export function stringToBoolean(val: string): boolean {
-    return !!+val;
-}
-
 export function documentFieldToHASHValue(field: ParsedFieldType | { type: ParsedFieldType["type"] }, value: any, key?: string): Array<string> {
     if (field.type === "boolean") return keyExists(booleanToString(value), key);
     if (field.type === "date") return keyExists(dateToNumber(value).toString(), key);
@@ -181,4 +173,12 @@ export function arrayOfKeysToObject(arr: Array<string> | undefined, val: unknown
     }, obj);
 
     return obj;
+}
+
+function booleanToString(val: boolean): string {
+    return (+val).toString();
+}
+
+function stringToBoolean(val: string): boolean {
+    return !!+val;
 }
