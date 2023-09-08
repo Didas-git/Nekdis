@@ -77,6 +77,7 @@ export interface BooleanField extends BaseField {
 export interface TextField extends BaseField {
     type: "text";
     default?: string | undefined;
+    phonetic?: "dm:en" | "dm:fr" | "dm:pt" | "dm:es";
 }
 
 // NUMERIC

@@ -291,10 +291,8 @@ Vector properties wont be documented here, check the types instead
 
 # Missing features
 
-- Stop Words.
 - Field weight.
 - Custom alias for a field[^3].
-- Phonetic matcher
 
 # Todo
 

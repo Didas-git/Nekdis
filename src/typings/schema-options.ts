@@ -3,6 +3,7 @@ export interface SchemaOptions {
 
     /** For word Stemming */
     language?: Language;
+    stopWords?: Array<string>;
     skipDocumentValidation?: boolean | undefined;
     noLogs?: boolean | undefined;
     prefix?: string | undefined;

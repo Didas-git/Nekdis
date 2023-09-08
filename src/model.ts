@@ -59,6 +59,11 @@ export class Model<S extends Schema<any>> {
         ];
 
         if (this.#options.language) this.#searchIndexBase.push("LANGUAGE", this.#options.language);
+        if (this.#options.stopWords) {
+            this.#searchIndexBase.push("STOPWORDS", this.#options.stopWords.length.toString());
+            if (this.#options.stopWords.length > 0) this.#searchIndexBase.push(...this.#options.stopWords);
+        }
+
         this.#searchIndexBase.push("SCHEMA");
 
         this.#searchIndex = index;
