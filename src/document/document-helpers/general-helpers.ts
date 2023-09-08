@@ -16,21 +16,6 @@ export function numberToDate(val: number): Date {
     return new Date(val);
 }
 
-export function stringsToObject(arr: Array<string>, val: unknown): Record<string, any> {
-    let obj: any = {};
-    arr.reduce((object, accessor, i) => {
-        object[accessor] = {};
-
-        if (arr.length - 1 === i) {
-            object[accessor] = val;
-        }
-
-        return <Record<string, unknown>>object[accessor];
-    }, obj);
-
-    return <Record<string, any>>obj;
-}
-
 export function validateSchemaReferences(
     schema: ParsedSchemaDefinition["references"],
     data: JSONDocument | HASHDocument
