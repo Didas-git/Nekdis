@@ -38,6 +38,7 @@ export interface StringField extends BaseField {
     type: "string";
     default?: string | undefined;
     literal?: string | Array<string> | undefined;
+    caseSensitive?: boolean | undefined;
 }
 
 export interface ParsedStringField extends Required<StringField> {

@@ -1,4 +1,11 @@
-import type { ParsedArrayField, ParsedFieldType, ParsedMap, ParsedSchemaDefinition, ParsedSchemaToSearch, VectorField } from "../typings";
+import type {
+    ParsedSchemaDefinition,
+    ParsedSchemaToSearch,
+    ParsedArrayField,
+    ParsedFieldType,
+    VectorField,
+    ParsedMap
+} from "../typings";
 
 export function parseSchemaToSearchIndex(
     schema: ParsedSchemaDefinition["data"],
@@ -111,6 +118,7 @@ export function parseSchemaToSearchIndex(
         }
 
         if (value.sortable) index.push("SORTABLE");
+        if (value.type === "string" && value.caseSensitive) index.push("CASESENSITIVE");
     }
 
     return { map: objs, index };

@@ -55,9 +55,11 @@ export class Model<S extends Schema<any>> {
             data.options.dataStructure!,
             "PREFIX",
             "1",
-            `${globalPrefix}:${this.#options.prefix}:${this.name}:`,
-            "SCHEMA"
+            `${globalPrefix}:${this.#options.prefix}:${this.name}:`
         ];
+
+        if (this.#options.language) this.#searchIndexBase.push("LANGUAGE", this.#options.language);
+        this.#searchIndexBase.push("SCHEMA");
 
         this.#searchIndex = index;
         this.#searchIndexHash = createHash("sha1").update(JSON.stringify({
