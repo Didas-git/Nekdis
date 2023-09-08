@@ -13,7 +13,8 @@ import type {
     FlatVector,
     HNSWVector,
     BaseField,
-    FieldType
+    FieldType,
+    BigIntField
 } from "./schema-definition";
 
 export type ParseSchema<T extends SchemaDefinition> = {
@@ -69,6 +70,10 @@ export type ParseSchema<T extends SchemaDefinition> = {
         ? {
             [P in keyof Required<NumberField>]: T[K][P] extends {} ? T[K][P] : Fill<P>
         }
+        : T[K] extends BigIntField
+        ? {
+            [P in keyof Required<BigIntField>]: T[K][P] extends {} ? T[K][P] : Fill<P>
+        }
         : T[K] extends BaseField
         ? {
             [P in keyof Required<BaseField>]: T[K][P] extends {} ? T[K][P] : Fill<P>
@@ -111,6 +116,12 @@ export type CreateDefinitionFromString<T extends string> = T extends "vector"
     : T extends "number"
     ? {
         [K in keyof Required<NumberField>]: K extends "type"
+        ? T
+        : Fill<K>
+    }
+    : T extends "bigint"
+    ? {
+        [K in keyof Required<BigIntField>]: K extends "type"
         ? T
         : Fill<K>
     }

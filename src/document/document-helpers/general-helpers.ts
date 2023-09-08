@@ -149,7 +149,7 @@ function validate(
         if (typeof value !== "string") throw new PrettyError("Text field has to be a string");
     } else if (field.type === "vector") {
         if (!(value instanceof Float32Array) && !(value instanceof Float64Array) && !Array.isArray(value)) throw new PrettyError("Got wrong vector format");
-    } else if (field.type === "string" || field.type === "number") {
+    } else if (field.type === "string" || field.type === "number" || field.type === "bigint") {
         if (typeof field.literal !== "undefined") {
             if (!field.literal.includes(<never>value)) {
                 throw new PrettyError(`Got wrong value. Expected one of: '${field.literal}' got '${value}'`, {

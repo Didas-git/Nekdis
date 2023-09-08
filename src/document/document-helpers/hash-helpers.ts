@@ -74,6 +74,7 @@ export function HASHValueToDocumentField(
     keysList?: Array<string>
 ): unknown {
     if (field.type === "number") return parseFloat(value);
+    if (field.type === "bigint") return BigInt(value);
     if (field.type === "boolean") return stringToBoolean(value);
     if (field.type === "date") return numberToDate(parseFloat(value));
     if (field.type === "point") {

@@ -229,7 +229,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                     if (typeof value.epsilon === "undefined") value.epsilon = undefined;
                 }
                 value = this.#fill(value);
-            } else if (value.type === "string" || value.type === "number") {
+            } else if (value.type === "string" || value.type === "number" || value.type === "bigint") {
                 if (typeof value.literal === "undefined") value.literal = undefined;
                 else if (!Array.isArray(value.literal)) value.literal = [<never>value.literal];
                 value = this.#fill(value);

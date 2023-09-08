@@ -182,7 +182,7 @@ testModel.search().where("age").between(18, 30)
         .return(8))
     .returnAll();
 // Generates the following query
-// "((@age:[18 30]))=>[KNN 8 @vec $BLOB]" BLOB \x02\x05\x07 DIALECT 2
+// "((@age:[18 30]))=>[KNN 8 @vec $BLOB]" PARAMS 2 BLOB \x02\x05\x07 DIALECT 2
 ```
 
 ## Range queries
@@ -193,7 +193,7 @@ testModel.search().where("vec").eq((vector) => vector
     .from([2, 5, 7]))
 .returnAll();
 // Generates the following query
-// "((@vec:[VECTOR_RANGE 5 $BLOB]))" BLOB \x02\x05\x07 DIALECT 2
+// "((@vec:[VECTOR_RANGE 5 $BLOB]))" PARAMS 2 BLOB \x02\x05\x07 DIALECT 2
 ```
 
 # Custom Methods
@@ -245,21 +245,22 @@ client.myMod.myFunction()
 
 # Schema Types
 
-This proposal adds 4 new data types `array`, `object`, `tuple` & `reference` and removes the `string[]` type.
+This proposal adds some new data types and removes the `string[]` & `number[]` types.
 
 | Type        | Description                                                                                                                                                                                                                                                                                                                                                                                 |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `string`    | A standard string that will be treated as `TAG`                                                                                                                                                                                                                                                                                                                                             |
-| `number`    | A standard float64 number that will be treated as `NUMERIC`                                                                                                                                                                                                                                                                                                                                 |
-| `boolean`   | A standard boolean that will be treated as `TAG`                                                                                                                                                                                                                                                                                                                                            |
-| `text`      | A standard string that will be treated as `TEXT` which allows for full text search                                                                                                                                                                                                                                                                                                          |
-| `date`      | This field will internally be treated as `NUMERIC`, it gets saved as a Unix Epoch but you will be able to interact with it normally as it will be a [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date) when you access it                                                                                                                      |
-| `point`     | This is an object containing a `latitude` and `longitude` and will be treated as `GEO`                                                                                                                                                                                                                                                                                                      |
-| `array`     | Internally it will be treated as the type given to the `elements` property which defaults to `string`                                                                                                                                                                                                                                                                                       |
+| `string`    | A standard string that will be indexed as `TAG`                                                                                                                                                                                                                                                                                                                                             |
+| `number`    | A standard float64 number that will be indexed as `NUMERIC`                                                                                                                                                                                                                                                                                                                                 |
+| `bigint`    | A javascript [BigInt](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt) that will be indexed as `TAG`                                                                                                                                                                                                                                                |
+| `boolean`   | A standard boolean that will be indexed as `TAG`                                                                                                                                                                                                                                                                                                                                            |
+| `text`      | A standard string that will be indexed as `TEXT` which allows for full text search                                                                                                                                                                                                                                                                                                          |
+| `date`      | This field will internally be indexed as `NUMERIC`, it gets saved as a Unix Epoch but you will be able to interact with it normally as it will be a [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date) when you access it                                                                                                                      |
+| `point`     | This is an object containing a `latitude` and `longitude` and will be indexed as `GEO`                                                                                                                                                                                                                                                                                                      |
+| `array`     | Internally it will be indexed as the type given to the `elements` property which defaults to `string`                                                                                                                                                                                                                                                                                       |
 | `object`    | This type allows you to nest forever using the `properties` property in the schema and what gets indexed are its properties, if none are given it will not be indexed not checked                                                                                                                                                                                                           |
 | `reference` | When using this type you will be given a `ReferenceArray` which is a normal array with a `reference` method that you can pass in another document or a record id to it, references can be auto fetched but auto fetched references cannot be changed                                                                                                                                        |
 | `tuple`     | Tuples will be presented as per-index type safe arrays but they are dealt with in a different way. They will be indexed as static props so you can search on a specific element only, this also affects the query builder instead of `where(arrayName)` it will be `where(arrayName.idx.prop)` but this has working intellisense just like all the other fields so it shouldn't be an issue |
-| `vector`    | A vector field that is an array but treated as a `VECTOR`                                                                                                                                                                                                                                                                                                                                   |
+| `vector`    | A vector field that is an array but indexed as `VECTOR`                                                                                                                                                                                                                                                                                                                                     |
 
 # Field Properties
 
@@ -272,20 +273,21 @@ This proposal includes the addition of 2 new shared properties and some unique o
 | `type`     | The type of the field                                                                                                    |
 | `optional` | Defines whether the field is optional or not (this doesn't work if validation is disabled)                               |
 | `default`  | Chose a default value for the field making so that it will always exist even if it isn't required                        |
-| `index`    | Defines whether the field should be indexed or not (defaults to `true`)                                                  |
+| `index`    | Defines whether the field should be indexed or not (defaults to `false`)                                                 |
 | `sortable` | Defines whether the field is sortable or not (note that this doesn't exist nor work on object fields & reference fields) |
 
 ## Unique Properties
 
 Vector properties wont be documented here, check the types instead
 
-| Property     | Type        | Description                                                                                                                                                                  |
-| ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `elements`   | `array`     | Defines the type of the array                                                                                                                                                |
-| `elements`   | `tuple`     | Even tho it has the same name this field is required in tuples and there are no ways to define infinite length tuples (just use normal arrays)                               |
-| `separator`  | `array`     | This defines the separator that will be used for arrays on hash fields                                                                                                       |
-| `properties` | `object`    | The properties the object contains, if this isn't defined the object wont be type checked nor indexed                                                                        |
-| `schema`     | `reference` | This is a required property when using references and it allows for intellisense to give the types on auto fetch and later on for certain type checking to also work as well |
+| Property     | Type                             | Description                                                                                                                                                                  |
+| ------------ | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `elements`   | `array`                          | Defines the type of the array                                                                                                                                                |
+| `elements`   | `tuple`                          | Even tho it has the same name this field is required in tuples and there are no ways to define infinite length tuples (just use normal arrays)                               |
+| `separator`  | `array`                          | This defines the separator that will be used for arrays on hash fields                                                                                                       |
+| `properties` | `object`                         | The properties the object contains, if this isn't defined the object wont be type checked nor indexed                                                                        |
+| `schema`     | `reference`                      | This is a required property when using references and it allows for intellisense to give the types on auto fetch and later on for certain type checking to also work as well |
+| `literal`    | `string` \| `number` \| `bigint` | Make it so that the saved value has to be exactly one of the literal values                                                                                                  |
 
 # Missing features
 

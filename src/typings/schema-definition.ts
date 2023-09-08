@@ -9,10 +9,11 @@ export interface ParsedSchemaDefinition {
     references: Record<string, null>;
 }
 
-export type FieldType = StringField | NumberField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField | ReferenceField | VectorField;
+export type FieldType = StringField | NumberField | BigIntField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField | ReferenceField | VectorField;
 
 export type ParsedFieldType = ParsedStringField
     | ParsedNumberField
+    | ParsedBigIntField
     | ParsedObjectField
     | ParsedArrayField
     | ParsedTupleField
@@ -52,6 +53,17 @@ export interface NumberField extends BaseField {
 
 export interface ParsedNumberField extends Required<NumberField> {
     literal: Array<number> | undefined;
+}
+
+// TAG
+export interface BigIntField extends BaseField {
+    type: "bigint";
+    default?: bigint | undefined;
+    literal?: bigint | Array<bigint> | undefined;
+}
+
+export interface ParsedBigIntField extends Required<BigIntField> {
+    literal: Array<bigint> | undefined;
 }
 
 // TAG

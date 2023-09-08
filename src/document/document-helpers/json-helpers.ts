@@ -4,6 +4,7 @@ import type { ParsedFieldType, ParsedSchemaDefinition } from "../../typings";
 import { PrettyError } from "@infinite-fansub/logger";
 
 export function documentFieldToJSONValue(field: ParsedFieldType | { type: ParsedFieldType["type"] }, value: any): unknown {
+    if (field.type === "bigint") return value.toString();
     if (field.type === "date") return dateToNumber(value);
     if (field.type === "point") return `${value.longitude},${value.latitude}`;
     if (field.type === "vector") return Array.from(value);
@@ -69,6 +70,7 @@ function transformParsedDefinition(
 }
 
 export function JSONValueToDocumentField(field: ParsedFieldType | { type: ParsedFieldType["type"] }, value: any): unknown {
+    if (field.type === "bigint") return BigInt(value);
     if (field.type === "date") return numberToDate(value);
     if (field.type === "point") {
         const [longitude, latitude] = value.split(",");

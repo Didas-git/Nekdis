@@ -6,25 +6,26 @@ import type { SearchOptions, SearchReply } from "redis";
 
 import {
     type SearchField,
+    BooleanField,
     StringField,
     NumberField,
-    BooleanField,
-    TextField,
-    DateField,
+    BigIntField,
+    VectorField,
     PointField,
-    VectorField
+    TextField,
+    DateField
 } from "./search-builders";
 
 import type {
-    FieldType,
+    ParseSearchSchema,
+    SearchInformation,
     NodeRedisClient,
     MapSearchField,
+    ReturnDocument,
     ParseSchema,
-    ParseSearchSchema,
     BaseField,
     ParsedMap,
-    ReturnDocument,
-    SearchInformation
+    FieldType
 } from "../typings";
 
 export type SearchReturn<T extends Search<ParseSchema<any>>> = Omit<T, "where" | "and" | "or" | "rawQuery" | `sort${string}` | `return${string}`>;
@@ -338,6 +339,10 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
             case "number": {
                 this.#workingType = "number";
                 return <never>new NumberField<T, number>(this, field);
+            }
+            case "bigint": {
+                this.#workingType = "bigint";
+                return <never>new BigIntField<T, bigint>(this, field);
             }
             case "boolean": {
                 this.#workingType = "boolean";
