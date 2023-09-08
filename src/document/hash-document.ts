@@ -75,19 +75,34 @@ export class HASHDocument implements DocumentShared {
                         if (typeof workingField !== "undefined") {
                             if (workingField.type === "tuple") {
                                 if (!Array.isArray(this[keyName])) this[keyName] = [];
-                                this[keyName][+arr[0]] = HASHValueToDocumentField(workingField.elements[+arr[0]], value, this[keyName][+arr[0]]);
+                                this[keyName][+arr[0]] = HASHValueToDocumentField(
+                                    workingField.elements[+arr[0]],
+                                    value,
+                                    this[keyName][+arr[0]],
+                                    arr
+                                );
                             } else if (workingField.type === "object") {
                                 if (workingField.properties === null) throw new PrettyError("Something went terribly wrong");
                                 if (typeof this[keyName] === "undefined") this[keyName] = {};
-                                this[keyName][arr[0]] = HASHValueToDocumentField(workingField.properties[arr[0]], value, this[keyName][arr[0]]);
+                                this[keyName][arr[0]] = HASHValueToDocumentField(
+                                    workingField.properties[arr[0]],
+                                    value,
+                                    this[keyName][arr[0]],
+                                    arr
+                                );
                             }
                             continue;
                         }
                     }
+
+                    if (typeof schema.data[key] !== "undefined") {
+                        this[key] = HASHValueToDocumentField(schema.data[key], value);
+                        continue;
+                    }
                     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                     if (schema.references[key] === null) {
                         if (!this.#autoFetch) {
-                            this[key] = new ReferenceArray(value.split(","));
+                            this[key] = new ReferenceArray(value.split(" | "));
                             continue;
                         }
                     }
@@ -153,7 +168,7 @@ export class HASHDocument implements DocumentShared {
                 const key = keys[i];
 
                 if (!this[key]?.length) continue;
-                arr.push(key, this[key].join(","));
+                arr.push(key, this[key].join(" | "));
             }
         }
 

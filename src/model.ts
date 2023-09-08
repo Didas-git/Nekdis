@@ -1,7 +1,6 @@
 import { PrettyError } from "@infinite-fansub/logger";
 import { createHash } from "node:crypto";
 
-import { stringToHashField } from "./document/document-helpers";
 import { JSONDocument, HASHDocument } from "./document";
 import { methods, schemaData } from "./utils/symbols";
 import { parseSchemaToSearchIndex } from "./utils";
@@ -96,7 +95,7 @@ export class Model<S extends Schema<any>> {
             for (let i = 0, keys = Object.keys(this.#schema[schemaData].references), len = keys.length; i < len; i++) {
                 const key = keys[i];
                 //@ts-expect-error node-redis types decided to die
-                const val = this.#options.dataStructure === "JSON" ? data[key] : stringToHashField({ type: "array" }, <string>data[key]);
+                const val = this.#options.dataStructure === "JSON" ? data[key] : data[key].split(" | ");
                 const temp = [];
 
                 for (let j = 0, le = val.length; j < le; j++) {

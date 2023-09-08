@@ -1,7 +1,8 @@
-import { dateToNumber, numberToDate, stringsToObject } from "./general-helpers";
-
-import type { FieldType, ParsedFieldType, ParsedObjectField, ParsedSchemaDefinition, Point } from "../../typings";
 import { PrettyError } from "@infinite-fansub/logger";
+
+import { dateToNumber, numberToDate } from "./general-helpers";
+
+import type { ParsedFieldType, ParsedSchemaDefinition } from "../../typings";
 
 export function booleanToString(val: boolean): string {
     return (+val).toString();
@@ -9,110 +10,6 @@ export function booleanToString(val: boolean): string {
 
 export function stringToBoolean(val: string): boolean {
     return !!+val;
-}
-
-export function stringToPoint(val: string): Point {
-    const [longitude, latitude] = val.split(",");
-    return { longitude: parseFloat(longitude), latitude: parseFloat(latitude) };
-}
-
-export function stringToNumber(val: string): number {
-    return parseFloat(val);
-}
-
-export function stringToHashField(schema: FieldType, val: string): any {
-    if (schema.type === "number") {
-        return stringToNumber(val);
-    } if (schema.type === "boolean") {
-        return stringToBoolean(val);
-    } else if (schema.type === "date") {
-        return numberToDate(stringToNumber(val));
-    } else if (schema.type === "point") {
-        return stringToPoint(val);
-    } else if (schema.type === "array") {
-        const temp = val.split(schema.separator ?? "|");
-        for (let i = 0, len = temp.length; i < len; i++) {
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-            temp[i] = stringToHashField({ type: <never>schema.elements ?? "string" }, temp[i]);
-        }
-        return temp;
-    } else if (schema.type === "vector") {
-        if (schema.vecType === "FLOAT32") return new Float32Array(Buffer.from(val));
-        return new Float64Array(Buffer.from(val));
-    }
-    return val;
-}
-
-export function stringToHashArray(arr: Array<string>, schema: any, val: string): Record<string, any> {
-    let temp: any = [];
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const idx = arr.shift()!;
-    let props = schema[idx].properties;
-
-    if (arr.length === 1) {
-        return { [arr[0]]: val };
-    }
-
-    for (let i = 0, len = arr.length; i < len; i++) {
-        const value = arr[i];
-
-        if (props[value].type === "object") {
-            temp.push(value);
-            const x = i + 1;
-            props = { [arr[x]]: props[value].properties[arr[x]] };
-            continue;
-        }
-
-        temp.push(value, stringToHashField(props[value], val));
-    }
-
-    const trueVal = temp.pop();
-    return stringsToObject(temp, trueVal);
-}
-
-export function deepMerge(...objects: Array<Record<string, any>>): Record<string, any> {
-    let newObject: Record<string, any> = {};
-
-    for (let i = 0, len = objects.length; i < len; i++) {
-        const obj = objects[i];
-
-        if (typeof obj === "undefined") continue;
-
-        for (let j = 0, entries = Object.entries(obj), le = entries.length; j < le; j++) {
-            const [key, value] = entries[j];
-            if (typeof value === "object" && value) {
-                const derefObj = { ...value };
-
-                newObject[key] = newObject[key] ? deepMerge(newObject[key], derefObj) : derefObj;
-            } else {
-                newObject[key] = value;
-            }
-        }
-    }
-
-    return newObject;
-}
-
-export function getLastKeyInSchema(data: ParsedObjectField, key: string): FieldType | undefined {
-    if (typeof data.properties === "undefined" || data.properties === null) return { type: "string" };
-
-    for (let i = 0, entries = Object.entries(data.properties), len = entries.length; i < len; i++) {
-        const [k, value] = entries[i];
-
-        if (key === k) {
-            return <never>value;
-        }
-
-        if (typeof value === "undefined") continue;
-
-        if (value.type === "object") {
-            return getLastKeyInSchema(value, key);
-        }
-
-        continue;
-    }
-
-    return void 0;
 }
 
 export function documentFieldToHASHValue(field: ParsedFieldType | { type: ParsedFieldType["type"] }, value: any, key?: string): Array<string> {
@@ -170,8 +67,12 @@ function keyExists(value: string, key: string | undefined): Array<string> {
     return key ? [key, value] : [value];
 }
 
-//@ts-expect-error
-export function HASHValueToDocumentField(field: ParsedFieldType | { type: ParsedFieldType["type"] }, value: any, existingValue?: any): unknown {
+export function HASHValueToDocumentField(
+    field: ParsedFieldType | { type: ParsedFieldType["type"] },
+    value: any,
+    existingValue?: any,
+    keysList?: Array<string>
+): unknown {
     if (field.type === "number") return parseFloat(value);
     if (field.type === "boolean") return stringToBoolean(value);
     if (field.type === "date") return numberToDate(parseFloat(value));
@@ -187,7 +88,10 @@ export function HASHValueToDocumentField(field: ParsedFieldType | { type: Parsed
     }
 
     if (field.type === "object") {
-        // How to un-flatten??
+        if (!("properties" in field) || field.properties === null) return JSON.parse(value);
+        if (!existingValue || !keysList) throw new PrettyError("Something went terribly wrong");
+
+        return deepMerge(existingValue, arrayOfKeysToObject(keysList, value));
     }
 
     if (field.type === "array") {
@@ -196,9 +100,14 @@ export function HASHValueToDocumentField(field: ParsedFieldType | { type: Parsed
 
         for (let i = 0, length = temp.length; i < length; i++) {
             if (typeof field.elements === "object") {
-                // How to un-flatten??
+                if (!existingValue || !keysList) throw new PrettyError("Something went terribly wrong");
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const index = keysList.shift()!;
+
+                temp[i] = HASHValueToDocumentField(field.elements[+index], value, existingValue, keysList);
                 continue;
             }
+
             temp[i] = HASHValueToDocumentField({ type: field.elements }, temp[i]);
         }
         return temp;
@@ -206,9 +115,54 @@ export function HASHValueToDocumentField(field: ParsedFieldType | { type: Parsed
 
     if (field.type === "tuple") {
         if (!("elements" in field)) return value;
-        // How to un-flatten??
+        if (!existingValue || !keysList) throw new PrettyError("Something went terribly wrong");
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const index = keysList.shift()!;
+
+        return HASHValueToDocumentField(field.elements[+index], value, existingValue, keysList);
     }
 
     return value;
 
+}
+
+// This needs to be optimized
+function deepMerge(...objects: Array<Record<string, any>>): Record<string, any> {
+    let newObject: Record<string, any> = {};
+
+    for (let i = 0, len = objects.length; i < len; i++) {
+        const obj = objects[i];
+
+        if (typeof obj === "undefined") continue;
+
+        for (let j = 0, entries = Object.entries(obj), le = entries.length; j < le; j++) {
+            const [key, value] = entries[j];
+            if (typeof value === "object" && value) {
+                const derefObj = { ...value };
+
+                newObject[key] = newObject[key] ? deepMerge(newObject[key], derefObj) : derefObj;
+            } else {
+                newObject[key] = value;
+            }
+        }
+    }
+
+    return newObject;
+}
+
+// This also needs to be optimized
+export function arrayOfKeysToObject(arr: Array<string>, val: unknown): Record<string, unknown> {
+    const obj: Record<string, unknown> = {};
+    arr.reduce((object, accessor, i) => {
+        object[accessor] = {};
+
+        if (arr.length - 1 === i) {
+            object[accessor] = val;
+        }
+
+        return <Record<string, unknown>>object[accessor];
+    }, obj);
+
+    return obj;
 }
