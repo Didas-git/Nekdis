@@ -30,7 +30,7 @@ export function stringToHashField(schema: FieldType, val: string): any {
     } else if (schema.type === "point") {
         return stringToPoint(val);
     } else if (schema.type === "array") {
-        const temp = val.split(schema.separator ?? ",");
+        const temp = val.split(schema.separator ?? "|");
         for (let i = 0, len = temp.length; i < len; i++) {
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             temp[i] = stringToHashField({ type: <never>schema.elements ?? "string" }, temp[i]);
@@ -128,16 +128,18 @@ export function documentFieldToHASHValue(field: ParsedFieldType | { type: Parsed
 
     if (field.type === "array") {
         if (!("elements" in field)) return keyExists(value.toString(), key);
+        const temp: Array<string> = [];
+
         for (let i = 0, length = value.length; i < length; i++) {
             if (typeof field.elements === "object") {
-                value[i] = flatten(field.elements, value[i]);
+                temp.push(...flatten(field.elements, value[i], `${key}.${i}`));
                 continue;
             }
 
-            value[i] = documentFieldToHASHValue({ type: field.elements }, value[i]);
+            temp.push(...documentFieldToHASHValue({ type: field.elements }, value[i], `${key}.${i}`));
         }
 
-        return keyExists(value.join(field.separator), key);
+        return temp;
     }
 
     if (field.type === "tuple") {
@@ -146,17 +148,10 @@ export function documentFieldToHASHValue(field: ParsedFieldType | { type: Parsed
         const tempField: Record<`${number}`, ParsedFieldType> = { ...field.elements };
         const tempValue = { ...value };
 
-        for (let i = 0, entries = Object.entries(tempField), length = entries.length; i < length; i++) {
-            const val = entries[i][1];
-
-            tempValue[i] = documentFieldToHASHValue(val, tempValue[i]);
-        }
-
         return flatten(tempField, tempValue, key);
     }
 
     return keyExists(value.toString(), key);
-
 }
 
 function flatten(field: ParsedSchemaDefinition["data"], value: any, key?: string): Array<string> {
@@ -175,7 +170,8 @@ function keyExists(value: string, key: string | undefined): Array<string> {
     return key ? [key, value] : [value];
 }
 
-export function HASHValueToDocumentField(field: ParsedFieldType | { type: ParsedFieldType["type"] }, value: any, existingValue?: unknown): unknown {
+//@ts-expect-error
+export function HASHValueToDocumentField(field: ParsedFieldType | { type: ParsedFieldType["type"] }, value: any, existingValue?: any): unknown {
     if (field.type === "number") return parseFloat(value);
     if (field.type === "boolean") return stringToBoolean(value);
     if (field.type === "date") return numberToDate(parseFloat(value));
