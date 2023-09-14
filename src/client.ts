@@ -27,14 +27,6 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
 
     public constructor(options?: ClientOptions<SD, MD>) {
         this.#options = options ?? <ClientOptions<SD, MD>>{};
-
-        if (this.#options.modules) {
-            for (let i = 0, len = this.#options.modules.length; i < len; i++) {
-                const module = this.#options.modules[i];
-                //@ts-expect-error shenanigans
-                this[module.name] = new module.ctor(this);
-            }
-        }
     }
 
     public async connect(url: string | URLObject = this.#options.url ?? "redis://localhost:6379"): Promise<Client> {
