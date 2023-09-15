@@ -281,7 +281,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     async #get(id: string): Promise<ReturnDocument<T> | null> {
         const data = this.#information.dataStructure === "JSON" ? await this.#client.json.get(id) : await this.#client.hGetAll(id);
 
-        if (data === null) return null;
+        if (data === null || Object.keys(data).length === 0) return null;
 
         return <never>new this.#docType(<never>this.#schema, {
             globalPrefix: this.#information.globalPrefix,
