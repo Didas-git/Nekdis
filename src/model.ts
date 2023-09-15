@@ -83,17 +83,8 @@ export class Model<S extends Schema<any>> {
         if (typeof id === "undefined") throw new PrettyError("A valid id was not given", {
             reference: "nekdis"
         });
-        if (id.toString().split(":").length === 1) {
-            const suffix = this.#options.suffix;
 
-            if (typeof suffix === "function") {
-                throw new PrettyError("Due to the use of dynamic suffixes you gave to pass in a full id", {
-                    reference: "nekdis"
-                });
-            }
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-            id = `${this.#options.globalPrefix}:${this.#options.prefix}:${this.name}:${suffix ? `${suffix}:` : ""}${id}`;
-        }
+        id = this.formatId(id.toString());
 
         const data = this.#options.dataStructure === "JSON" ? await this.#client.json.get(id.toString()) : await this.#client.hGetAll(id.toString());
 
@@ -247,22 +238,30 @@ export class Model<S extends Schema<any>> {
 
             if (el instanceof JSONDocument || el instanceof HASHDocument) {
                 id = el.$record_id;
-            } else if (el.toString().split(":").length === 1) {
-                const suffix = this.#options.suffix;
-
-                if (typeof suffix === "function") {
-                    throw new PrettyError("Due to the use of dynamic suffixes you gave to pass in a full id", {
-                        reference: "nekdis"
-                    });
-                }
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                id = `${this.#options.globalPrefix}:${this.#options.prefix}:${this.name}:${suffix ? `${suffix}:` : ""}${el.toString()}`;
+            } else {
+                id = this.formatId(id);
             }
 
             temp.push(id);
         }
 
         return temp;
+    }
+
+    public formatId(id: string): string {
+        if (id.split(":").length === 1) {
+            const suffix = this.#options.suffix;
+
+            if (typeof suffix === "function") {
+                throw new PrettyError("Due to the use of dynamic suffixes you gave to pass in a full id", {
+                    reference: "nekdis"
+                });
+            }
+
+            return `${this.#options.globalPrefix}:${this.#options.prefix}:${this.name}:${suffix ? `${suffix}:` : ""}${id}`;
+        }
+
+        return id;
     }
 
     #defineMethods(): void {
