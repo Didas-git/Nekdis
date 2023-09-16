@@ -33,9 +33,8 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
         if (this.#open) return this;
 
         if (typeof url === "object") {
-
             const { username, password, entrypoint, port } = url;
-            url = `${username}:${password}@${(/:\d$/).exec(entrypoint) ? entrypoint : `${entrypoint}:${port}`}`;
+            url = `redis://${username}:${password}@${(/:\d$/).exec(entrypoint) ? entrypoint : `${entrypoint}:${port}`}`;
         }
 
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
