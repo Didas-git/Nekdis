@@ -50,7 +50,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
         return <never>this;
     }
 
-    #parse(schema: SchemaDefinition): ParsedSchemaDefinition {
+    #parse(schema: SchemaDefinition, isInsideTuple: boolean = false): ParsedSchemaDefinition {
         const data: Record<string, unknown> = {};
         const references: Record<string, unknown> = {};
 
@@ -117,7 +117,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                 } else if (value === "tuple") {
                     throw new PrettyError("Type 'tuple' needs to use its object definition");
                 } else if (value === "array") {
-                    value = { type: value, elements: "string", default: undefined, optional: false, sortable: false, index: false, separator: "|" };
+                    value = { type: value, elements: "string", default: undefined, optional: false, sortable: false, index: isInsideTuple, separator: "|" };
                 } else if (value === "vector") {
                     value = {
                         type: value,
@@ -128,10 +128,10 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                         default: undefined,
                         optional: false,
                         sortable: false,
-                        index: false
+                        index: isInsideTuple
                     };
                 } else {
-                    value = { type: value, default: undefined, optional: false, sortable: false, index: false };
+                    value = { type: value, default: undefined, optional: false, sortable: false, index: isInsideTuple };
                     if ((<FieldType>value).type === "string" || (<FieldType>value).type === "number") (<StringField | NumberField>value).literal = undefined;
                 }
 
@@ -156,11 +156,11 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                 if (typeof value.elements === "object") {
                     value.elements = <never>this.#parse(value.elements).data;
                 }
-                value = this.#fill(value);
+                value = this.#fill(value, isInsideTuple);
             } else if (value.type === "date") {
                 if (value.default instanceof Date) value.default = value.default.getTime();
                 if (typeof value.default === "string" || typeof value.default === "number") value.default = new Date(value.default).getTime();
-                value = this.#fill(value);
+                value = this.#fill(value, isInsideTuple);
             } else if (value.type === "object") {
                 if (typeof value.default === "undefined") value.default = undefined;
                 if (typeof value.optional === "undefined") value.optional = false;
@@ -172,9 +172,9 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                     reference: "nekdis"
                 });
                 for (let j = 0, le = value.elements.length; j < le; j++) {
-                    value.elements[j] = <never>this.#parse({ [j]: value.elements[j] }).data[j];
+                    value.elements[j] = <never>this.#parse({ [j]: value.elements[j] }, value.index ?? false).data[j];
                 }
-                value = this.#fill(value);
+                value = this.#fill(value, isInsideTuple);
             } else if (value.type === "reference") {
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
                 if (!value.schema) throw new PrettyError("Type 'reference' lacks a schema", {
@@ -228,13 +228,13 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                     if (typeof value.runtime === "undefined") value.runtime = undefined;
                     if (typeof value.epsilon === "undefined") value.epsilon = undefined;
                 }
-                value = this.#fill(value);
+                value = this.#fill(value, isInsideTuple);
             } else if (value.type === "string" || value.type === "number" || value.type === "bigint") {
                 if (typeof value.literal === "undefined") value.literal = undefined;
                 else if (!Array.isArray(value.literal)) value.literal = [<never>value.literal];
-                value = this.#fill(value);
+                value = this.#fill(value, isInsideTuple);
             } else {
-                value = this.#fill(value);
+                value = this.#fill(value, isInsideTuple);
             }
 
             data[key] = value;
@@ -242,11 +242,11 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
         return <never>{ data, references };
     }
 
-    #fill(value: BaseField): any {
+    #fill(value: BaseField, isInsideTuple: boolean): any {
         if (typeof value.default === "undefined") value.default = undefined;
         if (typeof value.optional === "undefined") value.optional = false;
         if (typeof value.sortable === "undefined") value.sortable = false;
-        if (typeof value.index === "undefined") value.index = false;
+        if (typeof value.index === "undefined") value.index = isInsideTuple;
         return value;
     }
 }

@@ -32,6 +32,7 @@ export function parseSchemaToSearchIndex(
             );
 
             objs = new Map([...objs, ...parsed.map]);
+            index.push(...parsed.index);
             continue;
         }
 
@@ -49,6 +50,7 @@ export function parseSchemaToSearchIndex(
                     }
                 );
                 objs = new Map([...objs, ...parsed.map]);
+                index.push(...parsed.index);
                 continue;
             }
 
@@ -69,7 +71,7 @@ export function parseSchemaToSearchIndex(
                 );
 
                 objs = new Map([...objs, ...parsed.map]);
-
+                index.push(...parsed.index);
             }
             continue;
         }
