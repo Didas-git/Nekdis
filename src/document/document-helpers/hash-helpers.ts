@@ -8,7 +8,11 @@ export function documentFieldToHASHValue(field: ParsedFieldType | { type: Parsed
     if (field.type === "boolean") return keyExists(booleanToString(value), key);
     if (field.type === "date") return keyExists(dateToNumber(value).toString(), key);
     if (field.type === "point") return keyExists(`${value.longitude},${value.latitude}`, key);
-    if (field.type === "vector") return keyExists(Buffer.from(value).toString(), key);
+    if (field.type === "vector") {
+        if (value.length === 0) return [];
+        return keyExists(Buffer.from(value).toString(), key);
+    }
+
     if (field.type === "object") {
         if (!("properties" in field) || field.properties === null) return keyExists(JSON.stringify(value), key);
         if (!key) throw new PrettyError("Something went terribly wrong");
