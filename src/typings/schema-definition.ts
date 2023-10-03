@@ -25,6 +25,8 @@ export type ParsedFieldType = ParsedStringField
 
 export type TupleElement = Exclude<keyof FieldMap, "tuple" | "reference" | "object"> | FieldType;
 
+export type FloatArray = Float32Array | Float64Array;
+
 export interface BaseField {
     type: keyof FieldMap;
     default?: FieldMap<unknown>[keyof FieldMap] | undefined;
@@ -96,7 +98,7 @@ export interface PointField extends BaseField {
 // VECTOR
 export interface BaseVector extends BaseField {
     type: "vector";
-    default?: Array<number> | Float32Array | Float64Array | undefined;
+    default?: Array<number> | FloatArray | undefined;
     algorithm: "FLAT" | "HNSW";
     vecType: "FLOAT32" | "FLOAT64";
     dim: number;

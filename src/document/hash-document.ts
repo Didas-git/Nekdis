@@ -170,9 +170,12 @@ export class HASHDocument implements DocumentShared {
 
         for (let i = 0, entries = Object.entries(this), length = entries.length; i < length; i++) {
             const [key, val] = entries[i];
+            if (key.startsWith("$") || key.startsWith("_")) continue;
+
             const schema = this.#schema.data[key];
 
             if (typeof schema !== "undefined") {
+                //@ts-expect-error This can return a Buffer but it has to be like this until i find out a better way to pass in buffers
                 arr.push(...documentFieldToHASHValue(schema, val, key));
                 continue;
             }

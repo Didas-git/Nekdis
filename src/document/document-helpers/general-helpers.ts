@@ -1,3 +1,4 @@
+/* eslint-disable array-element-newline */
 import { PrettyError } from "@infinite-fansub/logger";
 import { inspect } from "node:util";
 import { Color } from "colours.js";

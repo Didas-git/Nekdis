@@ -118,6 +118,8 @@ export class JSONDocument implements DocumentShared {
 
         for (let i = 0, entries = Object.entries(this), length = entries.length; i < length; i++) {
             const [key, val] = entries[i];
+            if (key.startsWith("$") || key.startsWith("_")) continue;
+
             const schema = this.#schema.data[key];
 
             if (typeof schema !== "undefined") {
