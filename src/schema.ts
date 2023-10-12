@@ -17,7 +17,7 @@ import type {
     ParsedSchemaDefinition
 } from "./typings";
 
-export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> = MethodsDefinition<S>, P extends ParseSchema<S> = ParseSchema<S>> {
+export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> = {}, P extends ParseSchema<S> = ParseSchema<S>> {
 
     /** @internal */
     public [methods]: M;
