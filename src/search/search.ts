@@ -179,7 +179,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return await this.sortBy(field, "DESC").firstId();
     }
 
-    public async all<F extends boolean = false>(autoFetch?: F, raw: boolean = false): Promise<Array<ReturnDocument<T, F>> | undefined> {
+    public async all<F extends boolean = false>(autoFetch?: F): Promise<Array<ReturnDocument<T, F>> | undefined> {
         const { total } = await this.#search({ LIMIT: { from: 0, size: 0 } });
         if (total === 0) return void 0;
 
@@ -202,17 +202,12 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                     doc.value[key] = <never>await Promise.all(temp);
                 }
             }
-
-            if (raw) {
-                docs.push(doc.value);
-            } else {
-                docs.push(new this.#doc(<never>this.#schema, {
-                    globalPrefix: this.#information.globalPrefix,
-                    prefix: this.#information.prefix,
-                    name: this.#information.modelName,
-                    suffix: this.#information.suffix
-                }, doc.value, true, this.#information.skipDocumentValidation, autoFetch));
-            }
+            docs.push(new this.#doc(<never>this.#schema, {
+                globalPrefix: this.#information.globalPrefix,
+                prefix: this.#information.prefix,
+                name: this.#information.modelName,
+                suffix: this.#information.suffix
+            }, doc.value, true, this.#information.skipDocumentValidation, autoFetch));
         }
 
         return <never>docs;
@@ -237,8 +232,8 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return this.count();
     }
 
-    public async returnAll<F extends boolean = false>(autoFetch?: F, raw?: boolean): Promise<Array<ReturnDocument<T, F>> | undefined> {
-        return await this.all(autoFetch, raw);
+    public async returnAll<F extends boolean = false>(autoFetch?: F): Promise<Array<ReturnDocument<T, F>> | undefined> {
+        return await this.all(autoFetch);
     }
 
     public async returnAllIds(withKey: boolean = false): Promise<Array<string> | undefined> {

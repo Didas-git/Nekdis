@@ -133,65 +133,69 @@ export class Model<S extends Schema<any>> {
 
         if (options?.withRelations) {
             if (typeof options.relationsConstrain !== "undefined") {
+                const tempConstrains: Record<string, [string, string]> = {};
+
                 for (let i = 0, entries = Object.entries(options.relationsConstrain), length = entries.length; i < length; i++) {
                     const [key, value] = <[string, (s: Search<ParseSchema<any>>) => Search<ParseSchema<any>>]>entries[i];
 
-                    const rawMeta = await value(new Search(this.#client, {
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        data: <never>this.#schema[schemaData].relations[key].meta!,
-                        references: {},
-                        relations: {}
-                    }, this.#docType, this.#relationsToIndex[key].data.map, {
-                        ...this.#options,
-                        modelName: this.name,
-                        suffix: this.#schema.options.suffix,
-                        searchIndex: `${this.#relationsToIndex[key].key}:index`,
-                        dataStructure: this.#schema.options.dataStructure
-                    })).returnAll(false, true);
+                    tempConstrains[key] = [
+                        `${this.#relationsToIndex[key].key}:index`,
+                        value(new Search(this.#client, {
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            data: <never>this.#schema[schemaData].relations[key].meta!,
+                            references: {},
+                            relations: {}
+                        }, this.#docType, this.#relationsToIndex[key].data.map, {
+                            ...this.#options,
+                            modelName: this.name,
+                            suffix: this.#schema.options.suffix,
+                            searchIndex: `${this.#relationsToIndex[key].key}:index`,
+                            dataStructure: this.#schema.options.dataStructure
+                        })).rawQuery
+                    ];
+                }
 
-                    if (typeof rawMeta === "undefined") {
-                        //@ts-expect-error node-redis types decided to die
-                        data[key] = [];
-                        continue;
-                    }
+                const fetched: Record<string, Array<unknown>> = JSON.parse(await this.#client.sendCommand([
+                    "FCALL",
+                    this.#schema.options.dataStructure === "JSON" ? "JSONSR" : "HSR",
+                    "1",
+                    JSON.stringify(tempConstrains),
+                    (+(options.returnMetadataOverRelation ?? false)).toString()
+                ]));
 
-                    for (let j = 0, len = rawMeta.length; j < len; j++) {
-                        if (options.returnMetadataOverRelation) {
-                            rawMeta[j] = <never>new this.#docType({
+                for (let i = 0, entries = Object.entries(fetched), length = entries.length; i < length; i++) {
+                    const [key, value] = entries[i];
+
+                    for (let j = 0, len = value.length; j < len; j++) {
+                        value[j] = <never>new this.#docType({
+                            data: <never>(options.returnMetadataOverRelation
                                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                                data: <never>this.#schema[schemaData].relations[key].meta!,
-                                references: {},
-                                relations: {}
-                            }, {
-                                globalPrefix: this.#options.globalPrefix,
-                                prefix: this.#options.prefix,
-                                name: this.name,
-                                suffix: this.#schema.options.suffix
-                            }, rawMeta[j], true, this.#options.skipDocumentValidation);
-                        } else {
-                            let fetchedRelation = this.#schema.options.dataStructure === "JSON" ? await this.#client.json.get(rawMeta[j].out) : await this.#client.hGetAll(rawMeta[j].out);
-                            if (fetchedRelation === null || Object.keys(fetchedRelation).length === 0) fetchedRelation = {};
-                            rawMeta[j] = <never>new this.#docType({
-                                data: <never>(this.#schema[schemaData].relations[key].schema ?? this.#schema[schemaData].data),
-                                references: {},
-                                relations: {}
-                            }, {
-                                globalPrefix: this.#options.globalPrefix,
-                                prefix: this.#options.prefix,
-                                name: this.name,
-                                suffix: this.#schema.options.suffix
-                            }, <never>fetchedRelation, true, this.#options.skipDocumentValidation);
-                        }
+                                ? this.#schema[schemaData].relations[key].meta!
+                                : this.#schema[schemaData].relations[key].schema ?? this.#schema[schemaData].data),
+                            references: {},
+                            relations: {}
+                        }, {
+                            globalPrefix: this.#options.globalPrefix,
+                            prefix: this.#options.prefix,
+                            name: this.name,
+                            suffix: this.#schema.options.suffix
+                        }, <never>value[j], true, this.#options.skipDocumentValidation);
                     }
 
                     //@ts-expect-error node-redis types decided to die
-                    data[key] = rawMeta;
+                    data[key] = value;
                 }
             } else {
                 for (let i = 0, entries = Object.entries(this.#schema[schemaData].relations), length = entries.length; i < length; i++) {
                     const [key, value] = entries[i];
 
-                    const arr: Array<Record<string, unknown>> = JSON.parse(await this.#client.sendCommand(["FCALL", "JSONGR", "1", id, key]));
+                    const arr: Array<Record<string, unknown>> = JSON.parse(await this.#client.sendCommand([
+                        "FCALL",
+                        this.#schema.options.dataStructure === "JSON" ? "JSONGR" : "HGR",
+                        "1",
+                        id,
+                        key
+                    ]));
 
                     for (let j = 0, len = arr.length; j < len; j++) {
                         arr[j] = new this.#docType({
