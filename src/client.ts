@@ -70,7 +70,7 @@ export class Client<SD extends TopLevelSchemaDefinition = {}, MD extends Methods
         return this;
     }
 
-    public schema<T extends Narrow<TopLevelSchemaDefinition>, M extends MethodsDefinition<(T & SD)>>(definition: T, methods?: M, options?: SchemaOptions): Schema<
+    public schema<T extends Narrow<TopLevelSchemaDefinition>, M extends MethodsDefinition<(T & SD)> = {}>(definition: T, methods?: M, options?: SchemaOptions): Schema<
         { [K in keyof (T & SD)]: (T & SD)[K] },
         { [K in keyof (M & MD)]: (M & MD)[K] }
     > {
