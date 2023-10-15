@@ -20,13 +20,13 @@ import type {
     SearchInformation,
     ParseSearchSchema,
     NodeRedisClient,
+    FieldStringType,
     MapSearchField,
     ReturnDocument,
     ParseSchema,
     BaseField,
     ParsedMap,
-    FieldType,
-    FieldStringType
+    FieldType
 } from "../typings";
 
 export type SearchReturn<T extends Search<ParseSchema<any>>> = Omit<T, "where" | "and" | "or" | "rawQuery" | `sort${string}` | `return${string}`>;
@@ -133,7 +133,8 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
             docs.push(new this.#doc(<never>this.#schema, {
                 globalPrefix: this.#information.globalPrefix,
                 prefix: this.#information.prefix,
-                name: this.#information.modelName
+                name: this.#information.modelName,
+                suffix: this.#information.suffix
             }, doc.value, true, this.#information.skipDocumentValidation, autoFetch));
         }
 
@@ -204,7 +205,8 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
             docs.push(new this.#doc(<never>this.#schema, {
                 globalPrefix: this.#information.globalPrefix,
                 prefix: this.#information.prefix,
-                name: this.#information.modelName
+                name: this.#information.modelName,
+                suffix: this.#information.suffix
             }, doc.value, true, this.#information.skipDocumentValidation, autoFetch));
         }
 
@@ -285,7 +287,8 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return <never>new this.#doc(<never>this.#schema, {
             globalPrefix: this.#information.globalPrefix,
             prefix: this.#information.prefix,
-            name: this.#information.modelName
+            name: this.#information.modelName,
+            suffix: this.#information.suffix
         }, <never>data, true, this.#information.skipDocumentValidation, false);
     }
 

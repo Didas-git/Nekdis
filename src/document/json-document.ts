@@ -39,7 +39,7 @@ export class JSONDocument implements DocumentShared {
             globalPrefix: string,
             prefix: string,
             name: string,
-            suffix?: string | (() => string) | undefined,
+            suffix: string | (() => string) | undefined,
             id?: string | undefined
         },
         data?: Record<string, any>,

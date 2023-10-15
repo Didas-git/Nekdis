@@ -1,11 +1,12 @@
 import type { SchemaOptions } from "./schema-options";
 
-export interface ModelOptions extends SchemaOptions {
+export interface ModelOptions extends Pick<SchemaOptions, "skipDocumentValidation"> {
+    injectScripts: boolean;
     globalPrefix: string;
     prefix: string;
 }
 
-export interface ModelInformation extends ModelOptions {
+export interface ModelInformation extends ModelOptions, Required<Pick<SchemaOptions, "suffix" | "dataStructure">> {
     modelName: string;
 }
 

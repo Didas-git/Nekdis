@@ -94,7 +94,7 @@ export class Client<SD extends TopLevelSchemaDefinition = {}, MD extends Methods
             reference: "nekdis"
         });
 
-        model = new Model(this.#client, this.#options.globalPrefix ?? "Nekdis", "V1", name, schema);
+        model = new Model(this.#client, this.#options.globalPrefix ?? "Nekdis", "V1", name, this.#options.enableInjections ?? false, schema);
         this.#models.set(name, model);
         return <never>model;
     }

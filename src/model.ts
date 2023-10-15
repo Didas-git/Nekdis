@@ -1,17 +1,18 @@
 import { PrettyError } from "@infinite-fansub/logger";
 import { createHash } from "node:crypto";
 
+import { parseRelationsToSearchIndex, parseSchemaToSearchIndex } from "./utils";
 import { JSONDocument, HASHDocument } from "./document";
 import { methods, schemaData } from "./utils/symbols";
-import { parseSchemaToSearchIndex } from "./utils";
 import { Relation } from "./relation/relation";
 import { Search } from "./search/search";
 
 import type { Schema } from "./schema";
 import type {
     ExtractParsedSchemaDefinition,
-    ReturnDocument,
+    ParsedRelationsToSearch,
     NodeRedisClient,
+    ReturnDocument,
     ModelOptions,
     ParsedMap,
     MapSchema,
@@ -21,35 +22,43 @@ import type {
 export class Model<S extends Schema<any>> {
     readonly #schema: S;
     readonly #client: NodeRedisClient;
-    readonly #searchIndexName: string;
-    readonly #searchIndexHashName: string;
-    readonly #searchIndexBase: Array<string>;
-    readonly #searchIndex: Array<string>;
-    readonly #searchIndexHash: string;
     readonly #parsedSchema: ParsedMap;
-    // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
     readonly #docType: typeof JSONDocument | typeof HASHDocument;
+    readonly #relationsToIndex: ParsedRelationsToSearch;
+    readonly #searchIndex: {
+        name: string,
+        hash: string,
+        query: Array<string>
+    } = <never>{};
 
     #options: ModelOptions;
 
-    public constructor(client: NodeRedisClient, globalPrefix: string, prefix: string, private readonly name: string, data: S) {
+    public constructor(
+        client: NodeRedisClient,
+        globalPrefix: string,
+        prefix: string,
+        private readonly name: string,
+        injectScripts: boolean,
+        data: S
+    ) {
         this.#client = client;
         this.#schema = data;
         this.#options = {
-            ...this.#schema.options,
+            injectScripts,
             skipDocumentValidation: !this.#schema.options.skipDocumentValidation,
             globalPrefix,
             prefix: this.#schema.options.prefix ?? prefix
         };
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const { map, index } = parseSchemaToSearchIndex(<never>this.#schema[schemaData].data, this.#options.dataStructure!);
+        const { map, index } = parseSchemaToSearchIndex(<never>this.#schema[schemaData].data, this.#schema.options.dataStructure!);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.#relationsToIndex = parseRelationsToSearchIndex(<never>this.#schema[schemaData].relations, this.#schema.options.dataStructure!, `${globalPrefix}:${this.#options.prefix}:${this.name}`);
         this.#parsedSchema = map;
-        this.#searchIndexName = `${globalPrefix}:${this.#options.prefix}:${this.name}:index`;
-        this.#searchIndexHashName = `${globalPrefix}:${this.#options.prefix}:${this.name}:index:hash`;
-        this.#searchIndexBase = [
+        this.#searchIndex.name = `${globalPrefix}:${this.#options.prefix}:${this.name}:index`;
+        this.#searchIndex.query = [
             "FT.CREATE",
-            this.#searchIndexName,
+            this.#searchIndex.name,
             "ON",
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             data.options.dataStructure!,
@@ -58,18 +67,18 @@ export class Model<S extends Schema<any>> {
             `${globalPrefix}:${this.#options.prefix}:${this.name}:`
         ];
 
-        if (this.#options.language) this.#searchIndexBase.push("LANGUAGE", this.#options.language);
-        if (this.#options.stopWords) {
-            this.#searchIndexBase.push("STOPWORDS", this.#options.stopWords.length.toString());
-            if (this.#options.stopWords.length > 0) this.#searchIndexBase.push(...this.#options.stopWords);
+        if (this.#schema.options.language) this.#searchIndex.query.push("LANGUAGE", this.#schema.options.language);
+        if (this.#schema.options.stopWords) {
+            this.#searchIndex.query.push("STOPWORDS", this.#schema.options.stopWords.length.toString());
+            if (this.#schema.options.stopWords.length > 0) this.#searchIndex.query.push(...this.#schema.options.stopWords);
         }
 
-        this.#searchIndexBase.push("SCHEMA");
+        this.#searchIndex.query.push("SCHEMA");
+        this.#searchIndex.query.push(...index);
 
-        this.#searchIndex = index;
-        this.#searchIndexHash = createHash("sha1").update(JSON.stringify({
+        this.#searchIndex.hash = createHash("sha1").update(JSON.stringify({
             name,
-            structure: this.#options.dataStructure,
+            structure: this.#schema.options.dataStructure,
             definition: this.#schema[schemaData].data
         })).digest("base64");
 
@@ -86,7 +95,7 @@ export class Model<S extends Schema<any>> {
 
         id = this.formatId(id.toString());
 
-        const data = this.#options.dataStructure === "JSON" ? await this.#client.json.get(id.toString()) : await this.#client.hGetAll(id.toString());
+        const data = this.#schema.options.dataStructure === "JSON" ? await this.#client.json.get(id.toString()) : await this.#client.hGetAll(id.toString());
 
         if (data === null || Object.keys(data).length === 0) return void 0;
         if (autoFetch) {
@@ -108,7 +117,8 @@ export class Model<S extends Schema<any>> {
         return <never>new this.#docType(<never>this.#schema[schemaData], {
             globalPrefix: this.#options.globalPrefix,
             prefix: this.#options.prefix,
-            name: this.name
+            name: this.name,
+            suffix: this.#schema.options.suffix
         }, <never>data, true, this.#options.skipDocumentValidation, autoFetch);
     }
 
@@ -120,7 +130,7 @@ export class Model<S extends Schema<any>> {
                 globalPrefix: this.#options.globalPrefix,
                 prefix: this.#options.prefix,
                 name: this.name,
-                suffix: this.#options.suffix
+                suffix: this.#schema.options.suffix
             }, idOrData, false, this.#options.skipDocumentValidation, false);
         }
 
@@ -128,7 +138,7 @@ export class Model<S extends Schema<any>> {
             globalPrefix: this.#options.globalPrefix,
             prefix: this.#options.prefix,
             name: this.name,
-            suffix: this.#options.suffix,
+            suffix: this.#schema.options.suffix,
             id: idOrData?.toString()
         }, void 0, false, this.#options.skipDocumentValidation, false);
     }
@@ -139,7 +149,7 @@ export class Model<S extends Schema<any>> {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-base-to-string
-        if (this.#options.dataStructure === "HASH") await this.#client.sendCommand(["HSET", doc.$record_id, ...doc.toString()]);
+        if (this.#schema.options.dataStructure === "HASH") await this.#client.sendCommand(["HSET", doc.$record_id, ...doc.toString()]);
         // eslint-disable-next-line @typescript-eslint/no-base-to-string
         else await this.#client.sendCommand(["JSON.SET", doc.$record_id, "$", <string>doc.toString()]);
     }
@@ -176,13 +186,10 @@ export class Model<S extends Schema<any>> {
         await Promise.all(temp);
     }
 
-    public async createAndSave(data: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true>): Promise<void> {
-        const doc = new this.#docType(<never>this.#schema[schemaData], {
-            globalPrefix: this.#options.globalPrefix,
-            prefix: this.#options.prefix,
-            name: this.name,
-            suffix: this.#options.suffix
-        }, data, false, this.#options.skipDocumentValidation, false);
+    public async createAndSave(id?: string | number): Promise<void>;
+    public async createAndSave(data?: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true>): Promise<void>;
+    public async createAndSave(idOrData?: string | number | { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true>): Promise<void> {
+        const doc = this.create(<never>idOrData);
         await this.save(doc);
     }
 
@@ -190,49 +197,86 @@ export class Model<S extends Schema<any>> {
         return new Search<ExtractParsedSchemaDefinition<S>>(this.#client, <never>this.#schema[schemaData], this.#docType, this.#parsedSchema, {
             ...this.#options,
             modelName: this.name,
-            searchIndex: this.#searchIndexName
+            suffix: this.#schema.options.suffix,
+            searchIndex: this.#searchIndex.name,
+            dataStructure: this.#schema.options.dataStructure
         });
     }
 
     public relate(idOrDoc: string | number | Document): Relation<ExtractParsedSchemaDefinition<S>> {
         return new Relation(this.#client, {
             ...this.#options,
-            modelName: this.name
+            modelName: this.name,
+            suffix: this.#schema.options.suffix,
+            dataStructure: this.#schema.options.dataStructure
         }, this.#idOrDocToString(idOrDoc));
     }
 
     public async createIndex(): Promise<void> {
-        const currentIndexHash = await this.#client.get(this.#searchIndexHashName);
-        if (currentIndexHash === this.#searchIndexHash) return;
+        if (!this.#options.injectScripts) {
+            if (!this.#schema.options.noLogs) console.warn("Cannot index relations... Skipping");
+        } else {
+            for (let i = 0, values = Object.values(this.#relationsToIndex), length = values.length; i < length; i++) {
+                const value = values[i];
 
-        if (this.#searchIndex.length === 0) {
-            if (!this.#options.noLogs) console.log("Nothing to index... Skipping");
+                if (await this.#client.get(`${value.key}:index:hash`) === value.hash) continue;
+                try {
+                    await Promise.all([
+                        this.#client.unlink(`${value.key}:index:hash`),
+                        this.#client.ft.dropIndex(`${value.key}:index`),
+                        this.#client.set(`${value.key}:index:hash`, value.hash),
+                        this.#client.sendCommand([
+                            "FT.CREATE",
+                            `${value.key}:index`,
+                            "ON",
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            this.#schema.options.dataStructure!,
+                            "PREFIX",
+                            "1",
+                            `${value.key}:`,
+                            "SCHEMA",
+                            ...value.data.index
+                        ])
+                    ]);
+                } catch (e) {
+                    if (e instanceof Error && e.message === "Unknown Index name") {
+                        continue;
+                    } else throw e;
+                }
+
+            }
+        }
+
+        if (await this.#client.get(`${this.#searchIndex.name}:hash`) === this.#searchIndex.hash) return;
+
+        if (this.#searchIndex.query.at(-1) === "SCHEMA") {
+            if (!this.#schema.options.noLogs) console.log("Nothing to index... Skipping");
             return;
         }
 
         await this.deleteIndex();
 
         await Promise.all([
-            this.#client.set(this.#searchIndexHashName, this.#searchIndexHash),
-            this.#client.sendCommand([...this.#searchIndexBase, ...this.#searchIndex])
+            this.#client.set(`${this.#searchIndex.name}:hash`, this.#searchIndex.hash),
+            this.#client.sendCommand(this.#searchIndex.query)
         ]);
     }
 
     public async deleteIndex(): Promise<void> {
         try {
             await Promise.all([
-                this.#client.unlink(this.#searchIndexHashName),
-                this.#client.ft.dropIndex(this.#searchIndexName)
+                this.#client.unlink(`${this.#searchIndex.name}:hash`),
+                this.#client.ft.dropIndex(this.#searchIndex.name)
             ]);
         } catch (e) {
             if (e instanceof Error && e.message === "Unknown Index name") {
-                Promise.resolve();
+                return;
             } else throw e;
         }
     }
 
     public async rawSearch(...args: Array<string>): Promise<ReturnType<NodeRedisClient["ft"]["search"]>> {
-        return await this.#client.ft.search(this.#searchIndexName, args.join(" "));
+        return await this.#client.ft.search(this.#searchIndex.name, args.join(" "));
     }
 
     #idsOrDocsToString(idsOrDocs: Array<string | number | Document>): Array<string> {
@@ -251,7 +295,7 @@ export class Model<S extends Schema<any>> {
 
     public formatId(id: string): string {
         if (id.split(":").length === 1) {
-            const suffix = this.#options.suffix;
+            const suffix = this.#schema.options.suffix;
 
             if (typeof suffix === "function") {
                 throw new PrettyError("Due to the use of dynamic suffixes you gave to pass in a full id", {
@@ -277,7 +321,7 @@ export class Model<S extends Schema<any>> {
         return this.#options;
     }
 
-    public set options(options: Partial<ModelOptions>) {
+    public set options(options: Partial<Exclude<ModelOptions, "dataStructure" | "globalPrefix">>) {
         this.#options = { ...this.#options, ...options };
     }
 }

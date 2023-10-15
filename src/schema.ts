@@ -53,7 +53,7 @@ export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinit
     #parse(schema: TopLevelSchemaDefinition): ParsedSchemaDefinition {
         const data: Record<string, unknown> = {};
         const references: Record<string, null> = {};
-        const relations: Record<string, Record<string, unknown> | null> = {};
+        const relations: ParsedSchemaDefinition["relations"] = {};
 
         for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
             let [key, value] = entries[i];
@@ -243,11 +243,13 @@ export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinit
                 });
 
                 if (typeof value.meta !== "undefined") {
-                    if (value.meta instanceof Schema) value.meta = <never>value.meta[schemaData].data;
-                    else value.meta = <never>this.#parse(value.meta).data;
+                    if (value.meta instanceof Schema) value.meta = <never>{ ...value.meta[schemaData].data, ...this.#parse({ in: "string", out: "string" }).data };
+                    else value.meta = <never>this.#parse({ ...value.meta, in: "string", out: "string" }).data;
+                } else {
+                    value.meta = <never>this.#parse({ in: "string", out: "string" }).data;
                 }
 
-                relations[key] = value.meta ?? null;
+                relations[key] = { index: value.index ?? false, data: value.meta };
                 continue;
             } else if (value.type === "vector") {
                 if (typeof value.algorithm === "undefined") {
