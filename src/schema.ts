@@ -138,7 +138,7 @@ export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinit
                 } else if (value === "tuple") {
                     throw new PrettyError("Type 'tuple' needs to use its object definition");
                 } else if (value === "array") {
-                    value = { type: value, elements: "string", default: undefined, optional: false, sortable: false, index: isInsideTuple, separator: "|" };
+                    value = { type: value, elements: "string", default: undefined, optional: false, sortable: false, index: false, separator: "|" };
                 } else if (value === "vector") {
                     value = {
                         type: value,
@@ -149,7 +149,7 @@ export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinit
                         default: undefined,
                         optional: false,
                         sortable: false,
-                        index: isInsideTuple
+                        index: false
                     };
                 } else {
                     value = { type: value, default: undefined, optional: false, sortable: false, index: false };
@@ -177,11 +177,11 @@ export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinit
                 if (typeof value.elements === "object") {
                     value.elements = <never>this.#parse(value.elements).data;
                 }
-                value = this.#fill(value, isInsideTuple);
+                value = this.#fill(value);
             } else if (value.type === "date") {
                 if (value.default instanceof Date) value.default = value.default.getTime();
                 if (typeof value.default === "string" || typeof value.default === "number") value.default = new Date(value.default).getTime();
-                value = this.#fill(value, isInsideTuple);
+                value = this.#fill(value);
             } else if (value.type === "object") {
                 if (typeof value.default === "undefined") value.default = undefined;
                 if (typeof value.optional === "undefined") value.optional = false;
@@ -196,9 +196,9 @@ export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinit
                     reference: "nekdis"
                 });
                 for (let j = 0, le = value.elements.length; j < le; j++) {
-                    value.elements[j] = <never>this.#parse({ [j]: value.elements[j] }, value.index ?? false).data[j];
+                    value.elements[j] = <never>this.#parse({ [j]: value.elements[j] }).data[j];
                 }
-                value = this.#fill(value, isInsideTuple);
+                value = this.#fill(value);
             } else if (value.type === "reference") {
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
                 if (!value.schema) throw new PrettyError("Type 'reference' lacks a schema which is needed to provide intellisense", {
@@ -286,13 +286,13 @@ export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinit
                     if (typeof value.runtime === "undefined") value.runtime = undefined;
                     if (typeof value.epsilon === "undefined") value.epsilon = undefined;
                 }
-                value = this.#fill(value, isInsideTuple);
+                value = this.#fill(value);
             } else if (value.type === "string" || value.type === "number" || value.type === "bigint") {
                 if (typeof value.literal === "undefined") value.literal = undefined;
                 else if (!Array.isArray(value.literal)) value.literal = [<never>value.literal];
-                value = this.#fill(value, isInsideTuple);
+                value = this.#fill(value);
             } else {
-                value = this.#fill(value, isInsideTuple);
+                value = this.#fill(value);
             }
 
             data[key] = value;
@@ -300,11 +300,11 @@ export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinit
         return <never>{ data, references, relations };
     }
 
-    #fill(value: BaseField, isInsideTuple: boolean): any {
+    #fill(value: BaseField): any {
         if (typeof value.default === "undefined") value.default = undefined;
         if (typeof value.optional === "undefined") value.optional = false;
         if (typeof value.sortable === "undefined") value.sortable = false;
-        if (typeof value.index === "undefined") value.index = isInsideTuple;
+        if (typeof value.index === "undefined") value.index = false;
         return value;
     }
 }
