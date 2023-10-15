@@ -1,8 +1,8 @@
 import { PrettyError } from "@infinite-fansub/logger";
 
-import { JSONDocument, HASHDocument } from "../document";
-
 import type { SearchOptions, SearchReply } from "redis";
+
+import type { JSONDocument, HASHDocument } from "../document";
 
 import {
     type SearchField,
@@ -17,8 +17,8 @@ import {
 } from "./search-builders";
 
 import type {
-    ParseSearchSchema,
     SearchInformation,
+    ParseSearchSchema,
     NodeRedisClient,
     MapSearchField,
     ReturnDocument,
@@ -36,8 +36,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     readonly #schema: T;
     readonly #parsedSchema: ParsedMap;
     readonly #information: SearchInformation;
-    // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
-    readonly #docType: typeof JSONDocument | typeof HASHDocument;
+    readonly #doc: typeof JSONDocument | typeof HASHDocument;
     #workingType!: FieldType["type"];
 
     /**
@@ -55,16 +54,15 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     public constructor(
         client: NodeRedisClient,
         schema: T,
+        doc: typeof JSONDocument | typeof HASHDocument,
         parsedSchema: ParsedMap,
         information: SearchInformation
     ) {
         this.#client = client;
         this.#schema = schema;
+        this.#doc = doc;
         this.#parsedSchema = parsedSchema;
         this.#information = information;
-
-        if (information.dataStructure === "HASH") this.#docType = HASHDocument;
-        else this.#docType = JSONDocument;
     }
 
     public where<F extends keyof P>(field: F): MapSearchField<F, T, P> {
@@ -131,7 +129,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                 }
             }
 
-            docs.push(new this.#docType(<never>this.#schema, {
+            docs.push(new this.#doc(<never>this.#schema, {
                 globalPrefix: this.#information.globalPrefix,
                 prefix: this.#information.prefix,
                 name: this.#information.modelName
@@ -202,7 +200,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                     doc.value[key] = <never>await Promise.all(temp);
                 }
             }
-            docs.push(new this.#docType(<never>this.#schema, {
+            docs.push(new this.#doc(<never>this.#schema, {
                 globalPrefix: this.#information.globalPrefix,
                 prefix: this.#information.prefix,
                 name: this.#information.modelName
@@ -283,7 +281,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
 
         if (data === null || Object.keys(data).length === 0) return null;
 
-        return <never>new this.#docType(<never>this.#schema, {
+        return <never>new this.#doc(<never>this.#schema, {
             globalPrefix: this.#information.globalPrefix,
             prefix: this.#information.prefix,
             name: this.#information.modelName

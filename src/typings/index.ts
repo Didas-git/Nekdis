@@ -1,11 +1,10 @@
 export type * from "./parsed-search-schema";
-export type * from "./search-information";
 export type * from "./methods-definition";
 export type * from "./schema-definition";
 export type * from "./map-search-fields";
 export type * from "./extract-generic";
+export type * from "./information.ts";
 export type * from "./schema-options";
-export type * from "./model-options";
 export type * from "./parse-schema";
 export type * from "./point-units";
 export type * from "./return-doc";

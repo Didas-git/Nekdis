@@ -17,4 +17,5 @@ export interface FieldMap<T = string> {
     tuple: [T];
     object: Record<string, SchemaDefinition>;
     reference: Array<Record<string, SchemaDefinition>>;
+    relation: Array<Record<string, SchemaDefinition>>;
 }

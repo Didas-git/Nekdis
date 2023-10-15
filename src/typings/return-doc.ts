@@ -5,6 +5,10 @@ import type { Schema } from "../schema";
 
 export type Document = JSONDocument | HASHDocument;
 
-export type ReturnDocument<T extends Schema<any, any> | ParseSchema<any>, AF extends boolean = false> = T extends Schema<any, any, infer U>
-    ? Document & MapSchema<U, AF>
-    : T extends ParseSchema<any> ? Document & MapSchema<T, AF> : never;
+export type ReturnDocument<
+    T extends Schema<any, any> | ParseSchema<any>,
+    FREF extends boolean = false,
+    FREL extends boolean = false
+> = T extends Schema<any, any, infer U>
+    ? Document & MapSchema<U, FREF, FREL>
+    : T extends ParseSchema<any> ? Document & MapSchema<T, FREF, FREL> : never;

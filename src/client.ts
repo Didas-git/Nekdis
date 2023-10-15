@@ -7,7 +7,7 @@ import { Model } from "./model";
 import type {
     ExtractSchemaMethods,
     MethodsDefinition,
-    SchemaDefinition,
+    TopLevelSchemaDefinition,
     NodeRedisClient,
     SchemaOptions,
     ClientOptions,
@@ -18,11 +18,10 @@ import type {
     Module
 } from "./typings";
 
-export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefinition<SD> = {}> {
+export class Client<SD extends TopLevelSchemaDefinition = {}, MD extends MethodsDefinition<SD> = {}> {
     #client!: NodeRedisClient;
     #models: Map<string, Model<any>> = new Map();
     #open: boolean = false;
-    #prefix: string = "Nekdis";
     #options: ClientOptions<SD, MD>;
 
     public constructor(options?: ClientOptions<SD, MD>) {
@@ -63,7 +62,7 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
         return this;
     }
 
-    public schema<T extends Narrow<SchemaDefinition>, M extends MethodsDefinition<(T & SD)>>(definition: T, methods?: M, options?: SchemaOptions): Schema<
+    public schema<T extends Narrow<TopLevelSchemaDefinition>, M extends MethodsDefinition<(T & SD)>>(definition: T, methods?: M, options?: SchemaOptions): Schema<
         { [K in keyof (T & SD)]: (T & SD)[K] },
         { [K in keyof (M & MD)]: (M & MD)[K] }
     > {
@@ -87,7 +86,7 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
             reference: "nekdis"
         });
 
-        model = new Model(this.#client, this.#prefix, "V1", name, schema);
+        model = new Model(this.#client, this.#options.globalPrefix ?? "Nekdis", "V1", name, schema);
         this.#models.set(name, model);
         return <never>model;
     }
@@ -131,7 +130,7 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
     }
 
     public set globalPrefix(str: string) {
-        this.#prefix = str;
+        this.#options.globalPrefix = str;
     }
 }
 

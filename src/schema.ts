@@ -7,7 +7,7 @@ import { methods, schemaData } from "./utils/symbols";
 import type {
     ExtractSchemaDefinition,
     MethodsDefinition,
-    SchemaDefinition,
+    TopLevelSchemaDefinition,
     SchemaOptions,
     ParseSchema,
     NumberField,
@@ -17,7 +17,7 @@ import type {
     ParsedSchemaDefinition
 } from "./typings";
 
-export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> = MethodsDefinition<S>, P extends ParseSchema<S> = ParseSchema<S>> {
+export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinition<S> = MethodsDefinition<S>, P extends ParseSchema<S> = ParseSchema<S>> {
 
     /** @internal */
     public [methods]: M;
@@ -50,7 +50,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
         return <never>this;
     }
 
-    #parse(schema: SchemaDefinition): ParsedSchemaDefinition {
+    #parse(schema: TopLevelSchemaDefinition): ParsedSchemaDefinition {
         const data: Record<string, unknown> = {};
         const references: Record<string, unknown> = {};
 

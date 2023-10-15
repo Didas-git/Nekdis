@@ -35,6 +35,7 @@ The next steps for the proposal include:
   - [Range queries](#range-queries)
 - [Custom Methods](#custom-methods)
 - [Modules](#modules)
+  - [Limitations](#limitations)
 - [Schema Types](#schema-types)
 - [Field Properties](#field-properties)
   - [Shared Properties](#shared-properties)
@@ -225,7 +226,7 @@ Nekdis allows you to add modules to the client, modules are something that adds 
 Keep in mind that this might be more useful if you are creating your own instance of the client and exporting it because that way you will also get intellisense for the module.
 
 ```ts
-import {type Client, client} from "nekdis";
+import { type Client, client } from "nekdis";
 
 class MyModule {
     constructor(client: Client) {
@@ -242,6 +243,10 @@ client.withModules({ name: "myMod", ctor: MyModule });
 // Access it
 client.myMod.myFunction()
 ```
+
+## Limitations
+
+The limitation with modules is their types, this is one of the places that i highly encourage you to create your own instance and export it because otherwise the only 2 ways for you to get the types are either reexporting or assigning it to a variable and extracting the type from it to use somewhere else.
 
 # Schema Types
 
@@ -299,8 +304,6 @@ Vector properties wont be documented here, check the types instead
 # Todo
 
 - `in` operator for number search
-- Array of points
-- Fully support array of objects
 - Add `$id` alias[^2]
 
 
@@ -503,7 +506,7 @@ await client.connect();
 
 // Create the schema
 const userSchema = client.schema({
-    age: "number"
+    age: { type: "number", index: true }
 }, {
     // Define function to help repetitive task
     findBetweenAge: async function (min: number, max: number) {
@@ -614,15 +617,15 @@ function between(min: number, max: number) {
 - [#25 (Use reflection to do object mapping for a more declarative API)](https://github.com/redis/redis-om-node/issues/25)
   - Achieves this purely on the type level working for both js and ts without extra steps and without the declarative (decorators) part
 - [#28 (Transactions & relations)](https://github.com/redis/redis-om-node/issues/28)
-  - Relations are added and transactions are in the plans with a nice api like the c# lib
+  - References are added and both transactions and relations are in the plans with a nice api like the c# lib
 - [#44 (Add in (eq for multiple values))](https://github.com/redis/redis-om-node/issues/44)
   - As mentioned in [Search](#search) methods like `equals` work just like it
 - [#54 (Add boolean[] as a new type)](https://github.com/redis/redis-om-node/issues/54)
 - [#55 (Add number[] as a new type)](https://github.com/redis/redis-om-node/issues/55)
 - [#66 (Implement implicit transaction and locking in the context of redis-om for master-detail relations )](https://github.com/redis/redis-om-node/issues/66)
-  - Partially done with relations
+  - Partially done with references
 - [#69 (Add default value to Schema)](https://github.com/redis/redis-om-node/issues/69)
-  - Also `required` was added
+  - `required` was also added
 - [#85 (Vector Similarity Search)](https://github.com/redis/redis-om-node/issues/85)
 - [#120 (Add expireAt)](https://github.com/redis/redis-om-node/issues/120)
   - normal expire accepts both seconds or a date object

@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { JSONDocument, HASHDocument } from "./document";
 import { methods, schemaData } from "./utils/symbols";
 import { parseSchemaToSearchIndex } from "./utils";
+import { Relation } from "./relation/relation";
 import { Search } from "./search/search";
 
 import type { Schema } from "./schema";
@@ -31,15 +32,14 @@ export class Model<S extends Schema<any>> {
 
     #options: ModelOptions;
 
-    public constructor(client: NodeRedisClient, globalPrefix: string, ver: string, private readonly name: string, data: S) {
+    public constructor(client: NodeRedisClient, globalPrefix: string, prefix: string, private readonly name: string, data: S) {
         this.#client = client;
         this.#schema = data;
         this.#options = {
             ...this.#schema.options,
             skipDocumentValidation: !this.#schema.options.skipDocumentValidation,
             globalPrefix,
-            prefix: this.#schema.options.prefix ?? ver,
-            version: ver
+            prefix: this.#schema.options.prefix ?? prefix
         };
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -148,21 +148,21 @@ export class Model<S extends Schema<any>> {
         if (!docs.length) throw new PrettyError("No documents were given to delete", {
             reference: "nekdis"
         });
-        await this.#client.del(this.#stringOrDocToString(docs));
+        await this.#client.del(this.#idsOrDocsToString(docs));
     }
 
     public async exists(...docs: Array<string | number | Document>): Promise<number> {
         if (!docs.length) throw new PrettyError("No documents were given to check", {
             reference: "nekdis"
         });
-        return await this.#client.exists(this.#stringOrDocToString(docs));
+        return await this.#client.exists(this.#idsOrDocsToString(docs));
     }
 
     public async expire(docs: Array<string | number | Document>, seconds: number | Date, mode?: "NX" | "XX" | "GT" | "LT"): Promise<void> {
         if (!docs.length) throw new PrettyError("No documents were given to expire", {
             reference: "nekdis"
         });
-        docs = this.#stringOrDocToString(docs);
+        docs = this.#idsOrDocsToString(docs);
 
         if (seconds instanceof Date) seconds = Math.round((seconds.getTime() - Date.now()) / 1000);
 
@@ -187,12 +187,18 @@ export class Model<S extends Schema<any>> {
     }
 
     public search(): Search<ExtractParsedSchemaDefinition<S>> {
-        // eslint-disable-next-line max-len
-        return new Search<ExtractParsedSchemaDefinition<S>>(this.#client, <never>this.#schema[schemaData], this.#parsedSchema, {
+        return new Search<ExtractParsedSchemaDefinition<S>>(this.#client, <never>this.#schema[schemaData], this.#docType, this.#parsedSchema, {
             ...this.#options,
             modelName: this.name,
             searchIndex: this.#searchIndexName
         });
+    }
+
+    public relate(idOrDoc: string | number | Document): Relation<ExtractParsedSchemaDefinition<S>> {
+        return new Relation(this.#client, {
+            ...this.#options,
+            modelName: this.name
+        }, this.#idOrDocToString(idOrDoc));
     }
 
     public async createIndex(): Promise<void> {
@@ -229,23 +235,18 @@ export class Model<S extends Schema<any>> {
         return await this.#client.ft.search(this.#searchIndexName, args.join(" "));
     }
 
-    #stringOrDocToString(stringOrNumOrDoc: Array<string | number | Document>): Array<string> {
+    #idsOrDocsToString(idsOrDocs: Array<string | number | Document>): Array<string> {
         const temp = [];
 
-        for (let i = 0, len = stringOrNumOrDoc.length; i < len; i++) {
-            const el = stringOrNumOrDoc[i];
-            let id = "";
-
-            if (el instanceof JSONDocument || el instanceof HASHDocument) {
-                id = el.$record_id;
-            } else {
-                id = this.formatId(id);
-            }
-
-            temp.push(id);
+        for (let i = 0, len = idsOrDocs.length; i < len; i++) {
+            temp.push(this.#idOrDocToString(idsOrDocs[i]));
         }
 
         return temp;
+    }
+
+    #idOrDocToString(idOrDoc: string | number | Document): string {
+        return idOrDoc instanceof JSONDocument || idOrDoc instanceof HASHDocument ? idOrDoc.$record_id : this.formatId(idOrDoc.toString());
     }
 
     public formatId(id: string): string {

@@ -1,6 +1,6 @@
 {
   "name": "nekdis",
-  "version": "0.12.3",
+  "version": "0.13.0",
   "description": "Object mapping, and more, for Redis and Node.js. Written in TypeScript.",
   "main": "dist/index.js",
   "exports": {
@@ -23,7 +23,7 @@
   "scripts": {
     "test": "vitest run --coverage",
     "lint": "eslint src/**/*.ts",
-    "build": "rm -rf ./dist && tsc",
+    "build": "rm -rf ./dist && tsc && cp -r ./src/scripts ./dist/scripts",
     "build:test": "tsc --noEmit",
     "bench": "rm -rf ./bench-dist && cd benchmarks && tsc && cd .. && node bench-dist/dist/index.mjs"
   },

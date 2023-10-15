@@ -2,14 +2,17 @@ import type { FieldMap } from "./field-map";
 import type { Schema } from "../schema";
 import type { Point } from "./point";
 
-export type SchemaDefinition = Record<string, keyof Omit<FieldMap, "tuple" | "object" | "reference"> | FieldType>;
+export type TopLevelSchemaDefinition = Record<string, keyof Omit<FieldMap, "tuple" | "object" | "reference"> | FieldType>;
+export type SchemaDefinition = Record<string, SchemaField>;
+export type SchemaField = keyof Omit<FieldMap, "tuple" | "object" | "reference"> | Exclude<FieldType, ReferenceField | RelationField>;
 
 export interface ParsedSchemaDefinition {
     data: Record<string, ParsedFieldType>;
     references: Record<string, null>;
+    relations: Record<string, Record<string, ParsedFieldType>>;
 }
 
-export type FieldType = StringField | NumberField | BigIntField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField | ReferenceField | VectorField;
+export type FieldType = StringField | NumberField | BigIntField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField | ReferenceField | VectorField | RelationField;
 
 export type ParsedFieldType = ParsedStringField
     | ParsedNumberField
@@ -22,8 +25,6 @@ export type ParsedFieldType = ParsedStringField
     | Required<PointField>
     | Required<TextField>
     | Required<DateField>;
-
-export type TupleElement = Exclude<keyof FieldMap, "tuple" | "reference" | "object"> | FieldType;
 
 export interface BaseField {
     type: keyof FieldMap;
@@ -139,7 +140,7 @@ export interface ParsedArrayField extends Required<BaseField> {
 //FALLBACK
 export interface TupleField extends Omit<BaseField, "sortable"> {
     type: "tuple";
-    elements: [TupleElement, ...Array<TupleElement>];
+    elements: [SchemaField, ...Array<SchemaField>];
     default?: Array<unknown> | undefined;
 }
 
@@ -166,4 +167,11 @@ export interface ParsedObjectField extends Omit<Required<BaseField>, "sortable">
 export interface ReferenceField extends Pick<BaseField, "type"> {
     type: "reference";
     schema: Schema<any, any> | "self";
+}
+
+// NON EXISTENT
+export interface RelationField extends Pick<BaseField, "type" | "index"> {
+    type: "relation";
+    schema: Schema<any, any> | "self";
+    meta?: Schema<any> | SchemaDefinition | undefined;
 }
