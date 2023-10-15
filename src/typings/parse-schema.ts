@@ -37,14 +37,14 @@ export type ParseSchema<T extends TopLevelSchemaDefinition> = {
         ? {
             [P in keyof Required<RelationField>]: P extends "schema"
             ? T[K][P] extends "self"
-            ? ParseSchemaData<T>
+            ? ParseSchemaData<T, true>
             : ExtractParsedSchemaDefinition<T[K][P]>["data"]
             : P extends "meta"
             ? T[K][P] extends {}
             ? T[K][P] extends Schema<any, any, infer U>
             ? U["data"]
             : T[K][P] extends SchemaDefinition
-            ? ParseSchemaData<T>
+            ? ParseSchemaData<T[K][P], true>
             : never
             : undefined
             : T[K][P]
@@ -53,43 +53,43 @@ export type ParseSchema<T extends TopLevelSchemaDefinition> = {
     }
 };
 
-export type ParseSchemaData<T extends TopLevelSchemaDefinition> = {
+export type ParseSchemaData<T extends TopLevelSchemaDefinition, REL extends boolean = false> = {
     [K in keyof T as T[K] extends ReferenceField ? never : T[K] extends RelationField ? never : K]: T[K] extends ObjectField
-    ? ParseObjectField<T[K]>
+    ? ParseObjectField<T[K], REL>
     : T[K] extends ArrayField
-    ? ParseArrayField<T[K]>
+    ? ParseArrayField<T[K], REL>
     : T[K] extends TupleField
-    ? ParseTupleField<T[K]>
+    ? ParseTupleField<T[K], REL>
     : T[K] extends VectorField
     ? T[K] extends FlatVector
     ? {
-        [P in keyof Required<FlatVector>]: T[K][P] extends {} ? T[K][P] : Fill<P>
+        [P in keyof Required<FlatVector>]: T[K][P] extends {} ? T[K][P] : Fill<P, REL>
     }
     : T[K] extends HNSWVector
     ? {
-        [P in keyof Required<HNSWVector>]: T[K][P] extends {} ? T[K][P] : Fill<P>
+        [P in keyof Required<HNSWVector>]: T[K][P] extends {} ? T[K][P] : Fill<P, REL>
     }
     : never
     : T[K] extends StringField
     ? {
-        [P in keyof Required<StringField>]: T[K][P] extends {} ? T[K][P] : Fill<P>
+        [P in keyof Required<StringField>]: T[K][P] extends {} ? T[K][P] : Fill<P, REL>
     }
     : T[K] extends NumberField
     ? {
-        [P in keyof Required<NumberField>]: T[K][P] extends {} ? T[K][P] : Fill<P>
+        [P in keyof Required<NumberField>]: T[K][P] extends {} ? T[K][P] : Fill<P, REL>
     }
     : T[K] extends BigIntField
     ? {
-        [P in keyof Required<BigIntField>]: T[K][P] extends {} ? T[K][P] : Fill<P>
+        [P in keyof Required<BigIntField>]: T[K][P] extends {} ? T[K][P] : Fill<P, REL>
     }
     : T[K] extends BaseField
     ? {
-        [P in keyof Required<BaseField>]: T[K][P] extends {} ? T[K][P] : Fill<P>
+        [P in keyof Required<BaseField>]: T[K][P] extends {} ? T[K][P] : Fill<P, REL>
     }
-    : CreateDefinitionFromString<T[K] & string>
+    : CreateDefinitionFromString<T[K] & string, REL>
 };
 
-type ParseObjectField<T extends ObjectField> = {
+type ParseObjectField<T extends ObjectField, REL extends boolean> = {
     [P in keyof Required<ObjectField>]: P extends "properties"
     ? T[P] extends {}
     ? T[P] extends Schema<any, any, infer U>
@@ -98,31 +98,31 @@ type ParseObjectField<T extends ObjectField> = {
     ? ParseSchemaData<T[P]>
     : never
     : undefined
-    : T[P] extends {} ? T[P] : Fill<P>
+    : T[P] extends {} ? T[P] : Fill<P, REL>
 };
 
-type ParseArrayField<T extends ArrayField> = {
+type ParseArrayField<T extends ArrayField, REL extends boolean> = {
     [P in keyof Required<ArrayField>]: P extends "elements"
     ? T[P] extends SchemaDefinition ? ParseSchemaData<T[P]>
     : T[P] extends {} ? T[P] : "string"
-    : Fill<P>
+    : Fill<P, REL>
 };
 
-type ParseTupleField<T extends TupleField> = {
+type ParseTupleField<T extends TupleField, REL extends boolean> = {
     [P in keyof Required<TupleField>]: P extends "elements"
     ? T extends Record<P, infer V>
     ? {
         [U in keyof V]: V[U] extends string
-        ? CreateDefinitionFromString<V[U]>
+        ? CreateDefinitionFromString<V[U], REL>
         : V[U] extends FieldType
         ? GetTupleObject<V[U]>
         : never
     }
     : never
-    : T[P] extends {} ? T[P] : Fill<P>
+    : T[P] extends {} ? T[P] : Fill<P, REL>
 };
 
-type CreateDefinitionFromString<T extends string> = T extends "vector"
+type CreateDefinitionFromString<T extends string, REL extends boolean> = T extends "vector"
     ? {
         [K in keyof Required<FlatVector>]: K extends "type"
         ? T
@@ -134,41 +134,41 @@ type CreateDefinitionFromString<T extends string> = T extends "vector"
         ? 128
         : K extends "distance"
         ? "L2"
-        : Fill<K>
+        : Fill<K, REL>
     }
     : T extends "string"
     ? {
         [K in keyof Required<StringField>]: K extends "type"
         ? T
-        : Fill<K>
+        : Fill<K, REL>
     }
     : T extends "number"
     ? {
         [K in keyof Required<NumberField>]: K extends "type"
         ? T
-        : Fill<K>
+        : Fill<K, REL>
     }
     : T extends "bigint"
     ? {
         [K in keyof Required<BigIntField>]: K extends "type"
         ? T
-        : Fill<K>
+        : Fill<K, REL>
     }
     : {
         [K in keyof Required<BaseField>]: K extends "type"
         ? T
-        : Fill<K>
+        : Fill<K, REL>
     };
 
 /**
  * `T` is the same as `keyof FieldTypes` but i can't use `extends` here
  */
-type Fill<T> = T extends "optional"
+type Fill<T, REL extends boolean> = T extends "optional"
     ? false
     : T extends "sortable"
     ? false
     : T extends "index"
-    ? false
+    ? REL extends true ? true : false
     : undefined;
 
 type GetTupleObject<T extends FieldType, P = ParseSchema<{ $: T }>["data"]> = P extends { $: unknown } ? P["$"] : never;

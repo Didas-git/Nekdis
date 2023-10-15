@@ -5,16 +5,16 @@ import { Color } from "colours.js";
 import { methods, schemaData } from "./utils/symbols";
 
 import type {
-    ExtractSchemaDefinition,
-    MethodsDefinition,
     TopLevelSchemaDefinition,
+    ExtractSchemaDefinition,
+    ParsedSchemaDefinition,
+    MethodsDefinition,
     SchemaOptions,
     ParseSchema,
     NumberField,
     StringField,
     BaseField,
-    FieldType,
-    ParsedSchemaDefinition
+    FieldType
 } from "./typings";
 
 export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinition<S> = MethodsDefinition<S>, P extends ParseSchema<S> = ParseSchema<S>> {
@@ -223,7 +223,7 @@ export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinit
                 continue;
             } else if (value.type === "relation") {
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
-                if (!value.schema) throw new PrettyError("Type 'relation' lacks a schema which is needed to provide intellisense", {
+                if (!value.schema) throw new PrettyError("Type 'relation' lacks a schema", {
                     reference: "nekdis",
                     lines: [
                         {
@@ -249,7 +249,11 @@ export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinit
                     value.meta = <never>this.#parse({ in: "string", out: "string" }).data;
                 }
 
-                relations[key] = { index: value.index ?? false, data: value.meta };
+                if (value.schema instanceof Schema) value.schema = <never>value.schema[schemaData].data;
+                else if (value.schema === "self") value.schema = <never>null;
+                else value.schema = <never>this.#parse(value.schema).data;
+
+                relations[key] = { index: value.index ?? false, schema: value.schema, meta: value.meta };
                 continue;
             } else if (value.type === "vector") {
                 if (typeof value.algorithm === "undefined") {

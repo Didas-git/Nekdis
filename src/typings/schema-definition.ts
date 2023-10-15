@@ -9,7 +9,7 @@ export type SchemaField = FieldStringType | Exclude<FieldType, ReferenceField | 
 export interface ParsedSchemaDefinition {
     data: Record<string, ParsedFieldType>;
     references: Record<string, null>;
-    relations: Record<string, { index: boolean, data: Record<string, ParsedFieldType> }>;
+    relations: Record<string, { index: boolean, schema: Record<string, ParsedFieldType> | null, meta: Record<string, ParsedFieldType> }>;
 }
 
 export type FieldType = StringField | NumberField | BigIntField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField | ReferenceField | VectorField | RelationField;
@@ -173,6 +173,6 @@ export interface ReferenceField extends Pick<BaseField, "type"> {
 // NON EXISTENT
 export interface RelationField extends Pick<BaseField, "type" | "index"> {
     type: "relation";
-    schema: Schema<any, any> | "self";
+    schema: Schema<any, any> | SchemaDefinition | "self";
     meta?: Schema<any> | SchemaDefinition | undefined;
 }

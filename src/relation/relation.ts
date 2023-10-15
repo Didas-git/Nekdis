@@ -6,11 +6,12 @@ import { JSONDocument, HASHDocument } from "../document";
 import type {
     ModelInformation,
     NodeRedisClient,
+    MapSchemaData,
     ParseSchema,
     Document
 } from "../typings";
 
-export class Relation<T extends ParseSchema<any>> {
+export class Relation<T extends ParseSchema<any>, F extends ParseSchema<any>["relations"][number]["meta"] = any> {
     readonly #client: NodeRedisClient;
     readonly #information: ModelInformation;
     readonly #in: string;
@@ -48,13 +49,13 @@ export class Relation<T extends ParseSchema<any>> {
         return this;
     }
 
-    public as(field: string): this {
-        this.#field = field;
-        return this;
+    public as<K extends keyof T["relations"]>(field: K): Relation<T, T["relations"][K]["meta"]> {
+        this.#field = <string>field;
+        return <never>this;
     }
 
-    public with(meta: T): this {
-        this.#meta = meta;
+    public with(meta: MapSchemaData<F extends {} ? F : any>): this {
+        this.#meta = <never>meta;
         return this;
     }
 
@@ -65,7 +66,7 @@ export class Relation<T extends ParseSchema<any>> {
         });
 
         const arr = ["FCALL"];
-        const omitId = `${this.#information.globalPrefix}:${this.#information.prefix}:${this.#information.modelName}-${this.#field}:${randomUUID()}`;
+        const omitId = `${this.#information.globalPrefix}:${this.#information.prefix}:${this.#information.modelName}-relation-${this.#field}:${randomUUID()}`;
 
         if (this.#information.dataStructure === "JSON") {
             arr.push("JSONCR");

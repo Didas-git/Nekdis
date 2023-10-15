@@ -177,7 +177,7 @@ export class HASHDocument implements DocumentShared {
                 continue;
             }
 
-            if (typeof this.#schema.references[key] === "undefined") arr.push(val);
+            if (typeof this.#schema.references[key] === "undefined" && typeof this.#schema.relations[key] === "undefined") arr.push(val);
         }
 
         if (!this.#autoFetch) {

@@ -14,9 +14,11 @@ import type {
     NodeRedisClient,
     ReturnDocument,
     ModelOptions,
+    ParseSchema,
     ParsedMap,
     MapSchema,
-    Document
+    Document,
+    TopLevelSchemaDefinition
 } from "./typings";
 
 export class Model<S extends Schema<any>> {
@@ -88,7 +90,22 @@ export class Model<S extends Schema<any>> {
         else this.#docType = JSONDocument;
     }
 
-    public async get<F extends boolean = false>(id: string | number, autoFetch?: F): Promise<ReturnDocument<S, F> | undefined> {
+    public async get<
+        FREF extends boolean,
+        FREL extends boolean,
+        K extends keyof T,
+        T extends ExtractParsedSchemaDefinition<S>["relations"] = ExtractParsedSchemaDefinition<S>["relations"]
+    >(
+        id: string | number,
+        options?: {
+            withReferences?: FREF,
+            withRelations?: FREL,
+
+            /** This only works if you are using `relationsConstrain` */
+            returnMetadataOverRelation?: boolean,
+            relationsConstrain?: Record<K, (search: Search<ParseSchema<(T[K]["meta"] & {}) extends TopLevelSchemaDefinition ? (T[K]["meta"] & {}) : any>>) => Search<ParseSchema<any>>>
+        }
+    ): Promise<ReturnDocument<S, FREF, FREL> | undefined> {
         if (typeof id === "undefined") throw new PrettyError("A valid id was not given", {
             reference: "nekdis"
         });
@@ -98,7 +115,7 @@ export class Model<S extends Schema<any>> {
         const data = this.#schema.options.dataStructure === "JSON" ? await this.#client.json.get(id.toString()) : await this.#client.hGetAll(id.toString());
 
         if (data === null || Object.keys(data).length === 0) return void 0;
-        if (autoFetch) {
+        if (options?.withReferences) {
             for (let i = 0, keys = Object.keys(this.#schema[schemaData].references), len = keys.length; i < len; i++) {
                 const key = keys[i];
                 //@ts-expect-error node-redis types decided to die
@@ -114,17 +131,97 @@ export class Model<S extends Schema<any>> {
             }
         }
 
+        if (options?.withRelations) {
+            if (typeof options.relationsConstrain !== "undefined") {
+                for (let i = 0, entries = Object.entries(options.relationsConstrain), length = entries.length; i < length; i++) {
+                    const [key, value] = <[string, (s: Search<ParseSchema<any>>) => Search<ParseSchema<any>>]>entries[i];
+
+                    const rawMeta = await value(new Search(this.#client, {
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        data: <never>this.#schema[schemaData].relations[key].meta!,
+                        references: {},
+                        relations: {}
+                    }, this.#docType, this.#relationsToIndex[key].data.map, {
+                        ...this.#options,
+                        modelName: this.name,
+                        suffix: this.#schema.options.suffix,
+                        searchIndex: `${this.#relationsToIndex[key].key}:index`,
+                        dataStructure: this.#schema.options.dataStructure
+                    })).returnAll(false, true);
+
+                    if (typeof rawMeta === "undefined") {
+                        //@ts-expect-error node-redis types decided to die
+                        data[key] = [];
+                        continue;
+                    }
+
+                    for (let j = 0, len = rawMeta.length; j < len; j++) {
+                        if (options.returnMetadataOverRelation) {
+                            rawMeta[j] = <never>new this.#docType({
+                                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                                data: <never>this.#schema[schemaData].relations[key].meta!,
+                                references: {},
+                                relations: {}
+                            }, {
+                                globalPrefix: this.#options.globalPrefix,
+                                prefix: this.#options.prefix,
+                                name: this.name,
+                                suffix: this.#schema.options.suffix
+                            }, rawMeta[j], true, this.#options.skipDocumentValidation);
+                        } else {
+                            let fetchedRelation = this.#schema.options.dataStructure === "JSON" ? await this.#client.json.get(rawMeta[j].out) : await this.#client.hGetAll(rawMeta[j].out);
+                            if (fetchedRelation === null || Object.keys(fetchedRelation).length === 0) fetchedRelation = {};
+                            rawMeta[j] = <never>new this.#docType({
+                                data: <never>(this.#schema[schemaData].relations[key].schema ?? this.#schema[schemaData].data),
+                                references: {},
+                                relations: {}
+                            }, {
+                                globalPrefix: this.#options.globalPrefix,
+                                prefix: this.#options.prefix,
+                                name: this.name,
+                                suffix: this.#schema.options.suffix
+                            }, <never>fetchedRelation, true, this.#options.skipDocumentValidation);
+                        }
+                    }
+
+                    //@ts-expect-error node-redis types decided to die
+                    data[key] = rawMeta;
+                }
+            } else {
+                for (let i = 0, entries = Object.entries(this.#schema[schemaData].relations), length = entries.length; i < length; i++) {
+                    const [key, value] = entries[i];
+
+                    const arr: Array<Record<string, unknown>> = JSON.parse(await this.#client.sendCommand(["FCALL", "JSONGR", "1", id, key]));
+
+                    for (let j = 0, len = arr.length; j < len; j++) {
+                        arr[j] = new this.#docType({
+                            data: <never>(value.schema ?? this.#schema[schemaData].data),
+                            references: {},
+                            relations: {}
+                        }, {
+                            globalPrefix: this.#options.globalPrefix,
+                            prefix: this.#options.prefix,
+                            name: this.name,
+                            suffix: this.#schema.options.suffix
+                        }, arr[j], true, this.#options.skipDocumentValidation);
+                    }
+                    //@ts-expect-error node-redis types decided to die
+                    data[key] = arr;
+                }
+            }
+        }
+
         return <never>new this.#docType(<never>this.#schema[schemaData], {
             globalPrefix: this.#options.globalPrefix,
             prefix: this.#options.prefix,
             name: this.name,
             suffix: this.#schema.options.suffix
-        }, <never>data, true, this.#options.skipDocumentValidation, autoFetch);
+        }, <never>data, true, this.#options.skipDocumentValidation);
     }
 
     public create(id?: string | number): ReturnDocument<S>;
-    public create(data?: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true>): ReturnDocument<S>;
-    public create(idOrData?: string | number | { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true>): ReturnDocument<S> {
+    public create(data?: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, true>): ReturnDocument<S>;
+    public create(idOrData?: string | number | { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, true>): ReturnDocument<S> {
         if (typeof idOrData === "object") {
             return <never>new this.#docType(<never>this.#schema[schemaData], {
                 globalPrefix: this.#options.globalPrefix,
@@ -187,8 +284,8 @@ export class Model<S extends Schema<any>> {
     }
 
     public async createAndSave(id?: string | number): Promise<void>;
-    public async createAndSave(data?: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true>): Promise<void>;
-    public async createAndSave(idOrData?: string | number | { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true>): Promise<void> {
+    public async createAndSave(data?: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, true>): Promise<void>;
+    public async createAndSave(idOrData?: string | number | { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, true>): Promise<void> {
         const doc = this.create(<never>idOrData);
         await this.save(doc);
     }

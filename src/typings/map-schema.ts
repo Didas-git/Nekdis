@@ -10,7 +10,7 @@ export type MapSchema<
     CAS extends boolean = false
 > = Expand<MapSchemaData<T["data"], CAS> & MapSchemaReferences<T["references"], FREF, CAS> & (CAS extends true ? unknown : FREL extends true ? MapSchemaRelations<T["relations"]> : unknown)>;
 
-type MapSchemaData<T extends ParseSchemaData<any>, CAS extends boolean = false> = {
+export type MapSchemaData<T extends ParseSchemaData<any>, CAS extends boolean = false> = {
     [K in keyof T as T[K]["optional"] extends false
     ? T[K]["default"] extends {}
     ? CAS extends true

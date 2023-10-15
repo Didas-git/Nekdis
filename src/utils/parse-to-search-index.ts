@@ -151,9 +151,9 @@ export function parseRelationsToSearchIndex(
             key: `${initialKey}-relation-${key}`,
             hash: createHash("sha1").update(JSON.stringify({
                 structure: structure,
-                definition: value.data
+                definition: value.meta
             })).digest("base64"),
-            data: parseSchemaToSearchIndex(value.data, structure, { topLevelIndex: value.index })
+            data: parseSchemaToSearchIndex(value.meta, structure, { topLevelIndex: value.index })
         };
     }
 

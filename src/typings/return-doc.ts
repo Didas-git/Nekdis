@@ -8,7 +8,8 @@ export type Document = JSONDocument | HASHDocument;
 export type ReturnDocument<
     T extends Schema<any, any> | ParseSchema<any>,
     FREF extends boolean = false,
-    FREL extends boolean = false
+    FREL extends boolean = false,
+    CAS extends boolean = false
 > = T extends Schema<any, any, infer U>
-    ? Document & MapSchema<U, FREF, FREL>
-    : T extends ParseSchema<any> ? Document & MapSchema<T, FREF, FREL> : never;
+    ? Document & MapSchema<U, FREF, FREL, CAS>
+    : T extends ParseSchema<any> ? Document & MapSchema<T, FREF, FREL, CAS> : never;
