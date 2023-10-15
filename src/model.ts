@@ -10,6 +10,7 @@ import { Search } from "./search/search";
 import type { Schema } from "./schema";
 import type {
     ExtractParsedSchemaDefinition,
+    TopLevelSchemaDefinition,
     ParsedRelationsToSearch,
     NodeRedisClient,
     ReturnDocument,
@@ -17,8 +18,7 @@ import type {
     ParseSchema,
     ParsedMap,
     MapSchema,
-    Document,
-    TopLevelSchemaDefinition
+    Document
 } from "./typings";
 
 export class Model<S extends Schema<any>> {
@@ -94,7 +94,8 @@ export class Model<S extends Schema<any>> {
         FREF extends boolean,
         FREL extends boolean,
         K extends keyof T,
-        T extends ExtractParsedSchemaDefinition<S>["relations"] = ExtractParsedSchemaDefinition<S>["relations"]
+        T extends ExtractParsedSchemaDefinition<S>["relations"] = ExtractParsedSchemaDefinition<S>["relations"],
+        MOR extends boolean = false
     >(
         id: string | number,
         options?: {
@@ -102,10 +103,10 @@ export class Model<S extends Schema<any>> {
             withRelations?: FREL,
 
             /** This only works if you are using `relationsConstrain` */
-            returnMetadataOverRelation?: boolean,
+            returnMetadataOverRelation?: MOR,
             relationsConstrain?: Record<K, (search: Search<ParseSchema<(T[K]["meta"] & {}) extends TopLevelSchemaDefinition ? (T[K]["meta"] & {}) : any>>) => Search<ParseSchema<any>>>
         }
-    ): Promise<ReturnDocument<S, FREF, FREL> | undefined> {
+    ): Promise<ReturnDocument<S, FREF, FREL, MOR> | undefined> {
         if (typeof id === "undefined") throw new PrettyError("A valid id was not given", {
             reference: "nekdis"
         });
@@ -224,8 +225,8 @@ export class Model<S extends Schema<any>> {
     }
 
     public create(id?: string | number): ReturnDocument<S>;
-    public create(data?: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, true>): ReturnDocument<S>;
-    public create(idOrData?: string | number | { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, true>): ReturnDocument<S> {
+    public create(data?: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, false, true>): ReturnDocument<S>;
+    public create(idOrData?: string | number | { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, false, true>): ReturnDocument<S> {
         if (typeof idOrData === "object") {
             return <never>new this.#docType(<never>this.#schema[schemaData], {
                 globalPrefix: this.#options.globalPrefix,
@@ -288,8 +289,8 @@ export class Model<S extends Schema<any>> {
     }
 
     public async createAndSave(id?: string | number): Promise<void>;
-    public async createAndSave(data?: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, true>): Promise<void>;
-    public async createAndSave(idOrData?: string | number | { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, true>): Promise<void> {
+    public async createAndSave(data?: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, false, true>): Promise<void>;
+    public async createAndSave(idOrData?: string | number | { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, false, true>): Promise<void> {
         const doc = this.create(<never>idOrData);
         await this.save(doc);
     }

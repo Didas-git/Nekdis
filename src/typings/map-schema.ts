@@ -7,8 +7,9 @@ export type MapSchema<
     T extends ParseSchema<any>,
     FREF extends boolean = false,
     FREL extends boolean = false,
+    MOR extends boolean = false,
     CAS extends boolean = false
-> = Expand<MapSchemaData<T["data"], CAS> & MapSchemaReferences<T["references"], FREF, CAS> & (CAS extends true ? unknown : FREL extends true ? MapSchemaRelations<T["relations"]> : unknown)>;
+> = Expand<MapSchemaData<T["data"], CAS> & MapSchemaReferences<T["references"], FREF, CAS> & (CAS extends true ? unknown : FREL extends true ? MapSchemaRelations<T["relations"], MOR> : unknown)>;
 
 export type MapSchemaData<T extends ParseSchemaData<any>, CAS extends boolean = false> = {
     [K in keyof T as T[K]["optional"] extends false
@@ -79,6 +80,8 @@ type _MapSchemaReferences<T extends ParseSchema<any>["references"][number], AF e
     ? Array<Expand<MapSchemaData<T["schema"]>>>
     : ReferenceArray;
 
-type MapSchemaRelations<T extends ParseSchema<any>["relations"]> = {
-    [K in keyof T]: Array<Expand<MapSchemaData<T[K]["schema"]>>>
+type MapSchemaRelations<T extends ParseSchema<any>["relations"], MOR extends boolean> = {
+    [K in keyof T]: MOR extends true
+    ? Array<Expand<MapSchemaData<(T[K]["meta"] & {}) extends ParseSchemaData<any> ? (T[K]["meta"] & {}) : any>>>
+    : Array<Expand<MapSchemaData<(T[K]["schema"] & {}) extends ParseSchemaData<any> ? (T[K]["schema"] & {}) : any>>>
 };
