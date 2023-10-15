@@ -52,7 +52,8 @@ export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinit
 
     #parse(schema: TopLevelSchemaDefinition): ParsedSchemaDefinition {
         const data: Record<string, unknown> = {};
-        const references: Record<string, unknown> = {};
+        const references: Record<string, null> = {};
+        const relations: Record<string, Record<string, unknown> | null> = {};
 
         for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
             let [key, value] = entries[i];
@@ -114,6 +115,26 @@ export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinit
                         ]
                     });
                     //@ts-expect-error Some people do not read docs
+                } else if (value === "relation") {
+                    throw new PrettyError("Type 'relation' needs to use its object definition", {
+                        reference: "nekdis",
+                        lines: [
+                            {
+                                error: inspect({ [key]: value }, { colors: true }),
+                                marker: { text: "Parsing:" }
+                            },
+                            {
+                                error: inspect({
+                                    [key]: {
+                                        type: "relation",
+                                        schema: "`SchemaInstance`"
+                                    }
+                                }, { colors: true, compact: false }),
+                                marker: { text: "Fix:", color: Color.fromHex("#00FF00"), newLine: true }
+                            }
+                        ]
+                    });
+                    //@ts-expect-error Some people do not read docs
                 } else if (value === "tuple") {
                     throw new PrettyError("Type 'tuple' needs to use its object definition");
                 } else if (value === "array") {
@@ -132,7 +153,7 @@ export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinit
                     };
                 } else {
                     value = { type: value, default: undefined, optional: false, sortable: false, index: false };
-                    if ((<FieldType>value).type === "string" || (<FieldType>value).type === "number") (<StringField | NumberField>value).literal = undefined;
+                    if ((<FieldType>value).type === "string" || (<FieldType>value).type === "number" || (<FieldType>value).type === "bigint") (<StringField | NumberField>value).literal = undefined;
                 }
 
                 data[key] = value;
@@ -164,9 +185,12 @@ export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinit
             } else if (value.type === "object") {
                 if (typeof value.default === "undefined") value.default = undefined;
                 if (typeof value.optional === "undefined") value.optional = false;
-                if (typeof value.properties === "undefined") value.properties = <never>null;
-                else if (value.properties instanceof Schema) value.properties = <never>value.properties[schemaData].data;
-                else value.properties = <never>this.#parse(value.properties).data;
+                if (typeof value.properties !== "undefined") {
+                    if (value.properties instanceof Schema) value.properties = <never>value.properties[schemaData].data;
+                    else value.properties = <never>this.#parse(value.properties).data;
+                } else {
+                    value.properties = void 0;
+                }
             } else if (value.type === "tuple") {
                 if (typeof value.elements === "undefined") throw new PrettyError("Tuple needs to have at least 1 element", {
                     reference: "nekdis"
@@ -177,7 +201,7 @@ export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinit
                 value = this.#fill(value);
             } else if (value.type === "reference") {
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
-                if (!value.schema) throw new PrettyError("Type 'reference' lacks a schema", {
+                if (!value.schema) throw new PrettyError("Type 'reference' lacks a schema which is needed to provide intellisense", {
                     reference: "nekdis",
                     lines: [
                         {
@@ -196,6 +220,34 @@ export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinit
                     ]
                 });
                 references[key] = null;
+                continue;
+            } else if (value.type === "relation") {
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
+                if (!value.schema) throw new PrettyError("Type 'relation' lacks a schema which is needed to provide intellisense", {
+                    reference: "nekdis",
+                    lines: [
+                        {
+                            error: inspect({ [key]: value }, { colors: true }),
+                            marker: { text: "Parsing:" }
+                        },
+                        {
+                            error: inspect({
+                                [key]: {
+                                    type: "relation",
+                                    schema: "`SchemaInstance`"
+                                }
+                            }, { colors: true, compact: false }),
+                            marker: { text: "Fix:", color: Color.fromHex("#00FF00"), newLine: true }
+                        }
+                    ]
+                });
+
+                if (typeof value.meta !== "undefined") {
+                    if (value.meta instanceof Schema) value.meta = <never>value.meta[schemaData].data;
+                    else value.meta = <never>this.#parse(value.meta).data;
+                }
+
+                relations[key] = value.meta ?? null;
                 continue;
             } else if (value.type === "vector") {
                 if (typeof value.algorithm === "undefined") {
@@ -239,7 +291,7 @@ export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinit
 
             data[key] = value;
         }
-        return <never>{ data, references };
+        return <never>{ data, references, relations };
     }
 
     #fill(value: BaseField): any {

@@ -11,7 +11,7 @@ export interface ClientOptions<T extends TopLevelSchemaDefinition, M extends Met
     url?: string | URLObject;
     globalPrefix?: string;
     enableInjections?: boolean;
-    inject?: {
+    base?: {
         schema?: {
             definition?: T,
             methods?: M,

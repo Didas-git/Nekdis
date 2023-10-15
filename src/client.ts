@@ -46,7 +46,7 @@ export class Client<SD extends TopLevelSchemaDefinition = {}, MD extends Methods
             this.#client.connect().then(async () => {
                 this.#open = true;
                 if (this.#options.enableInjections) {
-                    this.#client.functionLoad((
+                    await this.#client.functionLoad((
                         await readFile(join(__dirname, "scripts/create-relation.lua"))
                     ).toString("utf8"), { REPLACE: true });
                 }
@@ -75,13 +75,13 @@ export class Client<SD extends TopLevelSchemaDefinition = {}, MD extends Methods
         { [K in keyof (M & MD)]: (M & MD)[K] }
     > {
         return <never>new Schema({
-            ...this.#options.inject?.schema?.definition,
+            ...this.#options.base?.schema?.definition,
             ...definition
         }, <never>{
-            ...this.#options.inject?.schema?.methods,
+            ...this.#options.base?.schema?.methods,
             ...methods
         }, {
-            ...this.#options.inject?.schema?.options,
+            ...this.#options.base?.schema?.options,
             ...options
         });
     }
