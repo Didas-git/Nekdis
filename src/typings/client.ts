@@ -10,6 +10,7 @@ export type NodeRedisClient = ReturnType<typeof createClient>;
 export interface ClientOptions<T extends TopLevelSchemaDefinition, M extends MethodsDefinition<T>> {
     url?: string | URLObject;
     globalPrefix?: string;
+    enableInjections?: boolean;
     inject?: {
         schema?: {
             definition?: T,

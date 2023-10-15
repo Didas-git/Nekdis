@@ -25,7 +25,8 @@ import type {
     ParseSchema,
     BaseField,
     ParsedMap,
-    FieldType
+    FieldType,
+    FieldStringType
 } from "../typings";
 
 export type SearchReturn<T extends Search<ParseSchema<any>>> = Omit<T, "where" | "and" | "or" | "rawQuery" | `sort${string}` | `return${string}`>;
@@ -328,7 +329,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return <never>this.#defineReturn(searchPath, type);
     }
 
-    #defineReturn(field: string, type: Exclude<FieldType["type"], "tuple" | "array" | "reference">): BaseField {
+    #defineReturn(field: string, type: Exclude<FieldStringType, "array">): BaseField {
         switch (type) {
             case "string": {
                 this.#workingType = "string";
@@ -362,7 +363,6 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                 this.#workingType = "vector";
                 return <never>new VectorField<T>(this, field);
             }
-            case "object": { throw new PrettyError("This should not be possible"); }
         }
     }
 

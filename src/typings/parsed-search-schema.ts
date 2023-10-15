@@ -1,4 +1,4 @@
-import type { FieldMap } from "./field-map";
+import type { FieldStringType } from "./schema-definition";
 
 export interface ParsedSchemaToSearch {
     map: ParsedMap;
@@ -6,6 +6,6 @@ export interface ParsedSchemaToSearch {
 }
 
 export type ParsedMap = Map<string, {
-    type: Exclude<keyof FieldMap, "array" | "tuple" | "reference" | "object">,
+    type: Exclude<FieldStringType, "array">,
     searchPath: string
 }>;

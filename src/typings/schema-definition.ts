@@ -2,9 +2,9 @@ import type { FieldMap } from "./field-map";
 import type { Schema } from "../schema";
 import type { Point } from "./point";
 
-export type TopLevelSchemaDefinition = Record<string, keyof Omit<FieldMap, "tuple" | "object" | "reference"> | FieldType>;
+export type TopLevelSchemaDefinition = Record<string, FieldStringType | FieldType>;
 export type SchemaDefinition = Record<string, SchemaField>;
-export type SchemaField = keyof Omit<FieldMap, "tuple" | "object" | "reference"> | Exclude<FieldType, ReferenceField | RelationField>;
+export type SchemaField = FieldStringType | Exclude<FieldType, ReferenceField | RelationField>;
 
 export interface ParsedSchemaDefinition {
     data: Record<string, ParsedFieldType>;
@@ -13,6 +13,7 @@ export interface ParsedSchemaDefinition {
 }
 
 export type FieldType = StringField | NumberField | BigIntField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField | ReferenceField | VectorField | RelationField;
+export type FieldStringType = keyof Omit<FieldMap, "tuple" | "object" | "reference" | "relation">;
 
 export type ParsedFieldType = ParsedStringField
     | ParsedNumberField
@@ -123,14 +124,14 @@ export type VectorField = FlatVector | HNSWVector;
 // FALLBACK
 export interface ArrayField extends BaseField {
     type: "array";
-    elements?: Exclude<keyof FieldMap, "array" | "reference" | "object" | "tuple"> | SchemaDefinition | undefined;
+    elements?: Exclude<FieldStringType, "array"> | SchemaDefinition | undefined;
     default?: Array<unknown> | undefined;
     separator?: string;
 }
 
 export interface ParsedArrayField extends Required<BaseField> {
     type: "array";
-    elements: Exclude<keyof FieldMap, "array" | "reference" | "object" | "tuple"> | ParsedSchemaDefinition["data"];
+    elements: Exclude<FieldStringType, "array"> | ParsedSchemaDefinition["data"];
     default: Array<unknown> | undefined;
 
     /** Default: `|` */

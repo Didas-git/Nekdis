@@ -1,3 +1,6 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+
 import { PrettyError } from "@infinite-fansub/logger";
 import { createClient } from "redis";
 
@@ -5,9 +8,9 @@ import { Schema } from "./schema";
 import { Model } from "./model";
 
 import type {
+    TopLevelSchemaDefinition,
     ExtractSchemaMethods,
     MethodsDefinition,
-    TopLevelSchemaDefinition,
     NodeRedisClient,
     SchemaOptions,
     ClientOptions,
@@ -29,23 +32,28 @@ export class Client<SD extends TopLevelSchemaDefinition = {}, MD extends Methods
     }
 
     public async connect(url: string | URLObject = this.#options.url ?? "redis://localhost:6379"): Promise<Client> {
-        if (this.#open) return this;
+        return new Promise((resolve, reject) => {
+            if (this.#open) resolve(this);
 
-        if (typeof url === "object") {
-            const { username, password, entrypoint, port } = url;
-            url = `redis://${username}:${password}@${(/:\d$/).exec(entrypoint) ? entrypoint : `${entrypoint}:${port}`}`;
-        }
+            if (typeof url === "object") {
+                const { username, password, entrypoint, port } = url;
+                url = `redis://${username}:${password}@${(/:\d$/).exec(entrypoint) ? entrypoint : `${entrypoint}:${port}`}`;
+            }
 
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        this.#client ??= createClient({ url });
-        try {
-            await this.#client.connect();
-            this.#open = true;
-        } catch (e) {
-            Promise.reject(e);
-        }
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+            this.#client ??= createClient({ url });
 
-        return this;
+            this.#client.connect().then(async () => {
+                this.#open = true;
+                if (this.#options.enableInjections) {
+                    this.#client.functionLoad((
+                        await readFile(join(__dirname, "scripts/create-relation.lua"))
+                    ).toString("utf8"), { REPLACE: true });
+                }
+
+                resolve(this);
+            }).catch((e) => reject(e));
+        });
     }
 
     public async disconnect(): Promise<Client> {
@@ -127,10 +135,6 @@ export class Client<SD extends TopLevelSchemaDefinition = {}, MD extends Methods
         if (!this.#open) {
             this.#client = client;
         }
-    }
-
-    public set globalPrefix(str: string) {
-        this.#options.globalPrefix = str;
     }
 }
 
