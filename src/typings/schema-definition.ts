@@ -27,7 +27,6 @@ export type ParsedFieldType = ParsedStringField
     | Required<TextField>
     | Required<DateField>;
 
-
 export type FloatArray = Float32Array | Float64Array;
 
 export interface BaseField {

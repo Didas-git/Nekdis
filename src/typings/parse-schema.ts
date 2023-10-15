@@ -42,9 +42,9 @@ export type ParseSchema<T extends TopLevelSchemaDefinition> = {
             : P extends "meta"
             ? T[K][P] extends {}
             ? T[K][P] extends Schema<any, any, infer U>
-            ? U["data"]
+            ? U["data"] & ParseSchemaData<{ in: "string", out: "string" }>
             : T[K][P] extends SchemaDefinition
-            ? ParseSchemaData<T[K][P], true>
+            ? ParseSchemaData<T[K][P] & { in: "string", out: "string" }, true>
             : never
             : undefined
             : T[K][P]

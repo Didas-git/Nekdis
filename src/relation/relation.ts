@@ -54,7 +54,7 @@ export class Relation<T extends ParseSchema<any>, F extends ParseSchema<any>["re
         return <never>this;
     }
 
-    public with(meta: MapSchemaData<F extends {} ? F : any>): this {
+    public with(meta: MapSchemaData<F extends {} ? Omit<F, "in" | "out"> : any>): this {
         this.#meta = <never>meta;
         return this;
     }
