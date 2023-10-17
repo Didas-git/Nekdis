@@ -110,7 +110,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
 
     public async page<F extends boolean = false>(offset: number, count: number, autoFetch?: F): Promise<Array<ReturnDocument<T, F>> | undefined> {
         const { total, documents } = await this.#search({ LIMIT: { from: offset, size: count } });
-        if (total === 0) return void 0;
+        if (total === 0) return undefined;
 
         const docs = [];
 
@@ -143,7 +143,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
 
     public async pageOfIds(offset: number, count: number, idOnly: boolean = false): Promise<Array<string> | undefined> {
         const { total, documents } = await this.#search({ LIMIT: { from: offset, size: count } }, true);
-        if (total === 0) return void 0;
+        if (total === 0) return undefined;
 
         const docs: Array<string> = [];
 
@@ -181,7 +181,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
 
     public async all<F extends boolean = false>(autoFetch?: F): Promise<Array<ReturnDocument<T, F>> | undefined> {
         const { total } = await this.#search({ LIMIT: { from: 0, size: 0 } });
-        if (total === 0) return void 0;
+        if (total === 0) return undefined;
 
         const { documents } = await this.#search({ LIMIT: { from: 0, size: total } });
         const docs = [];
@@ -215,7 +215,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
 
     public async allIds(idOnly: boolean = false): Promise<Array<string> | undefined> {
         const { total } = await this.#search({ LIMIT: { from: 0, size: 0 } });
-        if (total === 0) return void 0;
+        if (total === 0) return undefined;
 
         const { documents } = await this.#search({ LIMIT: { from: 0, size: total } });
         const docs: Array<string> = [];

@@ -99,7 +99,7 @@ export class JSONDocument implements DocumentShared {
                         ? value.vecType === "FLOAT32"
                             ? new Float32Array()
                             : new Float64Array()
-                        : void 0);
+                        : undefined);
         }
 
         for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {

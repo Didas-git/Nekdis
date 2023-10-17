@@ -115,7 +115,7 @@ export class Model<S extends Schema<any>> {
 
         const data = this.#schema.options.dataStructure === "JSON" ? await this.#client.json.get(id.toString()) : await this.#client.hGetAll(id.toString());
 
-        if (data === null || Object.keys(data).length === 0) return void 0;
+        if (data === null || Object.keys(data).length === 0) return undefined;
         if (options?.withReferences) {
             for (let i = 0, keys = Object.keys(this.#schema[schemaData].references), len = keys.length; i < len; i++) {
                 const key = keys[i];
@@ -243,7 +243,7 @@ export class Model<S extends Schema<any>> {
             name: this.name,
             suffix: this.#schema.options.suffix,
             id: idOrData?.toString()
-        }, void 0, false, this.#options.skipDocumentValidation, false);
+        }, undefined, false, this.#options.skipDocumentValidation, false);
     }
 
     public async save(doc: Document): Promise<void> {
