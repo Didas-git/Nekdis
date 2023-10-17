@@ -1,4 +1,4 @@
-name: Publish to NPM
+name: Publish beta to NPM
 
 on:
   workflow_dispatch:
