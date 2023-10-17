@@ -1,13 +1,13 @@
 import { createHash } from "node:crypto";
 
 import type {
+    ParsedRelationsToSearch,
     ParsedSchemaDefinition,
     ParsedSchemaToSearch,
     ParsedArrayField,
     ParsedFieldType,
     VectorField,
-    ParsedMap,
-    ParsedRelationsToSearch
+    ParsedMap
 } from "../typings";
 
 export function parseSchemaToSearchIndex(

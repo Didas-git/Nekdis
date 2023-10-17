@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+import { PrettyError } from "@infinite-fansub/logger";
 import { randomUUID } from "node:crypto";
 
 import { ReferenceArray } from "../utils";
@@ -10,7 +11,6 @@ import {
 } from "./document-helpers";
 
 import type { DocumentShared, ParsedSchemaDefinition } from "../typings";
-import { PrettyError } from "@infinite-fansub/logger";
 
 export class HASHDocument implements DocumentShared {
 

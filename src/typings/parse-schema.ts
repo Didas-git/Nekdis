@@ -1,23 +1,23 @@
-import type { ExtractParsedSchemaDefinition } from "./extract-generic";
+import type { ExtractParsedSchemaDefinition } from "./extract-schema-generics";
 import type { Schema } from "../schema";
 
 import type {
+    InnerSchemaDefinition,
     SchemaDefinition,
     ReferenceField,
+    RelationField,
     ObjectField,
     StringField,
     NumberField,
     VectorField,
+    BigIntField,
     ArrayField,
     TupleField,
     FlatVector,
     HNSWVector,
     BaseField,
-    FieldType,
-    BigIntField,
-    InnerSchemaDefinition,
-    RelationField
-} from "./schema-definition";
+    FieldType
+} from "./schema-and-fields-definition";
 
 export type ParseSchema<T extends SchemaDefinition> = {
     data: ParseSchemaData<T>,

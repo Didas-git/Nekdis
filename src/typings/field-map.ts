@@ -1,4 +1,4 @@
-import type { FloatArray, InnerSchemaDefinition } from "./schema-definition";
+import type { FloatArray, InnerSchemaDefinition } from "./schema-and-fields-definition";
 import type { Point } from "./point";
 
 /**

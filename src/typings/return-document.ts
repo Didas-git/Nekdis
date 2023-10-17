@@ -1,6 +1,6 @@
 import type { HASHDocument, JSONDocument } from "../document";
+import type { MapSchema } from "./map-schema-to-object";
 import type { ParseSchema } from "./parse-schema";
-import type { MapSchema } from "./map-schema";
 import type { Schema } from "../schema";
 
 export type Document = JSONDocument | HASHDocument;

@@ -1,8 +1,7 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
-
 import { PrettyError } from "@infinite-fansub/logger";
+import { readFile } from "node:fs/promises";
 import { createClient } from "redis";
+import { join } from "node:path";
 
 import { Schema } from "./schema";
 import { Model } from "./model";

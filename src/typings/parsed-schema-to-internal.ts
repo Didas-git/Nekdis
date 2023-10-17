@@ -1,4 +1,4 @@
-import type { FieldStringType } from "./schema-definition";
+import type { FieldStringType } from "./schema-and-fields-definition";
 
 export interface ParsedSchemaToSearch {
     map: ParsedMap;
