@@ -49,7 +49,8 @@ export class Model<S extends Schema<any>> {
             injectScripts,
             skipDocumentValidation: !this.#schema.options.skipDocumentValidation,
             globalPrefix,
-            prefix: this.#schema.options.prefix ?? prefix
+            prefix: this.#schema.options.prefix ?? prefix,
+            suffix: this.#schema.options.suffix
         };
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -150,7 +151,7 @@ export class Model<S extends Schema<any>> {
                         }, this.#docType, this.#relationsToIndex[key].data.map, {
                             ...this.#options,
                             modelName: this.name,
-                            suffix: this.#schema.options.suffix,
+                            suffix: this.#options.suffix,
                             searchIndex: `${this.#relationsToIndex[key].key}:index`,
                             dataStructure: this.#schema.options.dataStructure
                         })).rawQuery
@@ -180,7 +181,7 @@ export class Model<S extends Schema<any>> {
                             globalPrefix: this.#options.globalPrefix,
                             prefix: this.#options.prefix,
                             name: this.name,
-                            suffix: this.#schema.options.suffix
+                            suffix: this.#options.suffix
                         }, <never>value[j], true, this.#options.skipDocumentValidation);
                     }
 
@@ -208,7 +209,7 @@ export class Model<S extends Schema<any>> {
                             globalPrefix: this.#options.globalPrefix,
                             prefix: this.#options.prefix,
                             name: this.name,
-                            suffix: this.#schema.options.suffix
+                            suffix: this.#options.suffix
                         }, arr[j], true, this.#options.skipDocumentValidation);
                     }
                     //@ts-expect-error node-redis types decided to die
@@ -221,7 +222,7 @@ export class Model<S extends Schema<any>> {
             globalPrefix: this.#options.globalPrefix,
             prefix: this.#options.prefix,
             name: this.name,
-            suffix: this.#schema.options.suffix
+            suffix: this.#options.suffix
         }, <never>data, true, this.#options.skipDocumentValidation);
     }
 
@@ -233,7 +234,7 @@ export class Model<S extends Schema<any>> {
                 globalPrefix: this.#options.globalPrefix,
                 prefix: this.#options.prefix,
                 name: this.name,
-                suffix: this.#schema.options.suffix
+                suffix: this.#options.suffix
             }, idOrData, false, this.#options.skipDocumentValidation, false);
         }
 
@@ -241,7 +242,7 @@ export class Model<S extends Schema<any>> {
             globalPrefix: this.#options.globalPrefix,
             prefix: this.#options.prefix,
             name: this.name,
-            suffix: this.#schema.options.suffix,
+            suffix: this.#options.suffix,
             id: idOrData?.toString()
         }, undefined, false, this.#options.skipDocumentValidation, false);
     }
@@ -299,7 +300,7 @@ export class Model<S extends Schema<any>> {
         return new Search<ExtractParsedSchemaDefinition<S>>(this.#client, <never>this.#schema[schemaData], this.#docType, this.#parsedSchema, {
             ...this.#options,
             modelName: this.name,
-            suffix: this.#schema.options.suffix,
+            suffix: this.#options.suffix,
             searchIndex: this.#searchIndex.name,
             dataStructure: this.#schema.options.dataStructure
         });
@@ -309,7 +310,7 @@ export class Model<S extends Schema<any>> {
         return new Relation(this.#client, {
             ...this.#options,
             modelName: this.name,
-            suffix: this.#schema.options.suffix,
+            suffix: this.#options.suffix,
             dataStructure: this.#schema.options.dataStructure
         }, this.#idOrDocToString(idOrDoc));
     }
@@ -402,7 +403,7 @@ export class Model<S extends Schema<any>> {
 
     public formatId(id: string): string {
         if (id.split(":").length === 1) {
-            const suffix = this.#schema.options.suffix;
+            const suffix = this.#options.suffix;
 
             if (typeof suffix === "function") {
                 throw new PrettyError("Due to the use of dynamic suffixes you gave to pass in a full id", {
