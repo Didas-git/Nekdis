@@ -322,6 +322,7 @@ export class Model<S extends Schema<any>> {
                 const value = values[i];
 
                 if (await this.#client.get(`${value.key}:index:hash`) === value.hash) continue;
+
                 try {
                     await Promise.all([
                         this.#client.unlink(`${value.key}:index:hash`),
@@ -381,6 +382,10 @@ export class Model<S extends Schema<any>> {
         return await this.#client.ft.search(this.#searchIndex.name, args.join(" "));
     }
 
+    public sanitize(string: string): string {
+        return string.replaceAll(/[,.?<>{}[\]"':;!@#$%^&()\-+=~|/\\ ]/g, "\\$&");
+    }
+
     #idsOrDocsToString(idsOrDocs: Array<string | number | Document>): Array<string> {
         const temp = [];
 
@@ -423,7 +428,8 @@ export class Model<S extends Schema<any>> {
         return this.#options;
     }
 
-    public set options(options: Partial<Exclude<ModelOptions, "dataStructure" | "globalPrefix">>) {
+    public set options(options: Partial<Exclude<ModelOptions, "globalPrefix">>) {
+        if ("globalPrefix" in options) throw new PrettyError("To edit the global prefix please use the client options", { reference: "nekdis" });
         this.#options = { ...this.#options, ...options };
     }
 }
