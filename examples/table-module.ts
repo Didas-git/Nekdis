@@ -1,8 +1,6 @@
 import { PrettyError } from "@infinite-fansub/logger";
 
-import { Client, Model } from "../src";
-import { ModelOptions } from "../src/typings";
-
+import { Client, Model, ModelOptions } from "../src";
 /*
 This module allows you to define tables to use with normal redis operations
 However it doesn't affect the `Search` functionality since it doesn't have suffix constrains
@@ -41,7 +39,7 @@ class Table<T extends Model<any>> {
 type TableFunction = ((table: Table<any>) => Table<any> | Promise<Table<any>>) | Table<any>;
 
 const client = new Client({
-    inject: {
+    base: {
         schema: {
             methods: {
                 withTable: async function (name: string, table: TableFunction) {
