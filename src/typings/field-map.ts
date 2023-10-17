@@ -1,4 +1,4 @@
-import type { FloatArray, SchemaDefinition } from "./schema-definition";
+import type { FloatArray, InnerSchemaDefinition } from "./schema-definition";
 import type { Point } from "./point";
 
 /**
@@ -15,7 +15,7 @@ export interface FieldMap<T = string> {
     vector: Array<number> | FloatArray;
     array: Array<T>;
     tuple: [T];
-    object: Record<string, SchemaDefinition>;
-    reference: Array<Record<string, SchemaDefinition>>;
-    relation: Array<Record<string, SchemaDefinition>>;
+    object: Record<string, InnerSchemaDefinition>;
+    reference: Array<Record<string, InnerSchemaDefinition>>;
+    relation: Array<Record<string, InnerSchemaDefinition>>;
 }

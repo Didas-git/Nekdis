@@ -2,8 +2,8 @@ import type { FieldMap } from "./field-map";
 import type { Schema } from "../schema";
 import type { Point } from "./point";
 
-export type TopLevelSchemaDefinition = Record<string, FieldStringType | FieldType>;
-export type SchemaDefinition = Record<string, SchemaField>;
+export type SchemaDefinition = Record<string, FieldStringType | FieldType>;
+export type InnerSchemaDefinition = Record<string, SchemaField>;
 export type SchemaField = FieldStringType | Exclude<FieldType, ReferenceField | RelationField>;
 
 export interface ParsedSchemaDefinition {
@@ -126,7 +126,7 @@ export type VectorField = FlatVector | HNSWVector;
 // FALLBACK
 export interface ArrayField extends BaseField {
     type: "array";
-    elements?: Exclude<FieldStringType, "array"> | SchemaDefinition | undefined;
+    elements?: Exclude<FieldStringType, "array"> | InnerSchemaDefinition | undefined;
     default?: Array<unknown> | undefined;
     separator?: string;
 }
@@ -156,7 +156,7 @@ export interface ParsedTupleField extends Omit<Required<BaseField>, "sortable"> 
 // FALLBACK
 export interface ObjectField extends Omit<BaseField, "sortable"> {
     type: "object";
-    properties?: Schema<any> | SchemaDefinition | undefined;
+    properties?: Schema<any> | InnerSchemaDefinition | undefined;
     default?: Record<string, any> | undefined;
 }
 
@@ -175,6 +175,6 @@ export interface ReferenceField extends Pick<BaseField, "type"> {
 // NON EXISTENT
 export interface RelationField extends Pick<BaseField, "type" | "index"> {
     type: "relation";
-    schema: Schema<any, any> | SchemaDefinition | "self";
-    meta?: Schema<any> | SchemaDefinition | undefined;
+    schema: Schema<any, any> | InnerSchemaDefinition | "self";
+    meta?: Schema<any> | InnerSchemaDefinition | undefined;
 }

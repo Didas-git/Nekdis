@@ -8,9 +8,9 @@ import { Schema } from "./schema";
 import { Model } from "./model";
 
 import type {
-    TopLevelSchemaDefinition,
     ExtractSchemaMethods,
     MethodsDefinition,
+    SchemaDefinition,
     NodeRedisClient,
     SchemaOptions,
     ClientOptions,
@@ -21,7 +21,7 @@ import type {
     Module
 } from "./typings";
 
-export class Client<SD extends TopLevelSchemaDefinition = {}, MD extends MethodsDefinition<SD> = {}> {
+export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefinition<SD> = {}> {
     #client!: NodeRedisClient;
     #models: Map<string, Model<any>> = new Map();
     #open: boolean = false;
@@ -70,7 +70,7 @@ export class Client<SD extends TopLevelSchemaDefinition = {}, MD extends Methods
         return this;
     }
 
-    public schema<T extends Narrow<TopLevelSchemaDefinition>, M extends MethodsDefinition<(T & SD)> = {}>(definition: T, methods?: M, options?: SchemaOptions): Schema<
+    public schema<T extends Narrow<SchemaDefinition>, M extends MethodsDefinition<(T & SD)> = {}>(definition: T, methods?: M, options?: SchemaOptions): Schema<
         { [K in keyof (T & SD)]: (T & SD)[K] },
         { [K in keyof (M & MD)]: (M & MD)[K] }
     > {

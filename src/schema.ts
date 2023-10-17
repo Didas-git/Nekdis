@@ -5,10 +5,10 @@ import { Color } from "colours.js";
 import { methods, schemaData } from "./utils/symbols";
 
 import type {
-    TopLevelSchemaDefinition,
     ExtractSchemaDefinition,
     ParsedSchemaDefinition,
     MethodsDefinition,
+    SchemaDefinition,
     SchemaOptions,
     ParseSchema,
     NumberField,
@@ -17,7 +17,7 @@ import type {
     FieldType
 } from "./typings";
 
-export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinition<S> = {}, P extends ParseSchema<S> = ParseSchema<S>> {
+export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> = {}, P extends ParseSchema<S> = ParseSchema<S>> {
 
     /** @internal */
     public [methods]: M;
@@ -50,7 +50,7 @@ export class Schema<S extends TopLevelSchemaDefinition, M extends MethodsDefinit
         return <never>this;
     }
 
-    #parse(schema: TopLevelSchemaDefinition): ParsedSchemaDefinition {
+    #parse(schema: SchemaDefinition): ParsedSchemaDefinition {
         const data: Record<string, unknown> = {};
         const references: Record<string, null> = {};
         const relations: ParsedSchemaDefinition["relations"] = {};

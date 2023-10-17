@@ -2,7 +2,7 @@ import type { ExtractParsedSchemaDefinition } from "./extract-generic";
 import type { Schema } from "../schema";
 
 import type {
-    TopLevelSchemaDefinition,
+    SchemaDefinition,
     ReferenceField,
     ObjectField,
     StringField,
@@ -15,11 +15,11 @@ import type {
     BaseField,
     FieldType,
     BigIntField,
-    SchemaDefinition,
+    InnerSchemaDefinition,
     RelationField
 } from "./schema-definition";
 
-export type ParseSchema<T extends TopLevelSchemaDefinition> = {
+export type ParseSchema<T extends SchemaDefinition> = {
     data: ParseSchemaData<T>,
     references: {
         [K in keyof T as T[K] extends ReferenceField ? K : never]: T[K] extends ReferenceField
@@ -43,7 +43,7 @@ export type ParseSchema<T extends TopLevelSchemaDefinition> = {
             ? T[K][P] extends {}
             ? T[K][P] extends Schema<any, any, infer U>
             ? U["data"] & ParseSchemaData<{ in: "string", out: "string" }>
-            : T[K][P] extends SchemaDefinition
+            : T[K][P] extends InnerSchemaDefinition
             ? ParseSchemaData<T[K][P] & { in: "string", out: "string" }, true>
             : never
             : undefined
@@ -53,7 +53,7 @@ export type ParseSchema<T extends TopLevelSchemaDefinition> = {
     }
 };
 
-export type ParseSchemaData<T extends TopLevelSchemaDefinition, REL extends boolean = false> = {
+export type ParseSchemaData<T extends SchemaDefinition, REL extends boolean = false> = {
     [K in keyof T as T[K] extends ReferenceField ? never : T[K] extends RelationField ? never : K]: T[K] extends ObjectField
     ? ParseObjectField<T[K], REL>
     : T[K] extends ArrayField
@@ -94,7 +94,7 @@ type ParseObjectField<T extends ObjectField, REL extends boolean> = {
     ? T[P] extends {}
     ? T[P] extends Schema<any, any, infer U>
     ? U["data"]
-    : T[P] extends SchemaDefinition
+    : T[P] extends InnerSchemaDefinition
     ? ParseSchemaData<T[P]>
     : never
     : undefined
@@ -103,7 +103,7 @@ type ParseObjectField<T extends ObjectField, REL extends boolean> = {
 
 type ParseArrayField<T extends ArrayField, REL extends boolean> = {
     [P in keyof Required<ArrayField>]: P extends "elements"
-    ? T[P] extends SchemaDefinition ? ParseSchemaData<T[P]>
+    ? T[P] extends InnerSchemaDefinition ? ParseSchemaData<T[P]>
     : T[P] extends {} ? T[P] : "string"
     : Fill<P, REL>
 };

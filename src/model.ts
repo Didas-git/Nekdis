@@ -10,8 +10,8 @@ import { Search } from "./search/search";
 import type { Schema } from "./schema";
 import type {
     ExtractParsedSchemaDefinition,
-    TopLevelSchemaDefinition,
     ParsedRelationsToSearch,
+    SchemaDefinition,
     NodeRedisClient,
     ReturnDocument,
     ModelOptions,
@@ -104,7 +104,7 @@ export class Model<S extends Schema<any>> {
 
             /** This only works if you are using `relationsConstrain` */
             returnMetadataOverRelation?: MOR,
-            relationsConstrain?: Record<K, (search: Search<ParseSchema<(T[K]["meta"] & {}) extends TopLevelSchemaDefinition ? (T[K]["meta"] & {}) : any>>) => Search<ParseSchema<any>>>
+            relationsConstrain?: Record<K, (search: Search<ParseSchema<(T[K]["meta"] & {}) extends SchemaDefinition ? (T[K]["meta"] & {}) : any>>) => Search<ParseSchema<any>>>
         }
     ): Promise<ReturnDocument<S, FREF, FREL, MOR> | undefined> {
         if (typeof id === "undefined") throw new PrettyError("A valid id was not given", {
@@ -133,6 +133,7 @@ export class Model<S extends Schema<any>> {
         }
 
         if (options?.withRelations) {
+            if (!this.#options.injectScripts) throw new PrettyError("Cannot get relations without the required scripts", { reference: "nekdis" });
             if (typeof options.relationsConstrain !== "undefined") {
                 const tempConstrains: Record<string, [string, string]> = {};
 
@@ -291,8 +292,7 @@ export class Model<S extends Schema<any>> {
     public async createAndSave(id?: string | number): Promise<void>;
     public async createAndSave(data?: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, false, true>): Promise<void>;
     public async createAndSave(idOrData?: string | number | { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, false, true>): Promise<void> {
-        const doc = this.create(<never>idOrData);
-        await this.save(doc);
+        await this.save(this.create(<never>idOrData));
     }
 
     public search(): Search<ExtractParsedSchemaDefinition<S>> {
