@@ -149,7 +149,7 @@ export class JSONDocument implements DocumentShared {
         return this.#prefix;
     }
 
-    public get $model_name(): string {
+    public get $modelName(): string {
         return this.#model_name;
     }
 
@@ -161,7 +161,7 @@ export class JSONDocument implements DocumentShared {
         return this.#id;
     }
 
-    public get $record_id(): string {
+    public get $recordId(): string {
         return this.#record_id;
     }
 }
