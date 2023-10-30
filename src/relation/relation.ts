@@ -6,12 +6,13 @@ import { JSONDocument, HASHDocument } from "../document";
 import type {
     ModelInformation,
     NodeRedisClient,
+    ParseSchemaData,
     MapSchemaData,
     ParseSchema,
     Document
 } from "../typings";
 
-export class Relation<T extends ParseSchema<any>, F extends ParseSchema<any>["relations"][number]["meta"] = any> {
+export class Relation<T extends ParseSchema<any>, F extends ParseSchema<any>["relations"][number]["meta"] = {}> {
     readonly #client: NodeRedisClient;
     readonly #information: ModelInformation;
     readonly #in: string;
@@ -54,7 +55,7 @@ export class Relation<T extends ParseSchema<any>, F extends ParseSchema<any>["re
         return <never>this;
     }
 
-    public with(meta: MapSchemaData<F extends {} ? Omit<F, "in" | "out"> : any>): this {
+    public with(meta: [keyof F] extends [never] ? never : MapSchemaData<Omit<F, "in" | "out"> & ParseSchemaData<any>>): this {
         this.#meta = <never>meta;
         return this;
     }

@@ -128,7 +128,7 @@ export function parseSchemaToSearchIndex(
             }
         }
 
-        if (value.sortable) index.push("SORTABLE");
+        if ("sortable" in value && value.sortable) index.push("SORTABLE");
         if (value.type === "string" && value.caseSensitive) index.push("CASESENSITIVE");
         if (value.type === "text") {
             if (typeof value.phonetic !== "undefined") index.push("PHONETIC", value.phonetic);

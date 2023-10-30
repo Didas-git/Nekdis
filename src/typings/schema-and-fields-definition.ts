@@ -7,12 +7,29 @@ export type InnerSchemaDefinition = Record<string, SchemaField>;
 export type SchemaField = FieldStringType | Exclude<FieldType, ReferenceField | RelationField>;
 
 export interface ParsedSchemaDefinition {
-    data: Record<string, ParsedFieldType>;
-    references: Record<string, null>;
-    relations: Record<string, { index: boolean, schema: Record<string, ParsedFieldType> | null, meta: Record<string, ParsedFieldType> }>;
+    data: ParsedSchemaData;
+    references: ParsedSchemaReferences;
+    relations: ParsedSchemaRelations;
 }
 
-export type FieldType = StringField | NumberField | BigIntField | BooleanField | TextField | DateField | PointField | ArrayField | TupleField | ObjectField | ReferenceField | VectorField | RelationField;
+export type ParsedSchemaData = Record<string, ParsedFieldType>;
+export type ParsedSchemaReferences = Record<string, ParsedSchemaData>;
+export type ParsedSchemaRelations = Record<string, { index: boolean, schema: ParsedSchemaData | null, meta: ParsedSchemaData }>;
+
+export type FieldType = StringField
+    | NumberField
+    | BigIntField
+    | BooleanField
+    | TextField
+    | DateField
+    | PointField
+    | ArrayField
+    | TupleField
+    | ObjectField
+    | ReferenceField
+    | VectorField
+    | RelationField;
+
 export type FieldStringType = keyof Omit<FieldMap, "tuple" | "object" | "reference" | "relation">;
 
 export type ParsedFieldType = ParsedStringField
@@ -81,12 +98,12 @@ export interface BooleanField extends BaseField {
 export interface TextField extends BaseField {
     type: "text";
     default?: string | undefined;
-    phonetic?: "dm:en" | "dm:fr" | "dm:pt" | "dm:es";
+    phonetic?: "dm:en" | "dm:fr" | "dm:pt" | "dm:es" | undefined;
     weight?: number | undefined;
 }
 
 // NUMERIC
-export interface DateField extends BaseField {
+export interface DateField extends Omit<BaseField, "sortable"> {
     type: "date";
     default?: Date | number | string | undefined;
 }
@@ -133,7 +150,7 @@ export interface ArrayField extends BaseField {
 
 export interface ParsedArrayField extends Required<BaseField> {
     type: "array";
-    elements: Exclude<FieldStringType, "array"> | ParsedSchemaDefinition["data"];
+    elements: Exclude<FieldStringType, "array"> | ParsedSchemaData;
     default: Array<unknown> | undefined;
 
     /** Default: `|` */
@@ -160,21 +177,21 @@ export interface ObjectField extends Omit<BaseField, "sortable"> {
     default?: Record<string, any> | undefined;
 }
 
-export interface ParsedObjectField extends Omit<Required<BaseField>, "sortable"> {
+export interface ParsedObjectField extends Required<Omit<BaseField, "sortable">> {
     type: "object";
-    properties: Record<string, ParsedFieldType> | null;
+    properties: ParsedSchemaData | null;
     default: Record<string, any> | undefined;
 }
 
 // NON EXISTENT HANDLE AS ARRAY OF STRINGS WITH AUTOFETCH TRANSFORMING INTO AN OBJECT
 export interface ReferenceField extends Pick<BaseField, "type"> {
     type: "reference";
-    schema: Schema<any, any> | "self";
+    schema: Schema<any> | "self";
 }
 
 // NON EXISTENT
 export interface RelationField extends Pick<BaseField, "type" | "index"> {
     type: "relation";
-    schema: Schema<any, any> | InnerSchemaDefinition | "self";
+    schema: Schema<any> | InnerSchemaDefinition | "self";
     meta?: Schema<any> | InnerSchemaDefinition | undefined;
 }

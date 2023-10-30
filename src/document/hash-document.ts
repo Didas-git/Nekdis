@@ -157,8 +157,7 @@ export class HASHDocument implements DocumentShared {
         }
     }
 
-    /** This is actually and array... eventually i change it */
-    public toString(): Array<string> {
+    public toString(): string {
         if (this.#validate) this.#validateSchemaData(this.#schema.data, this);
 
         const arr = [
@@ -192,7 +191,7 @@ export class HASHDocument implements DocumentShared {
             }
         }
 
-        return arr;
+        return arr.join(" ");
     }
 
     public get $globalPrefix(): string {

@@ -36,12 +36,12 @@ export interface ModelOptions extends Required<Pick<SchemaOptions, "skipDocument
     prefix: string;
 }
 
-/** @internal */
+/** internal */
 export interface ModelInformation extends ModelOptions, Required<Pick<SchemaOptions, "dataStructure">> {
     modelName: string;
 }
 
-/** @internal */
+/** internal */
 export interface SearchInformation extends ModelInformation {
     searchIndex: string;
 }

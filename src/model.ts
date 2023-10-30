@@ -255,7 +255,7 @@ export class Model<S extends Schema<any>> {
         // eslint-disable-next-line @typescript-eslint/no-base-to-string
         if (this.#schema.options.dataStructure === "HASH") await this.#client.sendCommand(["HSET", doc.$record_id, ...doc.toString()]);
         // eslint-disable-next-line @typescript-eslint/no-base-to-string
-        else await this.#client.sendCommand(["JSON.SET", doc.$record_id, "$", <string>doc.toString()]);
+        else await this.#client.sendCommand(["JSON.SET", doc.$record_id, "$", doc.toString()]);
     }
 
     public async delete(...docs: Array<string | number | Document>): Promise<void> {
