@@ -53,7 +53,7 @@ export type ParseSchema<T extends SchemaDefinition> = {
     }
 };
 
-type ParseSchemaData<T extends SchemaDefinition, REL extends boolean = false> = {
+export type ParseSchemaData<T extends SchemaDefinition, REL extends boolean = false> = {
     [K in keyof T as T[K] extends ReferenceField ? never : T[K] extends RelationField ? never : K]: T[K] extends ObjectField
     ? ParseObjectField<T[K], REL>
     : T[K] extends ArrayField
