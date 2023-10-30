@@ -7,7 +7,7 @@ import type { ParsedFieldType, ParsedSchemaDefinition } from "../../typings";
 export function documentFieldToHASHValue(field: ParsedFieldType | { type: ParsedFieldType["type"] }, value: any, key?: string): Array<string | Buffer> {
     if (field.type === "boolean") return keyExists(booleanToString(value), key);
     if (field.type === "date") return keyExists(dateToNumber(value).toString(), key);
-    if (field.type === "point") return keyExists(`${value.longitude},${value.latitude}`, key);
+    if (field.type === "point") return keyExists(`"${value.longitude},${value.latitude}"`, key);
     if (field.type === "vector") {
         if (value.length === 0) return [];
         return keyExists(Buffer.from(Array.isArray(value) ? new Float64Array(value).buffer : value.buffer), key);

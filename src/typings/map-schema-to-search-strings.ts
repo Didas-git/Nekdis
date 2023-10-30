@@ -28,7 +28,11 @@ export type MapSearchField<K extends keyof T, S extends ParseSchema<any>, T exte
     ? VectorField<S>
     : never;
 
-export type SchemaToStrings<T extends ParseSchema<any>["data"], K extends keyof T = keyof T> = K extends string
+export type ParseSearchSchema<T extends ParseSchema<any>["data"]> = {
+    [K in SchemaToStrings<T>]: GetFinalProperty<K, T>
+};
+
+type SchemaToStrings<T extends ParseSchema<any>["data"], K extends keyof T = keyof T> = K extends string
     ? T[K] extends { schema: unknown }
     ? never
     : T[K] extends { index: false }
@@ -40,11 +44,13 @@ export type SchemaToStrings<T extends ParseSchema<any>["data"], K extends keyof 
     ? `${K}.${SchemaToStrings<{
         [U in keyof T[K]["elements"]as U extends `${number}` ? U : never]: T[K]["elements"][U]
     }>}`
+    : T[K]["elements"] extends object
+    ? `${K}.${SchemaToStrings<T[K]["elements"]>}`
     : K
     : K
     : never;
 
-export type GetFinalProperty<T extends string, S extends ParseSchema<any>["data"]> = T extends `${infer Head}.${infer Tail}`
+type GetFinalProperty<T extends string, S extends ParseSchema<any>["data"]> = T extends `${infer Head}.${infer Tail}`
     ? S[Head] extends { properties: any }
     ? GetFinalProperty<Tail, S[Head]["properties"]>
     : S[Head] extends { elements: unknown }
@@ -61,7 +67,3 @@ export type GetFinalProperty<T extends string, S extends ParseSchema<any>["data"
         : S[T]["literal"]
         : never
     ];
-
-export type ParseSearchSchema<T extends ParseSchema<any>["data"]> = {
-    [K in SchemaToStrings<T>]: GetFinalProperty<K, T>
-};

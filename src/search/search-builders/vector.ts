@@ -31,7 +31,7 @@ export class Vector {
     }
 
     public from(data: Array<number> | FloatArray): Vector {
-        this._buffer = Buffer.from(Array.isArray(data) ? new Float64Array(data).buffer : data.buffer);
+        this._buffer = Buffer.from(Array.isArray(data) ? new Float32Array(data).buffer : data.buffer);
         return this;
     }
 

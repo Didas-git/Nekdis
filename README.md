@@ -1,46 +1,36 @@
 # Nekdis
 
-## What is it?
-
-Nekdis is the temporary name for a proposal for [redis-om](https://github.com/redis/redis-om-node) that aims to improve the user experience and performance by providing an ODM-like naming scheme like the famous library [mongoose](https://mongoosejs.com/) for MongoDB
-
-## Future Plans
-
-Right now the proposal includes almost every feature that redis-om already has (See: [Missing Features](#missing-features)) and introduces some like [References](#schema-types).
-
-The next steps for the proposal include:
-- Improve performance on parsing nested objects for hashes[^1]
-- Improving auto fetch performance by including a lua script that will get injected as a redis function.
-- Allow auto references to be updated.
-- Improve reference checking
-- Adding support for objects inside arrays.
-- Make a proposal for [`node-redis`](https://github.com/redis/node-redis) to improve its performance.
+Nekdis is a [Redis](https://redis.com/) ODM and mainly a proposal for [redis-om](https://github.com/redis/redis-om-node) that aims to improve the user experience and performance.
 
 # Table of contents
 
 - [Nekdis](#nekdis)
-  - [What is it?](#what-is-it)
-  - [Future Plans](#future-plans)
 - [Table of contents](#table-of-contents)
 - [Installation](#installation)
 - [Getting Started](#getting-started)
   - [Connecting to the database](#connecting-to-the-database)
   - [Creating a Schema](#creating-a-schema)
   - [Creating a Model](#creating-a-model)
-  - [Creating and Saving data](#creating-and-saving-data)
-- [The new `RecordId`](#the-new-recordid)
-- [Vector Similarity Search](#vector-similarity-search)
-  - [Pure queries](#pure-queries)
-  - [Hybrid queries](#hybrid-queries)
-  - [Range queries](#range-queries)
-- [Custom Methods](#custom-methods)
-- [Modules](#modules)
-- [Schema Types](#schema-types)
-- [Field Properties](#field-properties)
-  - [Shared Properties](#shared-properties)
-  - [Unique Properties](#unique-properties)
-- [Missing features](#missing-features)
-- [Todo](#todo)
+  - [Creating a document/record](#creating-a-documentrecord)
+- [Glossary](#glossary)
+  - [RecordID](#recordid)
+  - [Document](#document)
+  - [Reference](#reference)
+  - [Relation](#relation)
+- [Advanced concepts](#advanced-concepts)
+  - [Vector similarity search](#vector-similarity-search)
+    - [Pure queries](#pure-queries)
+    - [Hybrid queries](#hybrid-queries)
+    - [Range queries](#range-queries)
+  - [References VS Relations](#references-vs-relations)
+    - [What is a Reference](#what-is-a-reference)
+      - [The problem](#the-problem)
+    - [What is a relation](#what-is-a-relation)
+      - [The problem](#the-problem-1)
+    - [Pros and Cons](#pros-and-cons)
+    - [When to and not to use relations](#when-to-and-not-to-use-relations)
+  - [Modularity with client modules](#modularity-with-client-modules)
+  - [Modularity with base injections](#modularity-with-base-injections)
 - [Nekdis VS Redis-OM](#nekdis-vs-redis-om)
   - [Client](#client)
   - [Schema](#schema)
@@ -51,15 +41,14 @@ The next steps for the proposal include:
   - [Search](#search)
   - [Nested objects](#nested-objects)
   - [A Simple example](#a-simple-example)
-  - [Open Issues this proposal fixes](#open-issues-this-proposal-fixes)
   - [Benchmarks](#benchmarks)
 
 # Installation
 
-Nekdis is available on npm via the command
+Nekdis is available on the npm registry and can be installed with your preferred package manager
 
 ```sh
-npm i nekdis
+pnpm i nekdis
 ```
 
 # Getting Started
@@ -71,33 +60,16 @@ Nekdis already exports a global client but you can also create your own instance
 ```ts
 import { client } from "nekdis";
 
-client.connect().then(() => {
+await client.connect().then(() => {
     console.log("Connected to redis");
 });
 ```
-
-<details>
-<summary>Creating an instance</summary>
-
-```ts
-import { Client } from "nekdis";
-
-const client = new Client();
-
-client.connect().then(() => {
-    console.log("Connected to redis");
-});
-```
-
-</details>
 
 ## Creating a Schema
 
-The client provides a helper to build a schema without any extra steps.
+Schemas are what defines the shape of your data and can be created using the `schema` method of the client.
 
 ```ts
-import { client } from "nekdis";
-
 const catSchema = client.schema({
     name: { type: "string" }
 });
@@ -105,17 +77,15 @@ const catSchema = client.schema({
 
 ## Creating a Model
 
-The client also provides a helper to create a model.
+Models are what you use to interact with the database and collections that have the shape of the schema you pass in. They can be crated using the `model` method of the client.
 
 ```ts
-import { client } from "nekdis";
-
 const catModel = client.model("Cat", catSchema);
 ```
 
-## Creating and Saving data
+## Creating a document/record
 
-The model is what provides all the functions to manage your data on the database.
+The model provides some methods to handle your documents but the simplest way to create one is to do as follows:
 
 ```ts
 const aCat = catModel.createAndSave({
@@ -123,192 +93,128 @@ const aCat = catModel.createAndSave({
 });
 ```
 
-# The new `RecordId`
+# Glossary
 
-This proposal introduces a new way to create unique ids called `RecordId`.
+Nekdis does naming a little different than redis does and here is a short explanation of some of them.
 
-RecordIds allow you to set prefixes and other properties to your id that is shared across all of the records.
+## RecordID
 
+Nekdis introduces the concept of the `RecordID` which is as highly customizable id that is divided into pieces, in redis itself this is just the `key`. So when you see documentation talking about an `id` or you read the types and you see `id` remember that it is just a redis `key` and shorthand for a `RecordID` in Nekdis.
+
+The structure of a `RecordID` is as follows:
 ![](./recordid.png)
 
-# Vector Similarity Search
+## Document
 
-There are 3 types of vss queries as said in the [documentation](https://redis.io/docs/stack/search/reference/vectors)
+A document in Nekdis is just the data within a key plus the id and its parts.
+The id parts can be accessed with `$globalPrefix`, `$prefix`, `$modelName`, `$suffix`, `$id` and `$recordId` respectively.
 
-Lets use the following schema & model for the next examples
+## Reference
 
-```ts
-import { client } from "nekdis";
+A `reference` in nekdis is nothing more nothing less than a foreign key, so when you defined a field in your schema as being a `reference` you are just saying that a field contains one or more keys.
 
-const testSchema = client.schema({
-    age: "number",
-    vec: "vector"
-})
+## Relation
 
-const testModel = client.model("Test", testSchema);
-```
+A `relation` is a bit more complex than a relation since it is "virtual" and not part of the document.
+For more details you can check the [references versus relations](#references-vs-relations) section on the readme.
 
-A note on the schema. Passing the string `"vector"` will default to the following options:
-```js
-const vectorDefaults = {
-    ALGORITHM: "FLAT",
-    // the vector type, nekdis calls it `vecType`
-    TYPE: "FLOAT32",
-    DIM: 128,
-    // nekdis calls it `distance`
-    DISTANCE_METRIC: "L2",
-}
-```
+# Advanced concepts
 
-## Pure queries
+Here im going to explain a bit more of the possibilities of Nekdis.
+
+## Vector similarity search
+
+Redis supports indexing vectors on the database for search, with this in mind we built a way to query them that resembles the point search using the same builder pattern.
+
+There are plans to add more functionality to it in the future but for now using it is really simple.
+
+### Pure queries
 
 ```ts
 testModel.search().where("vec").eq((vector) => vector
     .knn()
-    .from([2, 5, 7])
+    .from(new Float32Array([0.1, 0.1]))
     .return(8))
 .returnAll();
 // Generates the following query
-// "*=>[KNN 8 @vec $BLOB]" PARAMS 2 BLOB \x02\x05\x07 DIALECT 2
+// "*=>[KNN 8 @vec $BLOB]" "PARAMS" "2" "BLOB" "\xcd\xcc\xcc=\xcd\xcc\xcc=" "DIALECT" "2"
 ```
 
-## Hybrid queries
+### Hybrid queries
 
 ```ts
 testModel.search().where("age").between(18, 30)
     .and("vec").eq((vector) => vector
         .knn()
-        .from([2, 5, 7])
+        .from(new Float32Array([0.1, 0.1]))
         .return(8))
     .returnAll();
 // Generates the following query
-// "((@age:[18 30]))=>[KNN 8 @vec $BLOB]" PARAMS 2 BLOB \x02\x05\x07 DIALECT 2
+// "((@age:[18 30])) =>[KNN 8 @vec $BLOB]" "PARAMS" "2" "BLOB" "\xcd\xcc\xcc=\xcd\xcc\xcc=" "DIALECT" "2"
 ```
 
-## Range queries
+### Range queries
 
 ```ts
 testModel.search().where("vec").eq((vector) => vector
     .range(5)
-    .from([2, 5, 7]))
+    .from(new Float32Array([0.1, 0.1])))
 .returnAll();
 // Generates the following query
-// "((@vec:[VECTOR_RANGE 5 $BLOB]))" PARAMS 2 BLOB \x02\x05\x07 DIALECT 2
+// "((@vec:[VECTOR_RANGE 5 $BLOB])) " "PARAMS" "2" "BLOB" "\xcd\xcc\xcc=\xcd\xcc\xcc=" "DIALECT" "2"
 ```
 
-# Custom Methods
+## References VS Relations
 
-In this proposal you can create your own custom methods that will be added to the `Model`, this methods are defined on the schema directly.
+In this section i hope to explain a little bit more about the differences between this two methods of creation some sort of relationship between documents.
 
-> **WARNING:** Anonymous functions cannot be used when defining custom methods/functions
+### What is a Reference
+
+References are a pretty simple concept, they are pretty much an array of foreign keys, you can store keys in a field of a document as a form of saying "x keys is related in y form to this document".
+
+#### The problem
+
+While Nekdis provides a way to auto fetch this relations, meaning it will fetch the keys and append them to the field as an array, this **is not Atomic** which can lead to some problems.
+While this could be made atomic it would be somewhat of a breaking that im not sure its worth to make specially because relations exist.
+
+### What is a relation
+
+A relation as the name implies is a way to relate documents to each other, they work somewhat like graph relations and were inspired by the way [SurrealDB](https://surrealdb.com/) does relations.
+
+#### The problem
+
+Relations are expensive to run given redis runs on memory, this is because a lot of work and what we call omitted documents have to be created on the background for everything to work.
+
+### Pros and Cons
+
+| Type      | Is Atomic | Requires Lua | Works in redis-cli | Heavy on memory | Searchable | Allows Metadata |
+| --------- | :-------: | :----------: | :----------------: | :-------------: | :--------: | :-------------: |
+| Reference |     ❌     |      ❌       |         ❌          |        ❌        |     ❌      |        ❌        |
+| Relation  |     ✔️     |      ✔️       |         ✔️          |        ✔️        |     ✔️      |        ✔️        |
+
+### When to and not to use relations
+
+While relations provide an amazing api they are expensive on ram specially at scale, im not here to say "don't use it" but i do think you should only use them if you really need to do complex queries on your relations and/or apply constrains to them.
+
+References are yes way more limiting than relations as of now but you can still map a lot of relationships with them if you use them properly.
+
+## Modularity with client modules
+
+Nekdis allows you to add your own modules to the client, this allows easier access to the raw node-redis client and a way to export all your higher functions in one go.
+
+However there was a slight problem if you will regarding implementing this in a way that the types would still work, thats why instead of passing them to the constructor we provide a `withModules` method so even in javascript you can have intellisense on your modules.
 
 ```ts
-const albumSchema = client.schema({
-    artist: { type: "string", required: true },
-    name: { type: "text", required: true },
-    year: "number"
-}, {
-    searchByName: async function (name: string) {
-        return await this.search().where("name").matches(name).returnAll();
-    }
-})
-
-const albumModel = client.model("Album", albumSchema);
-
-const results = await albumModel.searchByName("DROP");
+// I have to think about something :c
 ```
 
-# Modules
+## Modularity with base injections
 
-Nekdis allows you to add modules to the client, modules are something that adds extra functionality to the library, you pass in a class where the constructor will receive the client as its first argument.
+Nekdis provides a way to set bases to your schemas, this means that you can have "global" definitions, methods and options that will be applied to every schema you create.
 
-Keep in mind that this might be more useful if you are creating your own instance of the client and exporting it because that way you will also get intellisense for the module.
+This is pretty useful specially when creating methods that you want to have across all your models.
 
-```ts
-import {type Client, client} from "nekdis";
-
-class MyModule {
-    constructor(client: Client) {
-        // Do something
-    }
-
-    myFunction() {
-        // Do something
-    }
-}
-
-client.withModules({ name: "myMod", ctor: MyModule });
-
-// Access it
-client.myMod.myFunction()
-```
-
-# Schema Types
-
-This proposal adds some new data types and removes the `string[]` & `number[]` types.
-
-| Type        | Description                                                                                                                                                                                                                                                                                                                                                                                 |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `string`    | A standard string that will be indexed as `TAG`                                                                                                                                                                                                                                                                                                                                             |
-| `number`    | A standard float64 number that will be indexed as `NUMERIC`                                                                                                                                                                                                                                                                                                                                 |
-| `bigint`    | A javascript [BigInt](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt) that will be indexed as `TAG`                                                                                                                                                                                                                                                |
-| `boolean`   | A standard boolean that will be indexed as `TAG`                                                                                                                                                                                                                                                                                                                                            |
-| `text`      | A standard string that will be indexed as `TEXT` which allows for full text search                                                                                                                                                                                                                                                                                                          |
-| `date`      | This field will internally be indexed as `NUMERIC`, it gets saved as a Unix Epoch but you will be able to interact with it normally as it will be a [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date) when you access it                                                                                                                      |
-| `point`     | This is an object containing a `latitude` and `longitude` and will be indexed as `GEO`                                                                                                                                                                                                                                                                                                      |
-| `array`     | Internally it will be indexed as the type given to the `elements` property which defaults to `string`                                                                                                                                                                                                                                                                                       |
-| `object`    | This type allows you to nest forever using the `properties` property in the schema and what gets indexed are its properties, if none are given it will not be indexed not checked                                                                                                                                                                                                           |
-| `reference` | When using this type you will be given a `ReferenceArray` which is a normal array with a `reference` method that you can pass in another document or a record id to it, references can be auto fetched but auto fetched references cannot be changed                                                                                                                                        |
-| `tuple`     | Tuples will be presented as per-index type safe arrays but they are dealt with in a different way. They will be indexed as static props so you can search on a specific element only, this also affects the query builder instead of `where(arrayName)` it will be `where(arrayName.idx.prop)` but this has working intellisense just like all the other fields so it shouldn't be an issue |
-| `vector`    | A vector field that is an array but indexed as `VECTOR`                                                                                                                                                                                                                                                                                                                                     |
-
-# Field Properties
-
-This proposal includes the addition of 2 new shared properties and some unique ones
-
-## Shared Properties
-
-| Property   | Description                                                                                                              |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `type`     | The type of the field                                                                                                    |
-| `optional` | Defines whether the field is optional or not (this doesn't work if validation is disabled)                               |
-| `default`  | Chose a default value for the field making so that it will always exist even if it isn't required                        |
-| `index`    | Defines whether the field should be indexed or not (defaults to `false`)                                                 |
-| `sortable` | Defines whether the field is sortable or not (note that this doesn't exist nor work on object fields & reference fields) |
-
-## Unique Properties
-
-Vector properties wont be documented here, check the types instead
-
-| Property        | Type                             | Description                                                                                                                                                                  |
-| --------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `elements`      | `array`                          | Defines the type of the array                                                                                                                                                |
-| `elements`      | `tuple`                          | Even tho it has the same name this field is required in tuples and there are no ways to define infinite length tuples (just use normal arrays)                               |
-| `separator`     | `array`                          | This defines the separator that will be used for arrays on hash fields                                                                                                       |
-| `properties`    | `object`                         | The properties the object contains, if this isn't defined the object wont be type checked nor indexed                                                                        |
-| `schema`        | `reference`                      | This is a required property when using references and it allows for intellisense to give the types on auto fetch and later on for certain type checking to also work as well |
-| `literal`       | `string` \| `number` \| `bigint` | Make it so that the saved value has to be exactly one of the literal values                                                                                                  |
-| `caseSensitive` | `string`                         | Defines whether the string is case sensitive or not                                                                                                                          |
-| `phonetic`      | `text`                           | Choose the phonetic matcher the field will use                                                                                                                               |
-| `weight`        | `text`                           | Declare the importance of the field                                                                                                                                          |
-
-# Missing features
-
-- Custom alias for a field[^3].
-
-# Todo
-
-- `in` operator for number search
-- Array of points
-- Fully support array of objects
-- Add `$id` alias[^2]
-
-
-[^1]: Currently the `deepMerge` function will take longer the more objects and nested objects you have, the idea i received is to do it all in one go by using a function to flatten it but im not sure yet on how to do it
-
-[^2]: This could be a nice addition but im still unsure if this should be added and needs to be further discussed
-
-[^3]: Is this really needed? From my point of view the complexity required to add this would outweigh any benefits from it specially on the type-level transformations
+A good example of this can be found <u>[here](./examples/table-module.ts)</u>.
 
 # Nekdis VS Redis-OM
 
@@ -503,7 +409,7 @@ await client.connect();
 
 // Create the schema
 const userSchema = client.schema({
-    age: "number"
+    age: { type: "number", index: true }
 }, {
     // Define function to help repetitive task
     findBetweenAge: async function (min: number, max: number) {
@@ -608,27 +514,6 @@ function between(min: number, max: number) {
 </td>
 </tr>
 </table>
-
-## Open Issues this proposal fixes
-
-- [#25 (Use reflection to do object mapping for a more declarative API)](https://github.com/redis/redis-om-node/issues/25)
-  - Achieves this purely on the type level working for both js and ts without extra steps and without the declarative (decorators) part
-- [#28 (Transactions & relations)](https://github.com/redis/redis-om-node/issues/28)
-  - Relations are added and transactions are in the plans with a nice api like the c# lib
-- [#44 (Add in (eq for multiple values))](https://github.com/redis/redis-om-node/issues/44)
-  - As mentioned in [Search](#search) methods like `equals` work just like it
-- [#54 (Add boolean[] as a new type)](https://github.com/redis/redis-om-node/issues/54)
-- [#55 (Add number[] as a new type)](https://github.com/redis/redis-om-node/issues/55)
-- [#66 (Implement implicit transaction and locking in the context of redis-om for master-detail relations )](https://github.com/redis/redis-om-node/issues/66)
-  - Partially done with relations
-- [#69 (Add default value to Schema)](https://github.com/redis/redis-om-node/issues/69)
-  - Also `required` was added
-- [#85 (Vector Similarity Search)](https://github.com/redis/redis-om-node/issues/85)
-- [#120 (Add expireAt)](https://github.com/redis/redis-om-node/issues/120)
-  - normal expire accepts both seconds or a date object
-- [#141 (Feature: "in" query clause functionality)](https://github.com/redis/redis-om-node/issues/141)
-  - Same as issue #44
-- [#184 (Set a Global Prefix in Node Om)](https://github.com/redis/redis-om-node/issues/184)
 
 ## Benchmarks
 

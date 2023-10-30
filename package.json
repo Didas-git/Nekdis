@@ -1,6 +1,6 @@
 {
   "name": "nekdis",
-  "version": "0.12.7",
+  "version": "0.13.3",
   "description": "Object mapping, and more, for Redis and Node.js. Written in TypeScript.",
   "main": "dist/index.js",
   "exports": {
@@ -23,7 +23,7 @@
   "scripts": {
     "test": "vitest run --coverage",
     "lint": "eslint src/**/*.ts",
-    "build": "rm -rf ./dist && tsc",
+    "build": "rm -rf ./dist && tsc && cp -r ./src/scripts ./dist/scripts",
     "build:test": "tsc --noEmit",
     "bench": "rm -rf ./bench-dist && cd benchmarks && tsc && cd .. && node bench-dist/dist/index.mjs"
   },
@@ -40,13 +40,13 @@
   "devDependencies": {
     "@microsoft/tsdoc": "^0.14.2",
     "@microsoft/tsdoc-config": "^0.16.2",
-    "@types/node": "^20.8.4",
-    "@typescript-eslint/eslint-plugin": "^6.7.5",
-    "@typescript-eslint/parser": "^6.7.5",
+    "@types/node": "^20.8.9",
+    "@typescript-eslint/eslint-plugin": "^6.9.0",
+    "@typescript-eslint/parser": "^6.9.0",
     "@vitest/coverage-v8": "^0.34.6",
     "c8": "^8.0.1",
-    "eslint": "^8.51.0",
-    "eslint-plugin-import": "^2.28.1",
+    "eslint": "^8.52.0",
+    "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-tsdoc": "^0.2.17",
     "redis-om": "0.4.2",
     "ts-node": "^10.9.1",

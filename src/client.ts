@@ -1,5 +1,7 @@
 import { PrettyError } from "@infinite-fansub/logger";
+import { readFile } from "node:fs/promises";
 import { createClient } from "redis";
+import { join } from "node:path";
 
 import { Schema } from "./schema";
 import { Model } from "./model";
@@ -22,7 +24,6 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
     #client!: NodeRedisClient;
     #models: Map<string, Model<any>> = new Map();
     #open: boolean = false;
-    #prefix: string = "Nekdis";
     #options: ClientOptions<SD, MD>;
 
     public constructor(options?: ClientOptions<SD, MD>) {
@@ -30,23 +31,28 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
     }
 
     public async connect(url: string | URLObject = this.#options.url ?? "redis://localhost:6379"): Promise<Client> {
-        if (this.#open) return this;
+        return new Promise((resolve, reject) => {
+            if (this.#open) resolve(this);
 
-        if (typeof url === "object") {
-            const { username, password, entrypoint, port } = url;
-            url = `redis://${username}:${password}@${(/:\d$/).exec(entrypoint) ? entrypoint : `${entrypoint}:${port}`}`;
-        }
+            if (typeof url === "object") {
+                const { username, password, entrypoint, port } = url;
+                url = `redis://${username}:${password}@${(/:\d$/).exec(entrypoint) ? entrypoint : `${entrypoint}:${port}`}`;
+            }
 
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        this.#client ??= createClient({ url });
-        try {
-            await this.#client.connect();
-            this.#open = true;
-        } catch (e) {
-            Promise.reject(e);
-        }
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+            this.#client ??= createClient({ url });
 
-        return this;
+            this.#client.connect().then(async () => {
+                this.#open = true;
+                if (this.#options.enableInjections) {
+                    await this.#client.functionLoad((
+                        await readFile(join(__dirname, "scripts/create-relation.lua"))
+                    ).toString("utf8"), { REPLACE: true });
+                }
+
+                resolve(this);
+            }).catch((e) => reject(e));
+        });
     }
 
     public async disconnect(): Promise<Client> {
@@ -68,13 +74,13 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
         { [K in keyof (M & MD)]: (M & MD)[K] }
     > {
         return <never>new Schema({
-            ...this.#options.inject?.schema?.definition,
+            ...this.#options.base?.schema?.definition,
             ...definition
         }, <never>{
-            ...this.#options.inject?.schema?.methods,
+            ...this.#options.base?.schema?.methods,
             ...methods
         }, {
-            ...this.#options.inject?.schema?.options,
+            ...this.#options.base?.schema?.options,
             ...options
         });
     }
@@ -87,7 +93,7 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
             reference: "nekdis"
         });
 
-        model = new Model(this.#client, this.#prefix, "V1", name, schema);
+        model = new Model(this.#client, this.#options.globalPrefix ?? "Nekdis", "V1", name, this.#options.enableInjections ?? false, schema);
         this.#models.set(name, model);
         return <never>model;
     }
@@ -128,10 +134,6 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
         if (!this.#open) {
             this.#client = client;
         }
-    }
-
-    public set globalPrefix(str: string) {
-        this.#prefix = str;
     }
 }
 

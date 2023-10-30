@@ -1,4 +1,7 @@
+import { createHash } from "node:crypto";
+
 import type {
+    ParsedRelationsToSearch,
     ParsedSchemaDefinition,
     ParsedSchemaToSearch,
     ParsedArrayField,
@@ -10,10 +13,10 @@ import type {
 export function parseSchemaToSearchIndex(
     schema: ParsedSchemaDefinition["data"],
     structure: "JSON" | "HASH",
-    { previousKey, previousPath, arrayKey }: { previousKey?: string, previousPath?: string, arrayKey?: string } = {}
+    { topLevelIndex, previousKey, previousPath, arrayKey }: { topLevelIndex?: boolean, previousKey?: string, previousPath?: string, arrayKey?: string } = {}
 ): ParsedSchemaToSearch {
+    const index: Array<string> = [];
     let objs: ParsedMap = new Map();
-    let index: Array<string> = [];
 
     for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
         const [key, value] = entries[i];
@@ -26,6 +29,8 @@ export function parseSchemaToSearchIndex(
                 value.properties,
                 structure,
                 {
+                    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+                    topLevelIndex: topLevelIndex || value.index,
                     previousKey: withPreviousKey,
                     previousPath: withPreviousPath
                 }
@@ -36,7 +41,7 @@ export function parseSchemaToSearchIndex(
             continue;
         }
 
-        if (!value.index) continue;
+        if (!topLevelIndex && !value.index) continue;
 
         if (value.type === "array") {
             if (typeof value.elements === "object") {
@@ -44,6 +49,8 @@ export function parseSchemaToSearchIndex(
                     value.elements,
                     structure,
                     {
+                        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+                        topLevelIndex: topLevelIndex || value.index,
                         previousKey: withPreviousKey,
                         previousPath: withPreviousPath,
                         arrayKey: previousKey ? `${previousKey}.${key}${getArrayModifier(value.elements)}` : `${key}${getArrayModifier(value.elements)}`
@@ -53,8 +60,6 @@ export function parseSchemaToSearchIndex(
                 index.push(...parsed.index);
                 continue;
             }
-
-            arrayKey = `${arrayKey ? `${arrayKey}.${key}` : withPreviousKey}${getArrayModifier(value.elements)}`;
         }
 
         if (value.type === "tuple") {
@@ -65,6 +70,8 @@ export function parseSchemaToSearchIndex(
                     { [j.toString()]: indexValue },
                     structure,
                     {
+                        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+                        topLevelIndex: topLevelIndex || value.index,
                         previousKey: withPreviousKey,
                         previousPath: withPreviousPath
                     }
@@ -89,7 +96,7 @@ export function parseSchemaToSearchIndex(
         const prefix = structure === "JSON" ? "$." : "";
 
         index.push(
-            `${prefix}${arrayKey ? arrayKey : withPreviousKey}`,
+            `${prefix}${arrayKey ? `${arrayKey}.${key}` : withPreviousKey}`,
             "AS",
             withPreviousPath,
             getSearchType(actualType)
@@ -119,7 +126,7 @@ export function parseSchemaToSearchIndex(
             }
         }
 
-        if (value.sortable) index.push("SORTABLE");
+        if ("sortable" in value && value.sortable) index.push("SORTABLE");
         if (value.type === "string" && value.caseSensitive) index.push("CASESENSITIVE");
         if (value.type === "text") {
             if (typeof value.phonetic !== "undefined") index.push("PHONETIC", value.phonetic);
@@ -130,9 +137,32 @@ export function parseSchemaToSearchIndex(
     return { map: objs, index };
 }
 
-function getArrayModifier(elements: ParsedArrayField["elements"]): "*" | "[*]" | "" {
-    if (typeof elements === "object" || elements === "vector") return "[*]";
-    if (elements === "string" || elements === "boolean") return "*";
+export function parseRelationsToSearchIndex(
+    schema: ParsedSchemaDefinition["relations"],
+    structure: "JSON" | "HASH",
+    initialKey: string
+): ParsedRelationsToSearch {
+    const relations: ParsedRelationsToSearch = {};
+
+    for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
+        const [key, value] = entries[i];
+
+        relations[key] = {
+            key: `${initialKey}-relation-${key}`,
+            hash: createHash("sha1").update(JSON.stringify({
+                structure: structure,
+                definition: value.meta
+            })).digest("base64"),
+            data: parseSchemaToSearchIndex(value.meta, structure, { topLevelIndex: value.index })
+        };
+    }
+
+    return relations;
+}
+
+function getArrayModifier(elements: ParsedArrayField["elements"]): ".*" | ".[*]" | "" {
+    if (typeof elements === "object" || elements === "vector") return ".[*]";
+    if (elements === "string" || elements === "boolean") return ".*";
     return "";
 }
 

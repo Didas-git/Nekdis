@@ -3,5 +3,9 @@
     "cSpell.words": [
         "HNSW",
         "nekdis"
+    ],
+    "Lua.diagnostics.globals": [
+        "redis",
+        "cjson"
     ]
 }

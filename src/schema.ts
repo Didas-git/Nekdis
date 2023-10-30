@@ -6,6 +6,7 @@ import { methods, schemaData } from "./utils/symbols";
 
 import type {
     ExtractSchemaDefinition,
+    ParsedSchemaDefinition,
     MethodsDefinition,
     SchemaDefinition,
     SchemaOptions,
@@ -13,8 +14,7 @@ import type {
     NumberField,
     StringField,
     BaseField,
-    FieldType,
-    ParsedSchemaDefinition
+    FieldType
 } from "./typings";
 
 export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> = {}, P extends ParseSchema<S> = ParseSchema<S>> {
@@ -50,9 +50,10 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
         return <never>this;
     }
 
-    #parse(schema: SchemaDefinition, isInsideTuple: boolean = false): ParsedSchemaDefinition {
+    #parse(schema: SchemaDefinition): ParsedSchemaDefinition {
         const data: Record<string, unknown> = {};
-        const references: Record<string, unknown> = {};
+        const references: Record<string, null> = {};
+        const relations: ParsedSchemaDefinition["relations"] = {};
 
         for (let i = 0, entries = Object.entries(schema), len = entries.length; i < len; i++) {
             let [key, value] = entries[i];
@@ -114,11 +115,34 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                         ]
                     });
                     //@ts-expect-error Some people do not read docs
+                } else if (value === "relation") {
+                    throw new PrettyError("Type 'relation' needs to use its object definition", {
+                        reference: "nekdis",
+                        lines: [
+                            {
+                                error: inspect({ [key]: value }, { colors: true }),
+                                marker: { text: "Parsing:" }
+                            },
+                            {
+                                error: inspect({
+                                    [key]: {
+                                        type: "relation",
+                                        schema: "`SchemaInstance`"
+                                    }
+                                }, { colors: true, compact: false }),
+                                marker: { text: "Fix:", color: Color.fromHex("#00FF00"), newLine: true }
+                            }
+                        ]
+                    });
+                    //@ts-expect-error Some people do not read docs
                 } else if (value === "tuple") {
                     throw new PrettyError("Type 'tuple' needs to use its object definition");
                 } else if (value === "array") {
-                    value = { type: value, elements: "string", default: undefined, optional: false, sortable: false, index: isInsideTuple, separator: "|" };
+                    value = { type: value, elements: "string", default: undefined, optional: false, sortable: false, index: false, separator: "|" };
                 } else if (value === "vector") {
+                    if (this.options.dataStructure === "HASH") {
+                        throw new PrettyError("Vectors currently aren't working with hashes", { reference: "nekdis" });
+                    }
                     value = {
                         type: value,
                         algorithm: "FLAT",
@@ -128,11 +152,11 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                         default: undefined,
                         optional: false,
                         sortable: false,
-                        index: isInsideTuple
+                        index: false
                     };
                 } else {
-                    value = { type: value, default: undefined, optional: false, sortable: false, index: isInsideTuple };
-                    if ((<FieldType>value).type === "string" || (<FieldType>value).type === "number") (<StringField | NumberField>value).literal = undefined;
+                    value = { type: value, default: undefined, optional: false, sortable: false, index: false };
+                    if ((<FieldType>value).type === "string" || (<FieldType>value).type === "number" || (<FieldType>value).type === "bigint") (<StringField | NumberField>value).literal = undefined;
                 }
 
                 data[key] = value;
@@ -156,28 +180,31 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                 if (typeof value.elements === "object") {
                     value.elements = <never>this.#parse(value.elements).data;
                 }
-                value = this.#fill(value, isInsideTuple);
+                value = this.#fill(value);
             } else if (value.type === "date") {
                 if (value.default instanceof Date) value.default = value.default.getTime();
                 if (typeof value.default === "string" || typeof value.default === "number") value.default = new Date(value.default).getTime();
-                value = this.#fill(value, isInsideTuple);
+                value = this.#fill(value);
             } else if (value.type === "object") {
                 if (typeof value.default === "undefined") value.default = undefined;
                 if (typeof value.optional === "undefined") value.optional = false;
-                if (typeof value.properties === "undefined") value.properties = <never>null;
-                else if (value.properties instanceof Schema) value.properties = <never>value.properties[schemaData].data;
-                else value.properties = <never>this.#parse(value.properties).data;
+                if (typeof value.properties !== "undefined") {
+                    if (value.properties instanceof Schema) value.properties = <never>value.properties[schemaData].data;
+                    else value.properties = <never>this.#parse(value.properties).data;
+                } else {
+                    value.properties = undefined;
+                }
             } else if (value.type === "tuple") {
                 if (typeof value.elements === "undefined") throw new PrettyError("Tuple needs to have at least 1 element", {
                     reference: "nekdis"
                 });
                 for (let j = 0, le = value.elements.length; j < le; j++) {
-                    value.elements[j] = <never>this.#parse({ [j]: value.elements[j] }, value.index ?? false).data[j];
+                    value.elements[j] = <never>this.#parse({ [j]: value.elements[j] }).data[j];
                 }
-                value = this.#fill(value, isInsideTuple);
+                value = this.#fill(value);
             } else if (value.type === "reference") {
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
-                if (!value.schema) throw new PrettyError("Type 'reference' lacks a schema", {
+                if (!value.schema) throw new PrettyError("Type 'reference' lacks a schema which is needed to provide intellisense", {
                     reference: "nekdis",
                     lines: [
                         {
@@ -197,7 +224,44 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                 });
                 references[key] = null;
                 continue;
+            } else if (value.type === "relation") {
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
+                if (!value.schema) throw new PrettyError("Type 'relation' lacks a schema", {
+                    reference: "nekdis",
+                    lines: [
+                        {
+                            error: inspect({ [key]: value }, { colors: true }),
+                            marker: { text: "Parsing:" }
+                        },
+                        {
+                            error: inspect({
+                                [key]: {
+                                    type: "relation",
+                                    schema: "`SchemaInstance`"
+                                }
+                            }, { colors: true, compact: false }),
+                            marker: { text: "Fix:", color: Color.fromHex("#00FF00"), newLine: true }
+                        }
+                    ]
+                });
+
+                if (typeof value.meta !== "undefined") {
+                    if (value.meta instanceof Schema) value.meta = <never>{ ...value.meta[schemaData].data, ...this.#parse({ in: "string", out: "string" }).data };
+                    else value.meta = <never>this.#parse({ ...value.meta, in: "string", out: "string" }).data;
+                } else {
+                    value.meta = <never>this.#parse({ in: "string", out: "string" }).data;
+                }
+
+                if (value.schema instanceof Schema) value.schema = <never>value.schema[schemaData].data;
+                else if (value.schema === "self") value.schema = <never>null;
+                else value.schema = <never>this.#parse(value.schema).data;
+
+                relations[key] = { index: value.index ?? false, schema: value.schema, meta: value.meta };
+                continue;
             } else if (value.type === "vector") {
+                if (this.options.dataStructure === "HASH") {
+                    throw new PrettyError("Vectors currently aren't working with hashes", { reference: "nekdis" });
+                }
                 if (typeof value.algorithm === "undefined") {
                     throw new PrettyError("'algorithm' is missing on the vector definition", {
                         reference: "nekdis"
@@ -228,25 +292,25 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                     if (typeof value.runtime === "undefined") value.runtime = undefined;
                     if (typeof value.epsilon === "undefined") value.epsilon = undefined;
                 }
-                value = this.#fill(value, isInsideTuple);
+                value = this.#fill(value);
             } else if (value.type === "string" || value.type === "number" || value.type === "bigint") {
                 if (typeof value.literal === "undefined") value.literal = undefined;
                 else if (!Array.isArray(value.literal)) value.literal = [<never>value.literal];
-                value = this.#fill(value, isInsideTuple);
+                value = this.#fill(value);
             } else {
-                value = this.#fill(value, isInsideTuple);
+                value = this.#fill(value);
             }
 
             data[key] = value;
         }
-        return <never>{ data, references };
+        return <never>{ data, references, relations };
     }
 
-    #fill(value: BaseField, isInsideTuple: boolean): any {
+    #fill(value: BaseField): any {
         if (typeof value.default === "undefined") value.default = undefined;
         if (typeof value.optional === "undefined") value.optional = false;
         if (typeof value.sortable === "undefined") value.sortable = false;
-        if (typeof value.index === "undefined") value.index = isInsideTuple;
+        if (typeof value.index === "undefined") value.index = false;
         return value;
     }
 }
