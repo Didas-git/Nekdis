@@ -140,6 +140,9 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                 } else if (value === "array") {
                     value = { type: value, elements: "string", default: undefined, optional: false, sortable: false, index: false, separator: "|" };
                 } else if (value === "vector") {
+                    if (this.options.dataStructure === "HASH") {
+                        throw new PrettyError("Vectors currently aren't working with hashes", { reference: "nekdis" });
+                    }
                     value = {
                         type: value,
                         algorithm: "FLAT",
@@ -256,6 +259,9 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                 relations[key] = { index: value.index ?? false, schema: value.schema, meta: value.meta };
                 continue;
             } else if (value.type === "vector") {
+                if (this.options.dataStructure === "HASH") {
+                    throw new PrettyError("Vectors currently aren't working with hashes", { reference: "nekdis" });
+                }
                 if (typeof value.algorithm === "undefined") {
                     throw new PrettyError("'algorithm' is missing on the vector definition", {
                         reference: "nekdis"
