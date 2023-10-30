@@ -32,7 +32,7 @@ export class Relation<T extends ParseSchema<any>, F extends ParseSchema<any>["re
     }
 
     public to(id: string | number | Document): this {
-        if (id instanceof JSONDocument || id instanceof HASHDocument) id = id.$record_id;
+        if (id instanceof JSONDocument || id instanceof HASHDocument) id = id.$recordId;
         else if (id.toString().split(":").length === 1) {
             const suffix = this.#information.suffix;
 

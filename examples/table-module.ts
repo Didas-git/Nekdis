@@ -82,12 +82,7 @@ const client = new Client({
     Expected result:
      
     JSONDocument {
-        '$global_prefix': 'Nekdis',
-        '$prefix': 'V1',
-        '$model_name': 'test',
-        '$suffix': undefined,
         '$id': '1',
-        '$record_id': 'Nekdis:V1:test:1',
         name: 'DidaS',
         age: 18
     }
@@ -121,12 +116,7 @@ const client = new Client({
         Expected result:
         
         JSONDocument {
-            '$global_prefix': 'Nekdis',
-            '$prefix': 'V1',
-            '$model_name': 'test',
-            '$suffix': 'table1',
             '$id': '1',
-            '$record_id': 'Nekdis:V1:test:table1:1',
             name: undefined,
             age: 21
         }

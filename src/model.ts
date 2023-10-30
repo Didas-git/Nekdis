@@ -253,9 +253,9 @@ export class Model<S extends Schema<any>> {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-base-to-string
-        if (this.#schema.options.dataStructure === "HASH") await this.#client.sendCommand(["HSET", doc.$record_id, ...doc.toString()]);
+        if (this.#schema.options.dataStructure === "HASH") await this.#client.sendCommand(["HSET", doc.$recordId, ...doc.toString()]);
         // eslint-disable-next-line @typescript-eslint/no-base-to-string
-        else await this.#client.sendCommand(["JSON.SET", doc.$record_id, "$", doc.toString()]);
+        else await this.#client.sendCommand(["JSON.SET", doc.$recordId, "$", doc.toString()]);
     }
 
     public async delete(...docs: Array<string | number | Document>): Promise<void> {
@@ -398,7 +398,7 @@ export class Model<S extends Schema<any>> {
     }
 
     #idOrDocToString(idOrDoc: string | number | Document): string {
-        return idOrDoc instanceof JSONDocument || idOrDoc instanceof HASHDocument ? idOrDoc.$record_id : this.formatId(idOrDoc.toString());
+        return idOrDoc instanceof JSONDocument || idOrDoc instanceof HASHDocument ? idOrDoc.$recordId : this.formatId(idOrDoc.toString());
     }
 
     public formatId(id: string): string {
