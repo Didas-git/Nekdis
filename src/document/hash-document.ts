@@ -145,9 +145,9 @@ export class HASHDocument implements DocumentShared {
                 : value.type === "tuple" || value.type === "array"
                     ? []
                     : value.type === "vector"
-                        ? value.vecType === "FLOAT32"
-                            ? new Float32Array()
-                            : new Float64Array()
+                        ? value.vecType === "FLOAT64"
+                            ? new Float64Array()
+                            : new Float32Array()
                         : undefined);
         }
 
