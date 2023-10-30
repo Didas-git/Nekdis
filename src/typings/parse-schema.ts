@@ -95,7 +95,7 @@ type ParseObjectField<T extends ObjectField, REL extends boolean> = {
     ? T[P] extends Schema<any, any, infer U>
     ? U["data"]
     : T[P] extends InnerSchemaDefinition
-    ? ParseSchemaData<T[P]>
+    ? ParseSchemaData<T[P], REL extends true ? true : T["index"] extends true ? true : false>
     : never
     : undefined
     : T[P] extends {} ? T[P] : Fill<P, REL>
@@ -103,9 +103,9 @@ type ParseObjectField<T extends ObjectField, REL extends boolean> = {
 
 type ParseArrayField<T extends ArrayField, REL extends boolean> = {
     [P in keyof Required<ArrayField>]: P extends "elements"
-    ? T[P] extends InnerSchemaDefinition ? ParseSchemaData<T[P]>
+    ? T[P] extends InnerSchemaDefinition ? ParseSchemaData<T[P], REL extends true ? true : T["index"] extends true ? true : false>
     : T[P] extends {} ? T[P] : "string"
-    : Fill<P, REL>
+    : T[P] extends {} ? T[P] : Fill<P, REL>
 };
 
 type ParseTupleField<T extends TupleField, REL extends boolean> = {
@@ -113,9 +113,9 @@ type ParseTupleField<T extends TupleField, REL extends boolean> = {
     ? T extends Record<P, infer V>
     ? {
         [U in keyof V]: V[U] extends string
-        ? CreateDefinitionFromString<V[U], REL>
+        ? CreateDefinitionFromString<V[U], REL extends true ? true : T["index"] extends true ? true : false>
         : V[U] extends FieldType
-        ? GetTupleObject<V[U]>
+        ? GetTupleObject<V[U], REL extends true ? true : T["index"] extends true ? true : false>
         : never
     }
     : never
@@ -171,4 +171,4 @@ type Fill<T, REL extends boolean> = T extends "optional"
     ? REL extends true ? true : false
     : undefined;
 
-type GetTupleObject<T extends FieldType, P = ParseSchema<{ $: T }>["data"]> = P extends { $: unknown } ? P["$"] : never;
+type GetTupleObject<T extends FieldType, REL extends boolean, P = ParseSchemaData<{ $: T }, REL>> = P extends { $: unknown } ? P["$"] : never;

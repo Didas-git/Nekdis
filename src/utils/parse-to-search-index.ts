@@ -60,8 +60,6 @@ export function parseSchemaToSearchIndex(
                 index.push(...parsed.index);
                 continue;
             }
-
-            arrayKey = `${arrayKey ? `${arrayKey}.${key}` : withPreviousKey}${getArrayModifier(value.elements)}`;
         }
 
         if (value.type === "tuple") {
@@ -98,7 +96,7 @@ export function parseSchemaToSearchIndex(
         const prefix = structure === "JSON" ? "$." : "";
 
         index.push(
-            `${prefix}${arrayKey ? arrayKey : withPreviousKey}`,
+            `${prefix}${arrayKey ? `${arrayKey}.${key}` : withPreviousKey}`,
             "AS",
             withPreviousPath,
             getSearchType(actualType)
@@ -162,9 +160,9 @@ export function parseRelationsToSearchIndex(
     return relations;
 }
 
-function getArrayModifier(elements: ParsedArrayField["elements"]): "*" | "[*]" | "" {
-    if (typeof elements === "object" || elements === "vector") return "[*]";
-    if (elements === "string" || elements === "boolean") return "*";
+function getArrayModifier(elements: ParsedArrayField["elements"]): ".*" | ".[*]" | "" {
+    if (typeof elements === "object" || elements === "vector") return ".[*]";
+    if (elements === "string" || elements === "boolean") return ".*";
     return "";
 }
 

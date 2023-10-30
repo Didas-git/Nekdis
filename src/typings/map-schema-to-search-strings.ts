@@ -40,6 +40,8 @@ export type SchemaToStrings<T extends ParseSchema<any>["data"], K extends keyof 
     ? `${K}.${SchemaToStrings<{
         [U in keyof T[K]["elements"]as U extends `${number}` ? U : never]: T[K]["elements"][U]
     }>}`
+    : T[K]["elements"] extends object
+    ? `${K}.${SchemaToStrings<T[K]["elements"]>}`
     : K
     : K
     : never;
