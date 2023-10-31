@@ -314,7 +314,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                 this.#options.DIALECT = 2;
                 this.#options.PARAMS = { BLOB: queryPart._vector._buffer };
             }
-            //@ts-expect-error This looks like something that should be reported
+            // @ts-expect-error This looks like something that should be reported
             query += `${queryPart.toString()} `;
         }
 

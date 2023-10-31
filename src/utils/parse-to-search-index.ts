@@ -13,7 +13,7 @@ import type {
 export function parseSchemaToSearchIndex(
     schema: ParsedSchemaDefinition["data"],
     structure: "JSON" | "HASH",
-    { topLevelIndex, previousKey, previousPath, arrayKey }: { topLevelIndex?: boolean, previousKey?: string, previousPath?: string, arrayKey?: string } = {}
+    { previousKey, previousPath, arrayKey }: { previousKey?: string, previousPath?: string, arrayKey?: string } = {}
 ): ParsedSchemaToSearch {
     const index: Array<string> = [];
     let objs: ParsedMap = new Map();
@@ -29,8 +29,6 @@ export function parseSchemaToSearchIndex(
                 value.properties,
                 structure,
                 {
-                    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-                    topLevelIndex: topLevelIndex || value.index,
                     previousKey: withPreviousKey,
                     previousPath: withPreviousPath
                 }
@@ -41,7 +39,7 @@ export function parseSchemaToSearchIndex(
             continue;
         }
 
-        if (!topLevelIndex && !value.index) continue;
+        if (!value.index) continue;
 
         if (value.type === "array") {
             if (typeof value.elements === "object") {
@@ -49,8 +47,6 @@ export function parseSchemaToSearchIndex(
                     value.elements,
                     structure,
                     {
-                        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-                        topLevelIndex: topLevelIndex || value.index,
                         previousKey: withPreviousKey,
                         previousPath: withPreviousPath,
                         arrayKey: previousKey ? `${previousKey}.${key}${getArrayModifier(value.elements)}` : `${key}${getArrayModifier(value.elements)}`
@@ -70,8 +66,6 @@ export function parseSchemaToSearchIndex(
                     { [j.toString()]: indexValue },
                     structure,
                     {
-                        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-                        topLevelIndex: topLevelIndex || value.index,
                         previousKey: withPreviousKey,
                         previousPath: withPreviousPath
                     }
@@ -153,7 +147,7 @@ export function parseRelationsToSearchIndex(
                 structure: structure,
                 definition: value.meta
             })).digest("base64"),
-            data: parseSchemaToSearchIndex(value.meta, structure, { topLevelIndex: value.index })
+            data: parseSchemaToSearchIndex(value.meta, structure)
         };
     }
 

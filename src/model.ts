@@ -53,18 +53,15 @@ export class Model<S extends Schema<any>> {
             suffix: this.#schema.options.suffix
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const { map, index } = parseSchemaToSearchIndex(<never>this.#schema[schemaData].data, this.#schema.options.dataStructure!);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.#relationsToIndex = parseRelationsToSearchIndex(<never>this.#schema[schemaData].relations, this.#schema.options.dataStructure!, `${globalPrefix}:${this.#options.prefix}:${this.name}`);
+        const { map, index } = parseSchemaToSearchIndex(<never>this.#schema[schemaData].data, this.#schema.options.dataStructure);
+        this.#relationsToIndex = parseRelationsToSearchIndex(<never>this.#schema[schemaData].relations, this.#schema.options.dataStructure, `${globalPrefix}:${this.#options.prefix}:${this.name}`);
         this.#parsedSchema = map;
         this.#searchIndex.name = `${globalPrefix}:${this.#options.prefix}:${this.name}:index`;
         this.#searchIndex.query = [
             "FT.CREATE",
             this.#searchIndex.name,
             "ON",
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            data.options.dataStructure!,
+            data.options.dataStructure,
             "PREFIX",
             "1",
             `${globalPrefix}:${this.#options.prefix}:${this.name}:`
@@ -174,6 +171,7 @@ export class Model<S extends Schema<any>> {
                             data: <never>(options.returnMetadataOverRelation
                                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                                 ? this.#schema[schemaData].relations[key].meta!
+                                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                                 : this.#schema[schemaData].relations[key].schema ?? this.#schema[schemaData].data),
                             references: {},
                             relations: {}
@@ -252,9 +250,7 @@ export class Model<S extends Schema<any>> {
             reference: "nekdis"
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-base-to-string
         if (this.#schema.options.dataStructure === "HASH") await this.#client.sendCommand(["HSET", doc.$recordId, ...doc.toString()]);
-        // eslint-disable-next-line @typescript-eslint/no-base-to-string
         else await this.#client.sendCommand(["JSON.SET", doc.$recordId, "$", doc.toString()]);
     }
 
@@ -307,12 +303,12 @@ export class Model<S extends Schema<any>> {
     }
 
     public relate(idOrDoc: string | number | Document): Relation<ExtractParsedSchemaDefinition<S>> {
-        return new Relation(this.#client, {
+        return new Relation(this.#client, this.#idOrDocToString(idOrDoc), {
             ...this.#options,
             modelName: this.name,
             suffix: this.#options.suffix,
             dataStructure: this.#schema.options.dataStructure
-        }, this.#idOrDocToString(idOrDoc));
+        });
     }
 
     public async createIndex(): Promise<void> {
@@ -333,8 +329,7 @@ export class Model<S extends Schema<any>> {
                             "FT.CREATE",
                             `${value.key}:index`,
                             "ON",
-                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                            this.#schema.options.dataStructure!,
+                            this.#schema.options.dataStructure,
                             "PREFIX",
                             "1",
                             `${value.key}:`,
@@ -387,20 +382,6 @@ export class Model<S extends Schema<any>> {
         return string.replaceAll(/[,.?<>{}[\]"':;!@#$%^&()\-+=~|/\\ ]/g, "\\$&");
     }
 
-    #idsOrDocsToString(idsOrDocs: Array<string | number | Document>): Array<string> {
-        const temp = [];
-
-        for (let i = 0, len = idsOrDocs.length; i < len; i++) {
-            temp.push(this.#idOrDocToString(idsOrDocs[i]));
-        }
-
-        return temp;
-    }
-
-    #idOrDocToString(idOrDoc: string | number | Document): string {
-        return idOrDoc instanceof JSONDocument || idOrDoc instanceof HASHDocument ? idOrDoc.$recordId : this.formatId(idOrDoc.toString());
-    }
-
     public formatId(id: string): string {
         if (id.split(":").length === 1) {
             const suffix = this.#options.suffix;
@@ -415,6 +396,20 @@ export class Model<S extends Schema<any>> {
         }
 
         return id;
+    }
+
+    #idsOrDocsToString(idsOrDocs: Array<string | number | Document>): Array<string> {
+        const temp = [];
+
+        for (let i = 0, len = idsOrDocs.length; i < len; i++) {
+            temp.push(this.#idOrDocToString(idsOrDocs[i]));
+        }
+
+        return temp;
+    }
+
+    #idOrDocToString(idOrDoc: string | number | Document): string {
+        return idOrDoc instanceof JSONDocument || idOrDoc instanceof HASHDocument ? idOrDoc.$recordId : this.formatId(idOrDoc.toString());
     }
 
     #defineMethods(): void {

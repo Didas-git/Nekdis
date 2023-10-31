@@ -23,8 +23,8 @@ export class Relation<T extends ParseSchema<any>, F extends ParseSchema<any>["re
 
     public constructor(
         client: NodeRedisClient,
-        information: ModelInformation,
-        id: string
+        id: string,
+        information: ModelInformation
     ) {
         this.#client = client;
         this.#information = information;
@@ -60,7 +60,6 @@ export class Relation<T extends ParseSchema<any>, F extends ParseSchema<any>["re
         return this;
     }
 
-    // This is what will create the relation on the db
     public async exec(): Promise<void> {
         if (typeof this.#out === "undefined" || typeof this.#field === "undefined") throw new PrettyError("Relation query was not properly formatted", {
             reference: "nekdis"

@@ -19,6 +19,8 @@ import type {
 
 export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> = {}, P extends ParseSchema<S> = ParseSchema<S>> {
 
+    public readonly options: SchemaOptions & ({ dataStructure: (SchemaOptions["dataStructure"] & {}) });
+
     /** @internal */
     public [methods]: M;
 
@@ -28,9 +30,10 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
     */
     public [schemaData]: P;
 
-    public constructor(rawData: S, methodsData?: M, public readonly options: SchemaOptions = {}) {
+    public constructor(rawData: S, methodsData?: M, options: SchemaOptions = {}) {
         this[schemaData] = <never>this.#parse(rawData);
         this[methods] = methodsData ?? <M>{};
+        this.options = <never>options;
         this.options.dataStructure = options.dataStructure ?? "JSON";
 
     }
@@ -50,7 +53,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
         return <never>this;
     }
 
-    #parse(schema: SchemaDefinition): ParsedSchemaDefinition {
+    #parse(schema: SchemaDefinition, topLevelIndex: boolean = false): ParsedSchemaDefinition {
         const data: Record<string, unknown> = {};
         const references: Record<string, null> = {};
         const relations: ParsedSchemaDefinition["relations"] = {};
@@ -138,7 +141,7 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                 } else if (value === "tuple") {
                     throw new PrettyError("Type 'tuple' needs to use its object definition");
                 } else if (value === "array") {
-                    value = { type: value, elements: "string", default: undefined, optional: false, sortable: false, index: false, separator: "|" };
+                    value = { type: value, elements: "string", default: undefined, optional: false, sortable: false, index: topLevelIndex, separator: "|" };
                 } else if (value === "vector") {
                     if (this.options.dataStructure === "HASH") {
                         throw new PrettyError("Vectors currently aren't working with hashes", { reference: "nekdis" });
@@ -152,10 +155,10 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                         default: undefined,
                         optional: false,
                         sortable: false,
-                        index: false
+                        index: topLevelIndex
                     };
                 } else {
-                    value = { type: value, default: undefined, optional: false, sortable: false, index: false };
+                    value = { type: value, default: undefined, optional: false, sortable: false, index: topLevelIndex };
                     if ((<FieldType>value).type === "string" || (<FieldType>value).type === "number" || (<FieldType>value).type === "bigint") (<StringField | NumberField>value).literal = undefined;
                 }
 
@@ -178,30 +181,31 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                 if (typeof value.elements === "undefined") value.elements = "string";
                 if (typeof value.separator === "undefined") value.separator = "|";
                 if (typeof value.elements === "object") {
-                    value.elements = <never>this.#parse(value.elements).data;
+                    value.elements = <never>this.#parse(value.elements, value.index ?? topLevelIndex).data;
                 }
-                value = this.#fill(value);
+                value = this.#fill(value, value.index ?? topLevelIndex);
             } else if (value.type === "date") {
                 if (value.default instanceof Date) value.default = value.default.getTime();
                 if (typeof value.default === "string" || typeof value.default === "number") value.default = new Date(value.default).getTime();
-                value = this.#fill(value);
+                value = this.#fill(value, value.index ?? topLevelIndex);
             } else if (value.type === "object") {
                 if (typeof value.default === "undefined") value.default = undefined;
                 if (typeof value.optional === "undefined") value.optional = false;
                 if (typeof value.properties !== "undefined") {
                     if (value.properties instanceof Schema) value.properties = <never>value.properties[schemaData].data;
-                    else value.properties = <never>this.#parse(value.properties).data;
+                    else value.properties = <never>this.#parse(value.properties, value.index ?? topLevelIndex).data;
                 } else {
                     value.properties = undefined;
                 }
+                value = this.#fill(value, value.index ?? topLevelIndex);
             } else if (value.type === "tuple") {
                 if (typeof value.elements === "undefined") throw new PrettyError("Tuple needs to have at least 1 element", {
                     reference: "nekdis"
                 });
                 for (let j = 0, le = value.elements.length; j < le; j++) {
-                    value.elements[j] = <never>this.#parse({ [j]: value.elements[j] }).data[j];
+                    value.elements[j] = <never>this.#parse({ [j]: value.elements[j] }, value.index ?? topLevelIndex).data[j];
                 }
-                value = this.#fill(value);
+                value = this.#fill(value, value.index ?? topLevelIndex);
             } else if (value.type === "reference") {
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
                 if (!value.schema) throw new PrettyError("Type 'reference' lacks a schema which is needed to provide intellisense", {
@@ -246,15 +250,15 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                 });
 
                 if (typeof value.meta !== "undefined") {
-                    if (value.meta instanceof Schema) value.meta = <never>{ ...value.meta[schemaData].data, ...this.#parse({ in: "string", out: "string" }).data };
-                    else value.meta = <never>this.#parse({ ...value.meta, in: "string", out: "string" }).data;
+                    if (value.meta instanceof Schema) value.meta = <never>{ ...value.meta[schemaData].data, ...this.#parse({ in: "string", out: "string" }, true).data };
+                    else value.meta = <never>this.#parse({ ...value.meta, in: "string", out: "string" }, true).data;
                 } else {
-                    value.meta = <never>this.#parse({ in: "string", out: "string" }).data;
+                    value.meta = <never>this.#parse({ in: "string", out: "string" }, true).data;
                 }
 
                 if (value.schema instanceof Schema) value.schema = <never>value.schema[schemaData].data;
                 else if (value.schema === "self") value.schema = <never>null;
-                else value.schema = <never>this.#parse(value.schema).data;
+                else value.schema = <never>this.#parse(value.schema, value.index ?? topLevelIndex).data;
 
                 relations[key] = { index: value.index ?? false, schema: value.schema, meta: value.meta };
                 continue;
@@ -292,13 +296,13 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
                     if (typeof value.runtime === "undefined") value.runtime = undefined;
                     if (typeof value.epsilon === "undefined") value.epsilon = undefined;
                 }
-                value = this.#fill(value);
+                value = this.#fill(value, value.index ?? topLevelIndex);
             } else if (value.type === "string" || value.type === "number" || value.type === "bigint") {
                 if (typeof value.literal === "undefined") value.literal = undefined;
                 else if (!Array.isArray(value.literal)) value.literal = [<never>value.literal];
-                value = this.#fill(value);
+                value = this.#fill(value, value.index ?? topLevelIndex);
             } else {
-                value = this.#fill(value);
+                value = this.#fill(value, value.index ?? topLevelIndex);
             }
 
             data[key] = value;
@@ -306,11 +310,11 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
         return <never>{ data, references, relations };
     }
 
-    #fill(value: BaseField): any {
+    #fill(value: BaseField, topLevelIndex: boolean): any {
         if (typeof value.default === "undefined") value.default = undefined;
         if (typeof value.optional === "undefined") value.optional = false;
         if (typeof value.sortable === "undefined") value.sortable = false;
-        if (typeof value.index === "undefined") value.index = false;
+        if (typeof value.index === "undefined") value.index = topLevelIndex;
         return value;
     }
 }
