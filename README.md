@@ -22,6 +22,9 @@ Nekdis is a [Redis](https://redis.com/) ODM and mainly a proposal for [redis-om]
     - [Pure queries](#pure-queries)
     - [Hybrid queries](#hybrid-queries)
     - [Range queries](#range-queries)
+  - [Relational concepts](#relational-concepts)
+    - [Using references](#using-references)
+    - [Using relations](#using-relations)
   - [References VS Relations](#references-vs-relations)
     - [What is a Reference](#what-is-a-reference)
       - [The problem](#the-problem)
@@ -31,6 +34,7 @@ Nekdis is a [Redis](https://redis.com/) ODM and mainly a proposal for [redis-om]
     - [When to and not to use relations](#when-to-and-not-to-use-relations)
   - [Modularity with client modules](#modularity-with-client-modules)
   - [Modularity with base injections](#modularity-with-base-injections)
+- [Schema field list](#schema-field-list)
 - [Nekdis VS Redis-OM](#nekdis-vs-redis-om)
   - [Client](#client)
   - [Schema](#schema)
@@ -164,6 +168,144 @@ testModel.search().where("vec").eq((vector) => vector
 // "((@vec:[VECTOR_RANGE 5 $BLOB])) " "PARAMS" "2" "BLOB" "\xcd\xcc\xcc=\xcd\xcc\xcc=" "DIALECT" "2"
 ```
 
+## Relational concepts
+
+Due to some design limitations all relational concepts within nekdis, be it references or relations, are many-to-many, you can still do one-to-many and many-to-one relations with this but there are no constrains to do it explicitly meaning that you could on accident add another relation. With that also comes the disadvantage of not being able to optimize queries for those cases.
+
+There are plans to introduce explicitly one-to-many and many-to-one **relations** but this change would not affect references and the default/implicit type would be many-to-many.
+
+### Using references
+
+As references are only foreign keys you can mix and match it with RediSearch to have functionality close to SQL, the problem however is that you will probably end up with non-atomic actions which may cause unwanted behavior down the line.
+
+```ts
+    const UserSchema = client.schema({
+        name: { type: "text", index: true },
+        friends: { type: "reference", schema: "self" }
+    })
+
+    const UserModel = client.model("User", UserSchema);
+    await UserModel.createIndex();
+
+    const user1 = UserModel.create({
+        name: "DidaS"
+    });
+
+    const user2 = UserModel.create({
+        name: "Niek",
+        friends: new ReferenceArray().reference(user1)
+    })
+
+    await UserModel.save(user1);
+    await UserModel.save(user2);
+
+    // Getting all the references
+    await UserModel.get(user2.$recordId, { withReferences: true });
+    /*
+    JSONDocument {
+      name: 'Niek',
+      friends: [ JSONDocument { name: 'DidaS', friends: ReferenceArray(0) [] } ]
+    }
+    */
+
+    // Searching ands returning the array of keys (just normal search)
+    await UserModel.search().where("name").eq("Niek").returnFirst();
+    /*
+    JSONDocument {
+      name: 'Niek',
+      friends: ReferenceArray(1) [
+        'Nekdis:V1:User:028af7e1-11b0-4239-a51d-351564eef5bf'
+      ]
+    }
+    */
+
+    // Searching and returning the references
+    await UserModel.search().where("name").eq("Niek").returnFirst(true);
+    /*
+    JSONDocument {
+      name: 'Niek',
+      friends: [ JSONDocument { name: 'DidaS', friends: ReferenceArray(0) [] } ]
+    }
+    */
+```
+
+### Using relations
+
+Relations provide a more robust api but as of now there is no way to auto fetch relations when using `search` so you can only auto fetch relations when using `get`, this will change and the search methods will have the same api as `get` in the future.
+
+```ts
+    const UserSchema = client.schema({
+        name: { type: "text", index: true },
+        friends: { type: "relation", schema: "self", meta: { age: "number" } }
+    })
+
+    const UserModel = client.model("User", UserSchema);
+    await UserModel.createIndex();
+
+    const user1 = UserModel.create({
+        name: "DidaS"
+    });
+
+    const user2 = UserModel.create({
+        name: "Niek"
+    })
+
+    const user3 = UserModel.create({
+        name: "Otis"
+    })
+
+    await UserModel.save(user1);
+    await UserModel.save(user2);
+    await UserModel.save(user3);
+
+    await UserModel.relate(user2).to(user1).as("friends").with({ age: 19 }).exec();
+    await UserModel.relate(user2).to(user3).as("friends").exec();
+
+    // Getting all the relations
+    await UserModel.get(user2.$recordId, { withRelations: true });
+    /*
+    JSONDocument {
+      name: 'Niek',
+      friends: [ JSONDocument { name: 'Otis' }, JSONDocument { name: 'DidaS' } ]
+    }
+    */
+
+    // Getting all the relations metadata
+    await UserModel.get(user2.$recordId, { withRelations: true, returnMetadataOverRelation: true });
+    /*
+    JSONDocument {
+      name: 'Niek',
+      friends: [
+        JSONDocument {
+          age: undefined,
+          in: 'Nekdis:V1:User:c59e67d5-69f7-4746-8476-2354b5113069',
+          out: 'Nekdis:V1:User:35c49ab7-112f-4938-aff7-a4e8374513df'
+        },
+        JSONDocument {
+          age: 19,
+          in: 'Nekdis:V1:User:c59e67d5-69f7-4746-8476-2354b5113069',
+          out: 'Nekdis:V1:User:a92df323-a6c2-4576-bd11-21565db48331'
+        }
+      ]
+    }
+    */
+
+    // Search on the relation metadata
+    await UserModel.get(user2.$recordId, {
+        withRelations: true,
+        relationsConstrain: {
+            // Lets only search user friends related to the user in question
+            friends: (s) => s.where("in").eq(UserModel.sanitize(user2.$recordId)).and("age").eq(19)
+        }
+    });
+    /*
+    JSONDocument {
+      name: 'Niek',
+      friends: [ JSONDocument { name: 'DidaS' } ]
+    }
+    */
+```
+
 ## References VS Relations
 
 In this section i hope to explain a little bit more about the differences between this two methods of creation some sort of relationship between documents.
@@ -194,7 +336,7 @@ Relations are expensive to run given redis runs on memory, this is because a lot
 
 ### When to and not to use relations
 
-While relations provide an amazing api they are expensive on ram specially at scale, im not here to say "don't use it" but i do think you should only use them if you really need to do complex queries on your relations and/or apply constrains to them.
+While relations provide an amazing api they are expensive on ram specially at scale, im not here to say not to use them but to be aware of the drawbacks and requirements before doing so.
 
 References are yes way more limiting than relations as of now but you can still map a lot of relationships with them if you use them properly.
 
@@ -205,7 +347,22 @@ Nekdis allows you to add your own modules to the client, this allows easier acce
 However there was a slight problem if you will regarding implementing this in a way that the types would still work, thats why instead of passing them to the constructor we provide a `withModules` method so even in javascript you can have intellisense on your modules.
 
 ```ts
-// I have to think about something :c
+import { type Client, client } from "nekdis";
+
+class MyModule {
+    constructor(client: Client) {
+        // Do something
+    }
+
+    myFunction() {
+        // Do something
+    }
+}
+
+client.withModules({ name: "myMod", ctor: MyModule });
+
+// Access it
+client.myMod.myFunction()
 ```
 
 ## Modularity with base injections
@@ -214,7 +371,27 @@ Nekdis provides a way to set bases to your schemas, this means that you can have
 
 This is pretty useful specially when creating methods that you want to have across all your models.
 
-A good example of this can be found <u>[here](./examples/table-module.ts)</u>.
+A good example of this can be found [<u>here</u>](./examples/table-module.ts).
+
+# Schema field list
+
+| Type        | String Notation | Literal value support | Sortable | Index type |
+| ----------- | :-------------: | :-------------------: | :------: | :--------: |
+| `string`    |        ✔️        |           ✔️           |    ✔️     |   `TAG`    |
+| `number`    |        ✔️        |           ✔️           |    ✔️     | `NUMERIC`  |
+| `bigint`    |        ✔️        |           ✔️           |    ✔️     |   `TAG`    |
+| `boolean`   |        ✔️        |           ❌           |    ✔️     |   `TAG`    |
+| `text`      |        ✔️        |           ❌           |    ✔️     |   `TEXT`   |
+| `date`      |        ✔️        |           ❌           |    ✔️     | `NUMERIC`  |
+| `point`     |        ✔️        |           ❌           |    ✔️     |   `GEO`    |
+| `vector`    |        ✔️        |           ❌           |    ❌     |  `VECTOR`  |
+| `array`     |        ✔️        |           ❌           |    ❌     |     -      |
+| `tuple`     |        ❌        |           ❌           |    ❌     |     -      |
+| `object`    |        ❌        |           ❌           |    ❌     |     -      |
+| `reference` |        ❌        |           ❌           |    ❌     |     -      |
+| `relation`  |        ❌        |           ❌           |    ❌     |     -      |
+
+To check the extra options for each field, refer to the [types](./src/typings/schema-and-fields-definition.ts).
 
 # Nekdis VS Redis-OM
 
