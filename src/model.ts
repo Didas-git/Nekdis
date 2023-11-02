@@ -118,7 +118,7 @@ export class Model<S extends Schema<any>> {
             for (let i = 0, keys = Object.keys(this.#schema[schemaData].references), len = keys.length; i < len; i++) {
                 const key = keys[i];
                 //@ts-expect-error node-redis types decided to die
-                const val = this.#options.dataStructure === "JSON" ? data[key] : data[key].split(" | ");
+                const val = this.#schema.options.dataStructure === "JSON" ? data[key] : data[key].split(" | ");
                 const temp = [];
 
                 for (let j = 0, le = val.length; j < le; j++) {
@@ -195,12 +195,17 @@ export class Model<S extends Schema<any>> {
                         this.#schema.options.dataStructure === "JSON" ? "JSONGR" : "HGR",
                         "1",
                         id,
-                        key
+                        key,
+                        (+(options.returnMetadataOverRelation ?? false)).toString()
                     ]));
 
                     for (let j = 0, len = arr.length; j < len; j++) {
                         arr[j] = new this.#docType({
-                            data: <never>(value.schema ?? this.#schema[schemaData].data),
+                            data: <never>(options.returnMetadataOverRelation
+                                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                                ? value.meta!
+                                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                                : value.schema ?? this.#schema[schemaData].data),
                             references: {},
                             relations: {}
                         }, {
@@ -221,7 +226,8 @@ export class Model<S extends Schema<any>> {
             prefix: this.#options.prefix,
             name: this.name,
             suffix: this.#options.suffix
-        }, <never>data, true, this.#options.skipDocumentValidation);
+            // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+        }, <never>data, true, this.#options.skipDocumentValidation, options?.withRelations || options?.withReferences);
     }
 
     public create(id?: string | number): ReturnDocument<S>;

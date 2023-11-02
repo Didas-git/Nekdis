@@ -75,6 +75,7 @@ end
     KEYS[1] = The id of the key we want to get the relations from
 
     ARGS[1] = The field the relations are stored at
+    ARGS[2] = Whether to return meta or entire object
 ]]
 local function getJSONRelations(KEYS, ARGS)
     local value = redis.call("SMEMBERS", KEYS[1] .. ":" .. ARGS[1])
@@ -82,8 +83,14 @@ local function getJSONRelations(KEYS, ARGS)
     if value ~= nil then
         local out = {}
 
-        for i, id in ipairs(value) do
-            out[i] = cjson.decode(redis.call("JSON.GET", cjson.decode(redis.call("JSON.GET", id)).out));
+        if (ARGS[2] == "1") then
+            for i, id in ipairs(value) do
+                out[i] = cjson.decode(redis.call("JSON.GET", id))
+            end
+        else
+            for i, id in ipairs(value) do
+                out[i] = cjson.decode(redis.call("JSON.GET", cjson.decode(redis.call("JSON.GET", id)).out));
+            end
         end
 
         return cjson.encode(out)
@@ -98,8 +105,14 @@ local function getHASHRelations(KEYS, ARGS)
     if value ~= nil then
         local out = {}
 
-        for i, id in ipairs(value) do
-            out[i] = hashToJson(redis.call("HGETALL", redis.call("HGET", id, "out")))
+        if (ARGS[2] == "1") then
+            for i, id in ipairs(value) do
+                out[i] = hashToJson(redis.call("HGETALL", id, "out"))
+            end
+        else
+            for i, id in ipairs(value) do
+                out[i] = hashToJson(redis.call("HGETALL", redis.call("HGET", id, "out")))
+            end
         end
 
         return cjson.encode(out)
