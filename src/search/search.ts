@@ -74,13 +74,9 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return this.#createWhere(field);
     }
 
-    public or(value: unknown): this {
-        if (this.#workingType === "string" || this.#workingType === "boolean" || this.#workingType === "text" || this.#workingType === "bigint") {
-            this._query.at(-1)?.or.push(value);
-        }
-
-        return this;
-    }
+    //! Reword needed, should OR the entire query instead of the previous field
+    // public or(value: unknown): this {
+    // }
 
     public sortBy<F extends keyof P>(field: F, order: "ASC" | "DESC" = "ASC"): SearchSortReturn<Search<T>> {
         this.#options.SORTBY = { BY: <string>field, DIRECTION: order };
