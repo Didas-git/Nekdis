@@ -75,7 +75,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     }
 
     public or(value: unknown): this {
-        if (this.#workingType === "string" || this.#workingType === "boolean" || this.#workingType === "text") {
+        if (this.#workingType === "string" || this.#workingType === "boolean" || this.#workingType === "text" || this.#workingType === "bigint") {
             this._query.at(-1)?.or.push(value);
         }
 
