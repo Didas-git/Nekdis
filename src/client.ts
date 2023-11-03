@@ -26,8 +26,9 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
     #open: boolean = false;
     #options: ClientOptions<SD, MD>;
 
-    public constructor(options?: ClientOptions<SD, MD>) {
+    public constructor(options?: ClientOptions<SD, MD>, client?: NodeRedisClient) {
         this.#options = options ?? <ClientOptions<SD, MD>>{};
+        this.#client = <never>client;
     }
 
     public async connect(url: string | URLObject = this.#options.url ?? "redis://localhost:6379"): Promise<Client> {
