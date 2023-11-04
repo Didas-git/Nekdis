@@ -27,6 +27,10 @@ export class BigIntField<T extends ParseSchema<any>, L extends bigint> extends S
         return this.eq(value);
     }
 
+    public includes(value: Array<L> | L): Search<T> {
+        return this.eq(value);
+    }
+
     protected construct(): string {
         return `{${this.value}${this.or.length > 0 ? ` | ${this.or.join(" | ")}` : ""}}`;
     }

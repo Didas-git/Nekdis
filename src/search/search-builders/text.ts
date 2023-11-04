@@ -22,6 +22,10 @@ export class TextField<T extends ParseSchema<any>> extends SearchField<T> {
         return this.eq(value);
     }
 
+    public includes(value: Array<string> | string): Search<T> {
+        return this.eq(value);
+    }
+
     public exact(value: Array<string> | string): Search<T> {
         return this.#handleMultipleFields(value, true);
     }
@@ -43,6 +47,10 @@ export class TextField<T extends ParseSchema<any>> extends SearchField<T> {
     }
 
     public matchesExactly(value: Array<string> | string): Search<T> {
+        return this.exact(value);
+    }
+
+    public includesExactly(value: Array<string> | string): Search<T> {
         return this.exact(value);
     }
 
