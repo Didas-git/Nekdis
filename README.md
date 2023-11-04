@@ -18,10 +18,14 @@ Nekdis is a [Redis](https://redis.com/) ODM and mainly a proposal for [redis-om]
   - [Reference](#reference)
   - [Relation](#relation)
 - [Advanced concepts](#advanced-concepts)
+  - [Self managed instance](#self-managed-instance)
+    - [Option 1](#option-1)
+    - [Option 2](#option-2)
   - [Vector similarity search](#vector-similarity-search)
     - [Pure queries](#pure-queries)
     - [Hybrid queries](#hybrid-queries)
     - [Range queries](#range-queries)
+  - [Multiple value queries (`or` queries)](#multiple-value-queries-or-queries)
   - [Relational concepts](#relational-concepts)
     - [Using references](#using-references)
     - [Using relations](#using-relations)
@@ -126,6 +130,28 @@ For more details you can check the [references versus relations](#references-vs-
 
 Here im going to explain a bit more of the possibilities of Nekdis.
 
+## Self managed instance
+
+Nekdis allows you to pass your own redis client to it, this allows a higher degree of control over the connection and some freedom.
+
+### Option 1
+
+```ts
+import { client } from "./src";
+import { createClient } from "redis";
+
+client.redisClient = createClient();
+```
+
+### Option 2
+
+```ts
+import { Client } from "./src";
+import { createClient } from "redis";
+
+const client = new Client({}, createClient());
+```
+
 ## Vector similarity search
 
 Redis supports indexing vectors on the database for search, with this in mind we built a way to query them that resembles the point search using the same builder pattern.
@@ -168,6 +194,24 @@ testModel.search().where("vec").eq((vector) => vector
 // "((@vec:[VECTOR_RANGE 5 $BLOB])) " "PARAMS" "2" "BLOB" "\xcd\xcc\xcc=\xcd\xcc\xcc=" "DIALECT" "2"
 ```
 
+## Multiple value queries (`or` queries)
+
+In Nekdis you can pass in an array of values to `eq`/`equals`/`equalsTo` to make an "or query". Another alias for it is `includes`.
+
+> **NOTE**
+> This only works on `TAG` (excluding boolean) and `TEXT` fields for now
+
+```ts
+const UserSchema = client.schema({
+    name: { type: "text", index: true }
+})
+
+const UserModel = client.model("User", UserSchema);
+
+// Return all users with name `DidaS` or `Leibale`
+await UserModel.search().where("name").eq(["DidaS", "Leibale"]).returnAll();
+```
+
 ## Relational concepts
 
 Due to some design limitations all relational concepts within nekdis, be it references or relations, are many-to-many, you can still do one-to-many and many-to-one relations with this but there are no constrains to do it explicitly meaning that you could on accident add another relation. With that also comes the disadvantage of not being able to optimize queries for those cases.
@@ -179,54 +223,54 @@ There are plans to introduce explicitly one-to-many and many-to-one **relations*
 As references are only foreign keys you can mix and match it with RediSearch to have functionality close to SQL, the problem however is that you will probably end up with non-atomic actions which may cause unwanted behavior down the line.
 
 ```ts
-    const UserSchema = client.schema({
-        name: { type: "text", index: true },
-        friends: { type: "reference", schema: "self" }
-    })
+const UserSchema = client.schema({
+    name: { type: "text", index: true },
+    friends: { type: "reference", schema: "self" }
+})
 
-    const UserModel = client.model("User", UserSchema);
-    await UserModel.createIndex();
+const UserModel = client.model("User", UserSchema);
+await UserModel.createIndex();
 
-    const user1 = UserModel.create({
-        name: "DidaS"
-    });
+const user1 = UserModel.create({
+    name: "DidaS"
+});
 
-    const user2 = UserModel.create({
-        name: "Niek",
-        friends: new ReferenceArray().reference(user1)
-    })
+const user2 = UserModel.create({
+    name: "Niek",
+    friends: new ReferenceArray().reference(user1)
+})
 
-    await UserModel.save(user1);
-    await UserModel.save(user2);
+await UserModel.save(user1);
+await UserModel.save(user2);
 
-    // Getting all the references
-    await UserModel.get(user2.$recordId, { withReferences: true });
-    /*
-    JSONDocument {
-      name: 'Niek',
-      friends: [ JSONDocument { name: 'DidaS', friends: ReferenceArray(0) [] } ]
-    }
-    */
+// Getting all the references
+await UserModel.get(user2.$recordId, { withReferences: true });
+/*
+JSONDocument {
+    name: 'Niek',
+    friends: [ JSONDocument { name: 'DidaS', friends: ReferenceArray(0) [] } ]
+}
+*/
 
-    // Searching ands returning the array of keys (just normal search)
-    await UserModel.search().where("name").eq("Niek").returnFirst();
-    /*
-    JSONDocument {
-      name: 'Niek',
-      friends: ReferenceArray(1) [
-        'Nekdis:V1:User:028af7e1-11b0-4239-a51d-351564eef5bf'
-      ]
-    }
-    */
+// Searching and returning the array of keys (just normal search)
+await UserModel.search().where("name").eq("Niek").returnFirst();
+/*
+JSONDocument {
+    name: 'Niek',
+    friends: ReferenceArray(1) [
+    'Nekdis:V1:User:028af7e1-11b0-4239-a51d-351564eef5bf'
+    ]
+}
+*/
 
-    // Searching and returning the references
-    await UserModel.search().where("name").eq("Niek").returnFirst(true);
-    /*
-    JSONDocument {
-      name: 'Niek',
-      friends: [ JSONDocument { name: 'DidaS', friends: ReferenceArray(0) [] } ]
-    }
-    */
+// Searching and returning the references
+await UserModel.search().where("name").eq("Niek").returnFirst(true);
+/*
+JSONDocument {
+    name: 'Niek',
+    friends: [ JSONDocument { name: 'DidaS', friends: ReferenceArray(0) [] } ]
+}
+*/
 ```
 
 ### Using relations
@@ -234,76 +278,76 @@ As references are only foreign keys you can mix and match it with RediSearch to 
 Relations provide a more robust api but as of now there is no way to auto fetch relations when using `search` so you can only auto fetch relations when using `get`, this will change and the search methods will have the same api as `get` in the future.
 
 ```ts
-    const UserSchema = client.schema({
-        name: { type: "text", index: true },
-        friends: { type: "relation", schema: "self", meta: { age: "number" } }
-    })
+const UserSchema = client.schema({
+    name: { type: "text", index: true },
+    friends: { type: "relation", schema: "self", meta: { age: "number" } }
+})
 
-    const UserModel = client.model("User", UserSchema);
-    await UserModel.createIndex();
+const UserModel = client.model("User", UserSchema);
+await UserModel.createIndex();
 
-    const user1 = UserModel.create({
-        name: "DidaS"
-    });
+const user1 = UserModel.create({
+    name: "DidaS"
+});
 
-    const user2 = UserModel.create({
-        name: "Niek"
-    })
+const user2 = UserModel.create({
+    name: "Niek"
+})
 
-    const user3 = UserModel.create({
-        name: "Otis"
-    })
+const user3 = UserModel.create({
+    name: "Otis"
+})
 
-    await UserModel.save(user1);
-    await UserModel.save(user2);
-    await UserModel.save(user3);
+await UserModel.save(user1);
+await UserModel.save(user2);
+await UserModel.save(user3);
 
-    await UserModel.relate(user2).to(user1).as("friends").with({ age: 19 }).exec();
-    await UserModel.relate(user2).to(user3).as("friends").exec();
+await UserModel.relate(user2).to(user1).as("friends").with({ age: 19 }).exec();
+await UserModel.relate(user2).to(user3).as("friends").exec();
 
-    // Getting all the relations
-    await UserModel.get(user2.$recordId, { withRelations: true });
-    /*
+// Getting all the relations
+await UserModel.get(user2.$recordId, { withRelations: true });
+/*
+JSONDocument {
+    name: 'Niek',
+    friends: [ JSONDocument { name: 'Otis' }, JSONDocument { name: 'DidaS' } ]
+}
+*/
+
+// Getting all the relations metadata
+await UserModel.get(user2.$recordId, { withRelations: true, returnMetadataOverRelation: true });
+/*
+JSONDocument {
+    name: 'Niek',
+    friends: [
     JSONDocument {
-      name: 'Niek',
-      friends: [ JSONDocument { name: 'Otis' }, JSONDocument { name: 'DidaS' } ]
-    }
-    */
-
-    // Getting all the relations metadata
-    await UserModel.get(user2.$recordId, { withRelations: true, returnMetadataOverRelation: true });
-    /*
+        age: undefined,
+        in: 'Nekdis:V1:User:c59e67d5-69f7-4746-8476-2354b5113069',
+        out: 'Nekdis:V1:User:35c49ab7-112f-4938-aff7-a4e8374513df'
+    },
     JSONDocument {
-      name: 'Niek',
-      friends: [
-        JSONDocument {
-          age: undefined,
-          in: 'Nekdis:V1:User:c59e67d5-69f7-4746-8476-2354b5113069',
-          out: 'Nekdis:V1:User:35c49ab7-112f-4938-aff7-a4e8374513df'
-        },
-        JSONDocument {
-          age: 19,
-          in: 'Nekdis:V1:User:c59e67d5-69f7-4746-8476-2354b5113069',
-          out: 'Nekdis:V1:User:a92df323-a6c2-4576-bd11-21565db48331'
-        }
-      ]
+        age: 19,
+        in: 'Nekdis:V1:User:c59e67d5-69f7-4746-8476-2354b5113069',
+        out: 'Nekdis:V1:User:a92df323-a6c2-4576-bd11-21565db48331'
     }
-    */
+    ]
+}
+*/
 
-    // Search on the relation metadata
-    await UserModel.get(user2.$recordId, {
-        withRelations: true,
-        relationsConstrain: {
-            // Lets only search user friends related to the user in question
-            friends: (s) => s.where("in").eq(UserModel.sanitize(user2.$recordId)).and("age").eq(19)
-        }
-    });
-    /*
-    JSONDocument {
-      name: 'Niek',
-      friends: [ JSONDocument { name: 'DidaS' } ]
+// Search on the relation metadata
+await UserModel.get(user2.$recordId, {
+    withRelations: true,
+    relationsConstrain: {
+        // Lets only search user friends related to the user in question
+        friends: (s) => s.where("in").eq(UserModel.sanitize(user2.$recordId)).and("age").eq(19)
     }
-    */
+});
+/*
+JSONDocument {
+    name: 'Niek',
+    friends: [ JSONDocument { name: 'DidaS' } ]
+}
+*/
 ```
 
 ## References VS Relations
