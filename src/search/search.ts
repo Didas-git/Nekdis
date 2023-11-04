@@ -76,7 +76,6 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
         return this.#createWhere(field);
     }
 
-    //! Reword needed, should OR the entire query instead of the previous field
     public or<F extends keyof P>(field: F): MapSearchField<F, T, P> {
         this.#or.push(this._query);
         this._query = [];
@@ -319,7 +318,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     }
 
     #parseQuery(query: Array<SearchField<T>>): string {
-        const queryArr: Array<string> = [];
+        const queryArr: Array<string> = ["("];
 
         for (let i = 0, len = query.length; i < len; i++) {
             const queryPart = query[i];
@@ -338,6 +337,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
             }
         }
 
+        queryArr.push(")");
         if (queryArr.length === 0) return "*";
         return queryArr.join(" ");
     }
