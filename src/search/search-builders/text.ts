@@ -76,6 +76,7 @@ export class TextField<T extends ParseSchema<any>> extends SearchField<T> {
             }
         }
 
+        this.search._query.push(this);
         return this.search;
     }
 }

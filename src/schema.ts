@@ -31,10 +31,10 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
     public [schemaData]: P;
 
     public constructor(rawData: S, methodsData?: M, options: SchemaOptions = {}) {
-        this[schemaData] = <never>this.#parse(rawData);
-        this[methods] = methodsData ?? <M>{};
         this.options = <never>options;
         this.options.dataStructure = options.dataStructure ?? "JSON";
+        this[schemaData] = <never>this.#parse(rawData);
+        this[methods] = methodsData ?? <M>{};
 
     }
 

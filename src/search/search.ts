@@ -25,8 +25,7 @@ import type {
     ReturnDocument,
     ParseSchema,
     BaseField,
-    ParsedMap,
-    FieldType
+    ParsedMap
 } from "../typings";
 
 export type SearchReturn<T extends Search<ParseSchema<any>>> = Omit<T, "where" | "and" | "or" | "rawQuery" | `sort${string}` | `return${string}`>;
@@ -38,19 +37,22 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     readonly #parsedSchema: ParsedMap;
     readonly #information: SearchInformation;
     readonly #doc: typeof JSONDocument | typeof HASHDocument;
-    #workingType!: FieldType["type"];
 
     /**
      * LIMIT defaults to 0 10
      * SORTBY DIRECTION defaults to ASC
     */
-    #options: SearchOptions = {};
+    #options: SearchOptions & Required<Pick<SearchOptions, "PARAMS">> = {
+        DIALECT: 2,
+        PARAMS: {}
+    };
+
+    #or: Array<Array<SearchField<T>>> = [];
+    #blobCount: number = 0;
+    #vectorQuery: string | undefined;
 
     /** @internal */
     public _query: Array<SearchField<T>> = [];
-
-    /** @internal */
-    public _vector?: VectorField<T>;
 
     public constructor(
         client: NodeRedisClient,
@@ -75,8 +77,12 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     }
 
     //! Reword needed, should OR the entire query instead of the previous field
-    // public or(value: unknown): this {
-    // }
+    public or<F extends keyof P>(field: F): MapSearchField<F, T, P> {
+        this.#or.push(this._query);
+        this._query = [];
+
+        return this.#createWhere(field);
+    }
 
     public sortBy<F extends keyof P>(field: F, order: "ASC" | "DESC" = "ASC"): SearchSortReturn<Search<T>> {
         this.#options.SORTBY = { BY: <string>field, DIRECTION: order };
@@ -289,32 +295,51 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     }
 
     #buildQuery(): string {
-        let query = "";
-        if (this._query.length === 0) query = "*";
-        else query = this.#parseQuery();
+        const query: Array<string> = [];
+        const length = this.#or.length;
 
-        if (typeof this._vector !== "undefined") {
-            this.#options.DIALECT = 2;
-            this.#options.PARAMS = { BLOB: this._vector._vector._buffer };
-            query += this._vector.toString();
+        if (length === 0 && this._query.length === 0) return "*";
+        else {
+            if (length > 0) {
+                query.push(this.#parseQuery(this.#or[0]));
+                if (length > 1) {
+                    for (let i = 1; i < length; i++) {
+                        query.push(this.#parseQuery(this.#or[i]));
+                    }
+                }
+            }
+
+            query.push(this.#parseQuery(this._query));
         }
 
-        return query;
+        let final = query.join(" | ");
+        if (typeof this.#vectorQuery === "string") final += this.#vectorQuery;
+
+        return final;
     }
 
-    #parseQuery(): string {
-        let query = "";
-        for (let i = 0, len = this._query.length; i < len; i++) {
-            const queryPart = this._query[i];
+    #parseQuery(query: Array<SearchField<T>>): string {
+        const queryArr: Array<string> = [];
+
+        for (let i = 0, len = query.length; i < len; i++) {
+            const queryPart = query[i];
+
             if (queryPart instanceof VectorField) {
-                this.#options.DIALECT = 2;
-                this.#options.PARAMS = { BLOB: queryPart._vector._buffer };
+                if (queryPart._vector._type === "RANGE") {
+                    queryArr.push(queryPart.toString(`BLOB${this.#blobCount}`));
+                } else {
+                    if (typeof this.#vectorQuery === "string") throw new PrettyError("Its not possible to `OR` multiple KNN queries together");
+                    this.#vectorQuery = queryPart.toString(`BLOB${this.#blobCount}`);
+                }
+
+                this.#options.PARAMS[`BLOB${this.#blobCount}`] = queryPart._vector._buffer;
+            } else {
+                queryArr.push(queryPart.toString());
             }
-            // @ts-expect-error This looks like something that should be reported
-            query += `${queryPart.toString()} `;
         }
 
-        return query;
+        if (queryArr.length === 0) return "*";
+        return queryArr.join(" ");
     }
 
     #createWhere<F extends keyof P>(field: F): MapSearchField<F, T, P> {
@@ -331,35 +356,27 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
     #defineReturn(field: string, type: Exclude<FieldStringType, "array">): BaseField {
         switch (type) {
             case "string": {
-                this.#workingType = "string";
                 return <never>new StringField<T, string>(this, field);
             }
             case "number": {
-                this.#workingType = "number";
                 return <never>new NumberField<T, number>(this, field);
             }
             case "bigint": {
-                this.#workingType = "bigint";
                 return <never>new BigIntField<T, bigint>(this, field);
             }
             case "boolean": {
-                this.#workingType = "boolean";
                 return <never>new BooleanField<T>(this, field);
             }
             case "text": {
-                this.#workingType = "text";
                 return <never>new TextField<T>(this, field);
             }
             case "date": {
-                this.#workingType = "date";
                 return <never>new DateField<T>(this, field);
             }
             case "point": {
-                this.#workingType = "point";
                 return <never>new PointField<T>(this, field);
             }
             case "vector": {
-                this.#workingType = "vector";
                 return <never>new VectorField<T>(this, field);
             }
         }

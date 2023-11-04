@@ -16,6 +16,8 @@ export class StringField<T extends ParseSchema<any>, L extends string> extends S
                 }
             }
         }
+
+        this.search._query.push(this);
         return this.search;
     }
 

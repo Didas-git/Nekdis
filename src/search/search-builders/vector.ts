@@ -48,8 +48,7 @@ export class VectorField<T extends ParseSchema<any>> extends SearchField<T> {
 
     public override eq(fn: VectorFunction | Vector): Search<T> {
         this._vector = typeof fn === "function" ? fn(this._vector) : fn;
-        if (this._vector._type === "RANGE") this.search._query.push(this);
-        else this.search._vector = this;
+        this.search._query.push(this);
         return this.search;
     }
 
@@ -61,19 +60,19 @@ export class VectorField<T extends ParseSchema<any>> extends SearchField<T> {
         return this.eq(fn);
     }
 
-    protected override construct(): string {
+    protected override construct(paramName: string = "BLOB"): string {
         // eslint-disable-next-line @typescript-eslint/naming-convention
         const { _range } = this._vector;
-        return `[VECTOR_RANGE ${_range} $BLOB]`;
+        return `[VECTOR_RANGE ${_range} $${paramName}]`;
     }
 
-    public override toString(): string {
+    public override toString(paramName: string = "BLOB"): string {
         if (this._vector._type === "RANGE") {
-            return `(${this.negated ? "-" : ""}(@${this.field}:${this.construct()}))`;
+            return `(${this.negated ? "-" : ""}(@${this.field}:${this.construct(paramName)}))`;
         } else {
             // eslint-disable-next-line @typescript-eslint/naming-convention
             const { _type, _return } = this._vector;
-            return `=>[${_type} ${_return} @${this.field} $BLOB]`;
+            return `=>[${_type} ${_return} @${this.field} $${paramName}]`;
         }
     }
 

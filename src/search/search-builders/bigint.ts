@@ -16,6 +16,8 @@ export class BigIntField<T extends ParseSchema<any>, L extends bigint> extends S
                 }
             }
         }
+
+        this.search._query.push(this);
         return this.search;
     }
 
