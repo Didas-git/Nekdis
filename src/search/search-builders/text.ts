@@ -26,16 +26,16 @@ export class TextField<T extends ParseSchema<any>> extends SearchField<T> {
         return this.eq(value);
     }
 
-    public exact(value: Array<string> | string): Search<T> {
-        return this.#handleMultipleFields(value, true);
-    }
-
     public match(value: Array<string> | string): Search<T> {
         return this.eq(value);
     }
 
     public matches(value: Array<string> | string): Search<T> {
         return this.eq(value);
+    }
+
+    public exact(value: Array<string> | string): Search<T> {
+        return this.#handleMultipleFields(value, true);
     }
 
     public matchExact(value: Array<string> | string): Search<T> {
@@ -54,7 +54,7 @@ export class TextField<T extends ParseSchema<any>> extends SearchField<T> {
         return this.exact(value);
     }
 
-    public get exactly(): Exclude<typeof this, "exact" | "matchExact" | "matchExactly" | "matchesExactly"> {
+    public get exactly(): Exclude<typeof this, "exact" | "matchExact" | "matchExactly" | "matchesExactly" | "includesExactly"> {
         this.value.exact = true;
         return <never>this;
     }
@@ -64,7 +64,7 @@ export class TextField<T extends ParseSchema<any>> extends SearchField<T> {
     }
 
     /** @internal */
-    #handleMultipleFields(value: Array<string> | string, exact: boolean = false): Search<T> {
+    #handleMultipleFields(value: Array<string> | string, exact: boolean = this.value.exact): Search<T> {
         if (typeof value === "string") {
             this.value = { val: value, exact };
         } else {
