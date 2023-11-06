@@ -29,6 +29,7 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
     public constructor(options?: ClientOptions<SD, MD>, client?: NodeRedisClient) {
         this.#options = options ?? <ClientOptions<SD, MD>>{};
         this.#client = <never>client;
+        this.#appendToModelProto();
     }
 
     public async connect(url: string | URLObject = this.#options.url ?? "redis://localhost:6379"): Promise<Client> {
@@ -74,16 +75,17 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
         { [K in keyof (T & SD)]: (T & SD)[K] },
         { [K in keyof (M & MD)]: (M & MD)[K] }
     > {
-        return <never>new Schema({
-            ...this.#options.base?.schema?.definition,
-            ...definition
-        }, <never>{
-            ...this.#options.base?.schema?.methods,
-            ...methods
-        }, {
-            ...this.#options.base?.schema?.options,
-            ...options
-        });
+        return <never>new Schema(
+            {
+                ...this.#options.base?.schema?.definition,
+                ...definition
+            },
+            <never>methods,
+            {
+                ...this.#options.base?.schema?.options,
+                ...options
+            }
+        );
     }
 
     public model<T extends Schema<any>>(name: string, schema?: T): Model<T> & ExtractSchemaMethods<T> {
@@ -129,11 +131,22 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
         }
 
         this.#options = { ...this.#options, ...options };
+        this.#appendToModelProto();
     }
 
     public set redisClient(client: NodeRedisClient) {
         if (!this.#open) {
             this.#client = client;
+        }
+    }
+
+    #appendToModelProto(): void {
+        if (typeof this.#options.base?.schema?.methods === "undefined") return;
+
+        for (let i = 0, entries = Object.entries(this.#options.base.schema.methods), length = entries.length; i < length; i++) {
+            const [key, value] = entries[i];
+            //@ts-expect-error shenanigans
+            Model.prototype[key] = value;
         }
     }
 }
