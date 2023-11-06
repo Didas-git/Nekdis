@@ -292,10 +292,13 @@ export class Model<S extends Schema<any>> {
         await Promise.all(temp);
     }
 
-    public async createAndSave(id?: string | number): Promise<void>;
-    public async createAndSave(data?: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, false, true>): Promise<void>;
-    public async createAndSave(idOrData?: string | number | { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, false, true>): Promise<void> {
-        await this.save(this.create(<never>idOrData));
+    public async createAndSave(id?: string | number): Promise<string>;
+    public async createAndSave(data?: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, false, true>): Promise<string>;
+    public async createAndSave(idOrData?: string | number | { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, false, true>): Promise<string> {
+        const doc = this.create(<never>idOrData);
+        await this.save(doc);
+
+        return doc.$recordId;
     }
 
     public search(): Search<ExtractParsedSchemaDefinition<S>> {
