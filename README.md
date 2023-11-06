@@ -68,9 +68,19 @@ Nekdis already exports a global client but you can also create your own instance
 ```ts
 import { client } from "nekdis";
 
-await client.connect().then(() => {
-    console.log("Connected to redis");
-});
+await client.connect();
+```
+
+But you can also use your own node-redis instance.
+
+```ts
+import { createClient } from "redis";
+import { client } from "nekdis";
+
+client.redisClient = createClient();
+
+// We still advise to use Nekdis to connect and disconnect
+await client.connect();
 ```
 
 ## Creating a Schema
@@ -78,7 +88,7 @@ await client.connect().then(() => {
 Schemas are what defines the shape of your data and can be created using the `schema` method of the client.
 
 ```ts
-const catSchema = client.schema({
+const CatSchema = client.schema({
     name: { type: "string" }
 });
 ```
@@ -88,7 +98,7 @@ const catSchema = client.schema({
 Models are what you use to interact with the database and collections that have the shape of the schema you pass in. They can be crated using the `model` method of the client.
 
 ```ts
-const catModel = client.model("Cat", catSchema);
+const CatModel = client.model("Cat", CatSchema);
 ```
 
 ## Creating a document/record
@@ -96,9 +106,17 @@ const catModel = client.model("Cat", catSchema);
 The model provides some methods to handle your documents but the simplest way to create one is to do as follows:
 
 ```ts
-const aCat = catModel.createAndSave({
+const aCat = CatModel.create({
     name: "Nozomi"
 });
+
+await CatModel.save(aCat);
+
+// Alternatively
+await CatModel.createAndSave({
+    name: "Vanilla"
+});
+
 ```
 
 # Glossary
@@ -231,20 +249,18 @@ const UserSchema = client.schema({
 const UserModel = client.model("User", UserSchema);
 await UserModel.createIndex();
 
-const user1 = UserModel.create({
+const user1id = await UserModel.createAndSave({
     name: "DidaS"
 });
 
-const user2 = UserModel.create({
+const user2id = await UserModel.createAndSave({
     name: "Niek",
-    friends: new ReferenceArray().reference(user1)
+    // <ReferenceArray>.reference accepts a Document or a recordId.
+    friends: new ReferenceArray().reference(user1id)
 })
 
-await UserModel.save(user1);
-await UserModel.save(user2);
-
 // Getting all the references
-await UserModel.get(user2.$recordId, { withReferences: true });
+await UserModel.get(user2id, { withReferences: true });
 /*
 JSONDocument {
     name: 'Niek',
@@ -286,27 +302,24 @@ const UserSchema = client.schema({
 const UserModel = client.model("User", UserSchema);
 await UserModel.createIndex();
 
-const user1 = UserModel.create({
+const user1id = await UserModel.createAndSave({
     name: "DidaS"
 });
 
-const user2 = UserModel.create({
+const user2id = await UserModel.createAndSave({
     name: "Niek"
 })
 
-const user3 = UserModel.create({
+const user3id = await UserModel.createAndSave({
     name: "Otis"
 })
 
-await UserModel.save(user1);
-await UserModel.save(user2);
-await UserModel.save(user3);
-
-await UserModel.relate(user2).to(user1).as("friends").with({ age: 19 }).exec();
-await UserModel.relate(user2).to(user3).as("friends").exec();
+// <Model>.relate accepts a Document, an id or a recordId
+await UserModel.relate(user2id).to(user1id).as("friends").with({ age: 19 }).exec();
+await UserModel.relate(user2id).to(user3id).as("friends").exec();
 
 // Getting all the relations
-await UserModel.get(user2.$recordId, { withRelations: true });
+await UserModel.get(user2id, { withRelations: true });
 /*
 JSONDocument {
     name: 'Niek',
@@ -315,7 +328,7 @@ JSONDocument {
 */
 
 // Getting all the relations metadata
-await UserModel.get(user2.$recordId, { withRelations: true, returnMetadataOverRelation: true });
+await UserModel.get(user2id, { withRelations: true, returnMetadataOverRelation: true });
 /*
 JSONDocument {
     name: 'Niek',
@@ -335,11 +348,11 @@ JSONDocument {
 */
 
 // Search on the relation metadata
-await UserModel.get(user2.$recordId, {
+await UserModel.get(user2id, {
     withRelations: true,
     relationsConstrain: {
         // Lets only search user friends related to the user in question
-        friends: (s) => s.where("in").eq(UserModel.sanitize(user2.$recordId)).and("age").eq(19)
+        friends: (s) => s.where("in").eq(UserModel.sanitize(user2id)).and("age").eq(19)
     }
 });
 /*
