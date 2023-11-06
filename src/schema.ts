@@ -48,6 +48,10 @@ export class Schema<S extends SchemaDefinition, M extends MethodsDefinition<S> =
             references: {
                 ...schema[schemaData].references,
                 ...this[schemaData].references
+            },
+            relations: {
+                ...schema[schemaData].references,
+                ...this[schemaData].references
             }
         };
         return <never>this;
