@@ -143,11 +143,7 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
     #appendToModelProto(): void {
         if (typeof this.#options.base?.schema?.methods === "undefined") return;
 
-        for (let i = 0, entries = Object.entries(this.#options.base.schema.methods), length = entries.length; i < length; i++) {
-            const [key, value] = entries[i];
-            //@ts-expect-error shenanigans
-            Model.prototype[key] = value;
-        }
+        Object.assign(Model.prototype, this.#options.base.schema.methods);
     }
 }
 

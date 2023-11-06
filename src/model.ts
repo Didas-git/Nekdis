@@ -422,11 +422,7 @@ export class Model<S extends Schema<any>> {
     }
 
     #defineMethods(): void {
-        for (let i = 0, entries = Object.entries(this.#schema[methods]), len = entries.length; i < len; i++) {
-            const [key, value] = entries[i];
-            //@ts-expect-error shenanigans
-            this[key] = value;
-        }
+        Object.assign(this, this.#schema[methods]);
     }
 
     public get options(): ModelOptions {
