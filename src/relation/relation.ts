@@ -1,7 +1,6 @@
-import { PrettyError } from "@infinite-fansub/logger";
 import { randomUUID } from "crypto";
 
-import { JSONDocument, HASHDocument } from "../document";
+import { JSONDocument, HASHDocument } from "../document/index.js";
 
 import type {
     ModelInformation,
@@ -10,7 +9,7 @@ import type {
     MapSchemaData,
     ParseSchema,
     Document
-} from "../typings";
+} from "../typings/index.js";
 
 export class Relation<T extends ParseSchema<any>, F extends ParseSchema<any>["relations"][number]["meta"] = {}> {
     readonly #client: NodeRedisClient;
@@ -34,13 +33,9 @@ export class Relation<T extends ParseSchema<any>, F extends ParseSchema<any>["re
     public to(id: string | number | Document): this {
         if (id instanceof JSONDocument || id instanceof HASHDocument) id = id.$recordId;
         else if (id.toString().split(":").length === 1) {
-            const suffix = this.#information.suffix;
+            const { suffix } = this.#information;
 
-            if (typeof suffix === "function") {
-                throw new PrettyError("Due to the use of dynamic suffixes you gave to pass in a full id", {
-                    reference: "nekdis"
-                });
-            }
+            if (typeof suffix === "function") throw new Error("Due to the use of dynamic suffixes you gave to pass in a full id");
 
             id = `${this.#information.globalPrefix}:${this.#information.prefix}:${this.#information.modelName}:${suffix ? `${suffix}:` : ""}${id}`;
         }
@@ -52,7 +47,7 @@ export class Relation<T extends ParseSchema<any>, F extends ParseSchema<any>["re
 
     public as<K extends keyof T["relations"]>(field: K): Relation<T, T["relations"][K]["meta"]> {
         this.#field = <string>field;
-        return <never>this;
+        return <never> this;
     }
 
     public with(meta: [keyof F] extends [never] ? never : MapSchemaData<Omit<F, "in" | "out"> & ParseSchemaData<any>>): this {
@@ -61,18 +56,15 @@ export class Relation<T extends ParseSchema<any>, F extends ParseSchema<any>["re
     }
 
     public async exec(): Promise<void> {
-        if (typeof this.#out === "undefined" || typeof this.#field === "undefined") throw new PrettyError("Relation query was not properly formatted", {
-            reference: "nekdis"
-        });
+        if (typeof this.#out === "undefined" || typeof this.#field === "undefined") throw new Error("Relation query was not properly formatted");
 
         const arr = ["FCALL"];
         const omitId = `${this.#information.globalPrefix}:${this.#information.prefix}:${this.#information.modelName}-relation-${this.#field}:${randomUUID()}`;
 
-        if (this.#information.dataStructure === "JSON") {
+        if (this.#information.dataStructure === "JSON")
             arr.push("JSONCR");
-        } else {
+        else
             arr.push("HCR");
-        }
 
         arr.push(
             "3",

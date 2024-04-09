@@ -1,16 +1,11 @@
-/* eslint-disable array-element-newline */
-import { PrettyError } from "@infinite-fansub/logger";
-import { inspect } from "node:util";
-import { Color } from "colours.js";
-
-import type { ParsedFieldType, ParsedSchemaDefinition } from "../../typings";
-import type { HASHDocument } from "../hash-document";
-import type { JSONDocument } from "../json-document";
+import type { ParsedFieldType, ParsedSchemaDefinition, Point } from "../../typings/index.js";
+import type { HASHDocument } from "../hash-document.js";
+import type { JSONDocument } from "../json-document.js";
 
 export function dateToNumber(val: Date | string | number): number {
     if (val instanceof Date) return val.getTime();
     if (typeof val === "string" || typeof val === "number") return new Date(val).getTime();
-    throw new PrettyError("An invalid value was given");
+    throw new Error("An invalid value was given");
 }
 
 export function numberToDate(val: number): Date {
@@ -23,32 +18,19 @@ export function validateSchemaReferences(
 ): void {
     for (let i = 0, keys = Object.keys(schema), len = keys.length; i < len; i++) {
         const key = keys[i];
-        const dataVal = data[key];
+        const dataVal = <Array<string>>data[key];
 
-        if (typeof dataVal === "undefined") throw new PrettyError(`Found a missing reference: '${key}'`, {
-            reference: "nekdis"
-        });
+        if (typeof dataVal === "undefined") throw new Error(`Found a missing reference: '${key}'`);
 
-        for (let j = 0, le = dataVal.length; j < le; j++) {
-            if (typeof dataVal[i] !== "string") throw new PrettyError("Invalid id inside a reference", {
-                reference: "nekdis",
-                lines: [
-                    {
-                        marker: { text: "Content: " },
-                        error: `Reference 'ids' must be strings.\nFound type: '${typeof dataVal[i]}'`
-                    }
-                ]
-            });
-        }
+        for (let j = 0, le = dataVal.length; j < le; j++) if (typeof dataVal[i] !== "string") throw new Error("Invalid id inside a reference");
     }
-
 }
 
 export function validateSchemaData(
     schema: ParsedSchemaDefinition["data"],
     data: JSONDocument | HASHDocument
 ): void {
-    for (let i = 0, entries = Object.entries(schema), length = entries.length; i < length; i++) {
+    for (let i = 0, entries = Object.entries(schema), { length } = entries; i < length; i++) {
         const [key, field] = entries[i];
 
         validate(field, data[key], key);
@@ -60,95 +42,47 @@ function validate(
     value: any,
     workingKey: string
 ): void {
-    if (value === null) throw new PrettyError("Cannot save 'null' to the database", {
-        reference: "nekdis"
-    });
+    if (value === null) throw new Error("Cannot save 'null' to the database");
 
     if (typeof value === "undefined"
-        || typeof value === "object" && !(value instanceof Date) && (value.length === 0 || Object.keys(value).length === 0)
+        // eslint-disable-next-line @stylistic/no-mixed-operators
+        || typeof value === "object" && !(value instanceof Date) && ((<Array<unknown>>value).length === 0 || Object.keys(<Record<string, unknown>>value).length === 0)
     ) {
         if (field.optional) return;
-        if (typeof field.default === "undefined") throw new PrettyError(`'${workingKey}' is required but was not given a value`, {
-            reference: "nekdis"
-        });
+        if (typeof field.default === "undefined") throw new Error(`'${workingKey}' is required but was not given a value`);
     }
 
     if (field.type === "object") {
         if (field.properties === null) return;
-        validateSchemaData(field.properties, value);
+        validateSchemaData(field.properties, <JSONDocument>value);
     } else if (field.type === "array") {
-        for (let i = 0, len = value.length; i < len; i++) {
-            const val = value[i];
+        for (let i = 0, len = (<Array<unknown>>value).length; i < len; i++) {
+            const val = (<never>value)[i];
 
-            if (typeof field.elements === "object") {
+            if (typeof field.elements === "object")
                 validateSchemaData(field.elements, val);
-            } else {
+            else {
                 // This should work without problems...
                 validate(<never>{ type: field.elements }, val, `${workingKey}.${i}`);
             }
         }
-    } else if (field.type === "tuple") {
-        for (let i = 0, length = field.elements.length; i < length; i++) {
-            validate(field.elements[i], value[i], `${workingKey}.${i}`);
-        }
-    } else if (field.type === "date") {
-        if (!(value instanceof Date) && typeof value !== "number") throw new PrettyError(`Expected 'Date' or type 'number' but instead got ${typeof value}`, {
-            reference: "nekdis"
-        });
+    } else if (field.type === "tuple")
+        for (let i = 0, { length } = field.elements; i < length; i++) validate(field.elements[i], (<never>value)[i], `${workingKey}.${i}`);
+    else if (field.type === "date") {
+        if (!(value instanceof Date) && typeof value !== "number") throw new Error(`Expected 'Date' or type 'number' but instead got ${typeof value}`);
     } else if (field.type === "point") {
-        if (typeof value !== "object") throw new PrettyError("Invalid 'point' format", {
-            reference: "nekdis",
-            lines: [
-                {
-                    error: inspect({
-                        longitude: "number",
-                        latitude: "number"
-                    }, { colors: true }),
-                    marker: { text: "Expected:", color: Color.fromHex("#00FF00"), spacedBefore: true, newLine: true }
-                },
-                {
-                    error: typeof value,
-                    marker: { text: "Got: ", color: Color.fromHex("#00FF00"), spacedBefore: true }
-                }
-            ]
-        });
-        if (!value.longitude || !value.latitude) throw new PrettyError("'longitude' or 'latitude' where not defined", {
-            reference: "nekdis"
-        });
-        if (Object.keys(value).length > 2) throw new PrettyError("Invalid 'point' format", {
-            reference: "nekdis",
-            lines: [
-                {
-                    error: inspect({
-                        longitude: "number",
-                        latitude: "number"
-                    }, { colors: true }),
-                    marker: { text: "Expected:", color: Color.fromHex("#00FF00"), spacedBefore: true, newLine: true }
-                },
-                {
-                    error: inspect(value, { colors: true }),
-                    marker: { text: "Got:", color: Color.fromHex("#00FF00"), spacedBefore: true, newLine: true }
-                }
-            ]
-        });
+        if (typeof value !== "object") throw new Error("Invalid 'point' format");
+        if (!(<Point>value).longitude || !(<Point>value).latitude) throw new Error("'longitude' or 'latitude' where not defined");
+        if (Object.keys(<Point>value).length > 2) throw new Error("Invalid 'point' format");
     } else if (field.type === "text") {
-        if (typeof value !== "string") throw new PrettyError("Text field has to be a string");
+        if (typeof value !== "string") throw new Error("Text field has to be a string");
     } else if (field.type === "vector") {
-        if (!(value instanceof Float32Array) && !(value instanceof Float64Array) && !Array.isArray(value)) throw new PrettyError("Got wrong vector format");
+        if (!(value instanceof Float32Array) && !(value instanceof Float64Array) && !Array.isArray(value)) throw new Error("Got wrong vector format");
     } else if (field.type === "string" || field.type === "number" || field.type === "bigint") {
         if (typeof field.literal !== "undefined") {
-            if (!field.literal.includes(<never>value)) {
-                throw new PrettyError(`Got wrong value. Expected one of: '${field.literal}' got '${value}'`, {
-                    reference: "nekdis"
-                });
-            }
-
-        } else if (typeof value !== field.type) {
-            throw new PrettyError(`Got wrong value type. Expected type: '${field.type}' got '${typeof value}'`, {
-                reference: "nekdis"
-            });
-        }
-    } else /* Handles `boolean` */ {
-        if (typeof value !== field.type) throw new PrettyError(`Got wrong value type. Expected type: '${field.type}' got '${typeof value}'`);
-    }
+            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+            if (!field.literal.includes(<never>value)) throw new Error(`Got wrong value. Expected one of: '${field.literal}' got '${value}'`);
+        } else if (typeof value !== field.type) throw new Error(`Got wrong value type. Expected type: '${field.type}' got '${typeof value}'`);
+    } else /* Handles `boolean` */
+        if (typeof value !== field.type) throw new Error(`Got wrong value type. Expected type: '${field.type}' got '${typeof value}'`);
 }

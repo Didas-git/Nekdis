@@ -1,10 +1,9 @@
-import { SearchField } from "./base";
+import { SearchField } from "./base.js";
 
-import type { ParseSchema } from "../../typings";
-import type { Search } from "../search";
+import type { ParseSchema } from "../../typings/index.js";
+import type { Search } from "../search.js";
 
 export class TextField<T extends ParseSchema<any>> extends SearchField<T> {
-
     protected override value: {
         val: string,
         exact: boolean
@@ -56,24 +55,21 @@ export class TextField<T extends ParseSchema<any>> extends SearchField<T> {
 
     public get exactly(): Exclude<typeof this, "exact" | "matchExact" | "matchExactly" | "matchesExactly" | "includesExactly"> {
         this.value.exact = true;
-        return <never>this;
+        return <never> this;
     }
 
     protected construct(): string {
-        return `(${this.value.exact ? `"${this.value.val}"` : this.value.val}${this.or.length > 0 ? ` | ${this.value.exact ? this.or.map((v) => `"${v}"`).join(" | ") : this.or.join(" | ")}` : ""})`;
+        return `(${this.value.exact ? `"${this.value.val}"` : this.value.val}${this.or.length > 0 ? ` | ${this.value.exact ? this.or.map((v: any) => `"${v}"`).join(" | ") : this.or.join(" | ")}` : ""})`;
     }
 
     /** @internal */
     #handleMultipleFields(value: Array<string> | string, exact: boolean = this.value.exact): Search<T> {
-        if (typeof value === "string") {
+        if (typeof value === "string")
             this.value = { val: value, exact };
-        } else {
+        else {
             this.value = { val: value[0], exact };
-            if (value.length > 1) {
-                for (let i = 1, length = value.length; i < length; i++) {
-                    this.or.push(value[i]);
-                }
-            }
+            if (value.length > 1)
+                for (let i = 1, { length } = value; i < length; i++) this.or.push(value[i]);
         }
 
         this.search._query.push(this);

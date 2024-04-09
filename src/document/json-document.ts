@@ -1,23 +1,22 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { randomUUID } from "node:crypto";
 
-import { ReferenceArray } from "../utils";
+import { ReferenceArray } from "../utils/index.js";
 import {
     validateSchemaReferences,
     documentFieldToJSONValue,
     JSONValueToDocumentField,
     validateSchemaData
-} from "./document-helpers";
+} from "./document-helpers/index.js";
 
-import type { DocumentShared, ParsedSchemaDefinition } from "../typings";
+import type { DocumentShared, ParsedSchemaDefinition } from "../typings/index.js";
 
 export class JSONDocument implements DocumentShared {
-
     readonly #schema: ParsedSchemaDefinition;
     readonly #validate: boolean;
     readonly #autoFetch: boolean;
-    #validateSchemaReferences = validateSchemaReferences;
-    #validateSchemaData = validateSchemaData;
+    readonly #validateSchemaReferences = validateSchemaReferences;
+    readonly #validateSchemaData = validateSchemaData;
 
     readonly #global_prefix: string;
     readonly #prefix: string;
@@ -50,8 +49,8 @@ export class JSONDocument implements DocumentShared {
         this.#global_prefix = record.globalPrefix;
         this.#prefix = record.prefix;
         this.#model_name = record.name;
-        this.#suffix = data?.$suffix ?? (typeof record.suffix === "function" ? record.suffix() : record.suffix);
-        this.#id = data?.$id?.toString() ?? record.id ?? randomUUID();
+        this.#suffix = <string | undefined>data?.$suffix ?? (typeof record.suffix === "function" ? record.suffix() : record.suffix);
+        this.#id = (<string | number | undefined>data?.$id)?.toString() ?? record.id ?? randomUUID();
         this.#record_id = `${this.#global_prefix}:${this.#prefix}:${this.#model_name}:${this.#suffix ? `${this.#suffix}:` : ""}${this.#id}`;
         this.#schema = schema;
         this.#validate = validate;
@@ -62,7 +61,7 @@ export class JSONDocument implements DocumentShared {
         if (data) {
             if (isFetchedData) {
                 for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
-                    const [key, value] = entries[i];
+                    const [key, value]: [string, never] = <never>entries[i];
                     if (key.startsWith("$")) continue;
 
                     if (typeof schema.data[key] !== "undefined") {
@@ -80,7 +79,7 @@ export class JSONDocument implements DocumentShared {
                 }
             } else {
                 for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
-                    const [key, value] = entries[i];
+                    const [key, value]: [string, never] = <never>entries[i];
                     if (key.startsWith("$")) continue;
                     this[key] = value;
                 }
@@ -93,6 +92,7 @@ export class JSONDocument implements DocumentShared {
             const [key, value] = entries[i];
             this[key] = value.default ?? (value.type === "object"
                 ? {}
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                 : value.type === "tuple" || value.type === "array"
                     ? []
                     : value.type === "vector"
@@ -116,8 +116,8 @@ export class JSONDocument implements DocumentShared {
             $id: this.#id
         };
 
-        for (let i = 0, entries = Object.entries(this), length = entries.length; i < length; i++) {
-            const [key, val] = entries[i];
+        for (let i = 0, entries = Object.entries(this), { length } = entries; i < length; i++) {
+            const [key, val]: [string, never] = <never>entries[i];
             if (key.startsWith("$") || key.startsWith("_")) continue;
 
             const schema = this.#schema.data[key];
@@ -134,7 +134,7 @@ export class JSONDocument implements DocumentShared {
             if (this.#validate) this.#validateSchemaReferences(this.#schema.references, this);
             for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
                 const key = keys[i];
-                if (this[key].length > 0) obj[key] = this[key];
+                if ((<Array<string>> this[key]).length > 0) obj[key] = this[key];
             }
         }
 

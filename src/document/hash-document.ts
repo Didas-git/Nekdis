@@ -1,24 +1,22 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { PrettyError } from "@infinite-fansub/logger";
 import { randomUUID } from "node:crypto";
 
-import { ReferenceArray } from "../utils";
+import { ReferenceArray } from "../utils/index.js";
 import {
     validateSchemaReferences,
     documentFieldToHASHValue,
     HASHValueToDocumentField,
     validateSchemaData
-} from "./document-helpers";
+} from "./document-helpers/index.js";
 
-import type { DocumentShared, ParsedSchemaDefinition } from "../typings";
+import type { DocumentShared, ParsedSchemaDefinition } from "../typings/index.js";
 
 export class HASHDocument implements DocumentShared {
-
     readonly #schema: ParsedSchemaDefinition;
     readonly #validate: boolean;
     readonly #autoFetch: boolean;
-    #validateSchemaReferences = validateSchemaReferences;
-    #validateSchemaData = validateSchemaData;
+    readonly #validateSchemaReferences = validateSchemaReferences;
+    readonly #validateSchemaData = validateSchemaData;
 
     readonly #global_prefix: string;
     readonly #prefix: string;
@@ -51,8 +49,8 @@ export class HASHDocument implements DocumentShared {
         this.#global_prefix = record.globalPrefix;
         this.#prefix = record.prefix;
         this.#model_name = record.name;
-        this.#suffix = data?.$suffix ?? (typeof record.suffix === "function" ? record.suffix() : record.suffix);
-        this.#id = data?.$id?.toString() ?? record.id ?? randomUUID();
+        this.#suffix = <string | undefined>data?.$suffix ?? (typeof record.suffix === "function" ? record.suffix() : record.suffix);
+        this.#id = (<string | number | undefined>data?.$id)?.toString() ?? record.id ?? randomUUID();
         this.#record_id = `${this.#global_prefix}:${this.#prefix}:${this.#model_name}:${this.#suffix ? `${this.#suffix}:` : ""}${this.#id}`;
         this.#schema = schema;
         this.#validate = validate;
@@ -63,7 +61,7 @@ export class HASHDocument implements DocumentShared {
         if (data) {
             if (isFetchedData) {
                 for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
-                    const [key, value] = entries[i];
+                    const [key, value]: [string, never] = <never>entries[i];
                     if (key.startsWith("$")) continue;
                     const arr = key.split(".");
 
@@ -74,34 +72,36 @@ export class HASHDocument implements DocumentShared {
 
                         if (typeof workingField !== "undefined") {
                             if (workingField.type === "tuple") {
+                                const keyNumber: number = +arr[0];
+                                if (isNaN(keyNumber)) throw new Error("Something went wrong parsing tuple key");
                                 if (!Array.isArray(this[keyName])) this[keyName] = [];
-                                if (workingField.elements[+arr[0]].type === "object") {
-                                    this[keyName][+arr[0]] = (<never>HASHValueToDocumentField(
-                                        workingField.elements[+arr[0]],
+                                if (workingField.elements[keyNumber].type === "object") {
+                                    (<Array<unknown>> this[keyName])[keyNumber] = (<never>HASHValueToDocumentField(
+                                        workingField.elements[keyNumber],
                                         value,
-                                        this[keyName][+arr[0]],
+                                        (<Array<unknown>> this[keyName])[keyNumber],
                                         arr
-                                    ))[+arr[0]];
+                                    ))[keyNumber];
                                 } else {
-                                    this[keyName][+arr[0]] = HASHValueToDocumentField(
-                                        workingField.elements[+arr[0]],
+                                    (<Array<unknown>> this[keyName])[keyNumber] = HASHValueToDocumentField(
+                                        workingField.elements[keyNumber],
                                         value,
-                                        this[keyName][+arr[0]],
+                                        (<Array<unknown>> this[keyName])[keyNumber],
                                         arr
                                     );
                                 }
                             } else if (workingField.type === "object") {
-                                if (workingField.properties === null) throw new PrettyError("Something went terribly wrong");
+                                if (workingField.properties === null) throw new Error("Something went terribly wrong");
                                 if (typeof this[keyName] === "undefined") this[keyName] = {};
-                                this[keyName][arr[0]] = HASHValueToDocumentField(
+                                (<Record<string, unknown>> this[keyName])[arr[0]] = HASHValueToDocumentField(
                                     workingField.properties[arr[0]],
                                     value,
-                                    this[keyName][arr[0]],
+                                    (<Record<string, unknown>> this[keyName])[arr[0]],
                                     arr
                                 );
                             } else if (workingField.type === "array") {
                                 if (!Array.isArray(this[keyName])) this[keyName] = [];
-                                if (typeof workingField.elements !== "object") throw new PrettyError("Something went terribly wrong processing an array");
+                                if (typeof workingField.elements !== "object") throw new Error("Something went terribly wrong processing an array");
                                 this[keyName] = Object.values(<never>HASHValueToDocumentField(
                                     { type: "object", properties: workingField.elements },
                                     value,
@@ -117,10 +117,11 @@ export class HASHDocument implements DocumentShared {
                         this[key] = HASHValueToDocumentField(schema.data[key], value);
                         continue;
                     }
+
                     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                     if (schema.references[key] === null) {
                         if (!this.#autoFetch) {
-                            this[key] = new ReferenceArray(value.split(" | "));
+                            this[key] = new ReferenceArray(...(<string>value).split(" | "));
                             continue;
                         }
                     }
@@ -129,7 +130,7 @@ export class HASHDocument implements DocumentShared {
                 }
             } else {
                 for (let i = 0, entries = Object.entries(data), len = entries.length; i < len; i++) {
-                    const [key, value] = entries[i];
+                    const [key, value]: [string, never] = <never>entries[i];
                     if (key.startsWith("$")) continue;
                     this[key] = value;
                 }
@@ -142,6 +143,7 @@ export class HASHDocument implements DocumentShared {
             const [key, value] = entries[i];
             this[key] = value.default ?? (value.type === "object"
                 ? {}
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                 : value.type === "tuple" || value.type === "array"
                     ? []
                     : value.type === "vector"
@@ -167,8 +169,8 @@ export class HASHDocument implements DocumentShared {
 
         if (this.$suffix) arr.push("$suffix", this.$suffix);
 
-        for (let i = 0, entries = Object.entries(this), length = entries.length; i < length; i++) {
-            const [key, val] = entries[i];
+        for (let i = 0, entries = Object.entries(this), { length } = entries; i < length; i++) {
+            const [key, val]: [string, never] = <never>entries[i];
             if (key.startsWith("$") || key.startsWith("_")) continue;
 
             const schema = this.#schema.data[key];
@@ -187,7 +189,7 @@ export class HASHDocument implements DocumentShared {
             for (let i = 0, keys = Object.keys(this.#schema.references), len = keys.length; i < len; i++) {
                 const key = keys[i];
 
-                if (this[key].length > 0) arr.push(key, this[key].join(" | "));
+                if ((<Array<string>> this[key]).length > 0) arr.push(key, (<Array<string>> this[key]).join(" | "));
             }
         }
 

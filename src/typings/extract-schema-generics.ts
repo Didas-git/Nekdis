@@ -1,4 +1,4 @@
-import type { Schema } from "../schema";
+import type { Schema } from "../schema.js";
 
 export type ExtractSchemaDefinition<T> = T extends Schema<infer S> ? S : never;
 export type ExtractSchemaMethods<T> = T extends Schema<any, infer M> ? M : never;

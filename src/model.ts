@@ -1,31 +1,31 @@
-import { PrettyError } from "@infinite-fansub/logger";
 import { createHash } from "node:crypto";
 
-import { parseRelationsToSearchIndex, parseSchemaToSearchIndex } from "./utils";
-import { JSONDocument, HASHDocument } from "./document";
-import { methods, schemaData } from "./utils/symbols";
-import { Relation } from "./relation/relation";
-import { Search } from "./search/search";
+import { parseRelationsToSearchIndex, parseSchemaToSearchIndex } from "./utils/index.js";
+import { JSONDocument, HASHDocument } from "./document/index.js";
+import { methods, schemaData } from "./utils/symbols.js";
+import { Relation } from "./relation/relation.js";
+import { Search } from "./search/search.js";
 
-import type { Schema } from "./schema";
+import type { Schema } from "./schema.js";
 import type {
     ExtractParsedSchemaDefinition,
     ParsedRelationsToSearch,
     SchemaDefinition,
     NodeRedisClient,
     ReturnDocument,
+    DocumentShared,
     ModelOptions,
     ParseSchema,
     ParsedMap,
     MapSchema,
     Document
-} from "./typings";
+} from "./typings/index.js";
 
 export class Model<S extends Schema<any>> {
     readonly #schema: S;
     readonly #client: NodeRedisClient;
     readonly #parsedSchema: ParsedMap;
-    readonly #docType: typeof JSONDocument | typeof HASHDocument;
+    readonly #docType: DocumentShared;
     readonly #relationsToIndex: ParsedRelationsToSearch;
     readonly #searchIndex: {
         name: string,
@@ -35,14 +35,17 @@ export class Model<S extends Schema<any>> {
 
     #options: ModelOptions;
 
+    private readonly name: string;
+
     public constructor(
         client: NodeRedisClient,
         globalPrefix: string,
         prefix: string,
-        private readonly name: string,
+        name: string,
         injectScripts: boolean,
         data: S
     ) {
+        this.name = name;
         this.#client = client;
         this.#schema = data;
         this.#options = {
@@ -53,8 +56,8 @@ export class Model<S extends Schema<any>> {
             suffix: this.#schema.options.suffix
         };
 
-        const { map, index } = parseSchemaToSearchIndex(<never>this.#schema[schemaData].data, this.#schema.options.dataStructure);
-        this.#relationsToIndex = parseRelationsToSearchIndex(<never>this.#schema[schemaData].relations, this.#schema.options.dataStructure, `${globalPrefix}:${this.#options.prefix}:${this.name}`);
+        const { map, index } = parseSchemaToSearchIndex(<never> this.#schema[schemaData].data, this.#schema.options.dataStructure);
+        this.#relationsToIndex = parseRelationsToSearchIndex(<never> this.#schema[schemaData].relations, this.#schema.options.dataStructure, `${globalPrefix}:${this.#options.prefix}:${this.name}`);
         this.#parsedSchema = map;
         this.#searchIndex.name = `${globalPrefix}:${this.#options.prefix}:${this.name}:index`;
         this.#searchIndex.query = [
@@ -105,9 +108,7 @@ export class Model<S extends Schema<any>> {
             relationsConstrain?: Record<K, (search: Search<ParseSchema<(T[K]["meta"] & {}) extends SchemaDefinition ? (T[K]["meta"] & {}) : any>>) => Search<ParseSchema<any>>>
         }
     ): Promise<ReturnDocument<S, FREF, FREL, MOR> | undefined> {
-        if (typeof id === "undefined") throw new PrettyError("A valid id was not given", {
-            reference: "nekdis"
-        });
+        if (typeof id === "undefined") throw new Error("A valid id was not given");
 
         id = this.formatId(id.toString());
 
@@ -118,31 +119,30 @@ export class Model<S extends Schema<any>> {
             for (let i = 0, keys = Object.keys(this.#schema[schemaData].references), len = keys.length; i < len; i++) {
                 const key = keys[i];
                 //@ts-expect-error node-redis types decided to die
-                const val = this.#schema.options.dataStructure === "JSON" ? data[key] : data[key].split(" | ");
+                const val = this.#schema.options.dataStructure === "JSON" ? <Array<string>>data[key] : (<string>data[key]).split(" | ");
                 const temp = [];
 
-                for (let j = 0, le = val.length; j < le; j++) {
-                    temp.push(this.get(<string>val[j]));
-                }
+                for (let j = 0, le = val.length; j < le; j++) temp.push(this.get(val[j]));
 
-                //@ts-expect-error node-redis types decided to die
+                // @ts-expect-error node-redis types decided to die
+                // eslint-disable-next-line no-await-in-loop
                 data[key] = await Promise.all(temp);
             }
         }
 
         if (options?.withRelations) {
-            if (!this.#options.injectScripts) throw new PrettyError("Cannot get relations without the required scripts", { reference: "nekdis" });
+            if (!this.#options.injectScripts) throw new Error("Cannot get relations without the required scripts");
             if (typeof options.relationsConstrain !== "undefined") {
                 const tempConstrains: Record<string, [string, string]> = {};
 
-                for (let i = 0, entries = Object.entries(options.relationsConstrain), length = entries.length; i < length; i++) {
+                for (let i = 0, entries = Object.entries(options.relationsConstrain), { length } = entries; i < length; i++) {
                     const [key, value] = <[string, (s: Search<ParseSchema<any>>) => Search<ParseSchema<any>>]>entries[i];
 
                     tempConstrains[key] = [
                         `${this.#relationsToIndex[key].key}:index`,
                         value(new Search(this.#client, {
                             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                            data: <never>this.#schema[schemaData].relations[key].meta!,
+                            data: <never> this.#schema[schemaData].relations[key].meta!,
                             references: {},
                             relations: {}
                         }, this.#docType, this.#relationsToIndex[key].data.map, {
@@ -155,7 +155,7 @@ export class Model<S extends Schema<any>> {
                     ];
                 }
 
-                const fetched: Record<string, Array<unknown>> = JSON.parse(await this.#client.sendCommand([
+                const fetched: Record<string, Array<unknown>> = <never> JSON.parse(await this.#client.sendCommand([
                     "FCALL",
                     this.#schema.options.dataStructure === "JSON" ? "JSONSR" : "HSR",
                     "1",
@@ -163,11 +163,12 @@ export class Model<S extends Schema<any>> {
                     (+(options.returnMetadataOverRelation ?? false)).toString()
                 ]));
 
-                for (let i = 0, entries = Object.entries(fetched), length = entries.length; i < length; i++) {
+                for (let i = 0, entries = Object.entries(fetched), { length } = entries; i < length; i++) {
                     const [key, value] = entries[i];
 
                     for (let j = 0, len = value.length; j < len; j++) {
-                        value[j] = <never>new this.#docType({
+                        // @ts-expect-error It can be constructed
+                        value[j] = <never> new this.#docType({
                             data: <never>(options.returnMetadataOverRelation
                                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                                 ? this.#schema[schemaData].relations[key].meta!
@@ -187,10 +188,11 @@ export class Model<S extends Schema<any>> {
                     data[key] = value;
                 }
             } else {
-                for (let i = 0, entries = Object.entries(this.#schema[schemaData].relations), length = entries.length; i < length; i++) {
+                for (let i = 0, entries = Object.entries(this.#schema[schemaData].relations), { length } = entries; i < length; i++) {
                     const [key, value] = entries[i];
 
-                    const arr: Array<Record<string, unknown>> = JSON.parse(await this.#client.sendCommand([
+                    // eslint-disable-next-line no-await-in-loop
+                    const arr: Array<Record<string, unknown>> = <never>JSON.parse(await this.#client.sendCommand([
                         "FCALL",
                         this.#schema.options.dataStructure === "JSON" ? "JSONGR" : "HGR",
                         "1",
@@ -200,7 +202,8 @@ export class Model<S extends Schema<any>> {
                     ]));
 
                     for (let j = 0, len = arr.length; j < len; j++) {
-                        arr[j] = new this.#docType({
+                        // @ts-expect-error It can be constructed
+                        arr[j] = <never> new this.#docType({
                             data: <never>(options.returnMetadataOverRelation
                                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                                 ? value.meta!
@@ -221,7 +224,8 @@ export class Model<S extends Schema<any>> {
             }
         }
 
-        return <never>new this.#docType(<never>this.#schema[schemaData], {
+        // @ts-expect-error It can be constructed
+        return <never> new this.#docType(<never> this.#schema[schemaData], {
             globalPrefix: this.#options.globalPrefix,
             prefix: this.#options.prefix,
             name: this.name,
@@ -231,10 +235,12 @@ export class Model<S extends Schema<any>> {
     }
 
     public create(id?: string | number): ReturnDocument<S>;
+    // eslint-disable-next-line @typescript-eslint/unified-signatures
     public create(data?: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, false, true>): ReturnDocument<S>;
     public create(idOrData?: string | number | { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, false, true>): ReturnDocument<S> {
         if (typeof idOrData === "object") {
-            return <never>new this.#docType(<never>this.#schema[schemaData], {
+            // @ts-expect-error It can be constructed
+            return <never> new this.#docType(<never> this.#schema[schemaData], {
                 globalPrefix: this.#options.globalPrefix,
                 prefix: this.#options.prefix,
                 name: this.name,
@@ -242,7 +248,8 @@ export class Model<S extends Schema<any>> {
             }, idOrData, false, this.#options.skipDocumentValidation, false);
         }
 
-        return <never>new this.#docType(<never>this.#schema[schemaData], {
+        // @ts-expect-error It can be constructed
+        return <never> new this.#docType(<never> this.#schema[schemaData], {
             globalPrefix: this.#options.globalPrefix,
             prefix: this.#options.prefix,
             name: this.name,
@@ -252,32 +259,27 @@ export class Model<S extends Schema<any>> {
     }
 
     public async save(doc: Document): Promise<void> {
-        if (typeof doc === "undefined") throw new PrettyError("No document was passed to be save", {
-            reference: "nekdis"
-        });
+        if (typeof doc === "undefined") throw new Error("No document was passed to be save");
 
         if (this.#schema.options.dataStructure === "HASH") await this.#client.sendCommand(["HSET", doc.$recordId, ...doc.toString()]);
         else await this.#client.sendCommand(["JSON.SET", doc.$recordId, "$", doc.toString()]);
     }
 
     public async delete(...docs: Array<string | number | Document>): Promise<void> {
-        if (!docs.length) throw new PrettyError("No documents were given to delete", {
-            reference: "nekdis"
-        });
+        if (!docs.length) throw new Error("No documents were given to delete");
+
         await this.#client.del(this.#idsOrDocsToString(docs));
     }
 
     public async exists(...docs: Array<string | number | Document>): Promise<number> {
-        if (!docs.length) throw new PrettyError("No documents were given to check", {
-            reference: "nekdis"
-        });
-        return await this.#client.exists(this.#idsOrDocsToString(docs));
+        if (!docs.length) throw new Error("No documents were given to check");
+
+        return this.#client.exists(this.#idsOrDocsToString(docs));
     }
 
     public async expire(docs: Array<string | number | Document>, seconds: number | Date, mode?: "NX" | "XX" | "GT" | "LT"): Promise<void> {
-        if (!docs.length) throw new PrettyError("No documents were given to expire", {
-            reference: "nekdis"
-        });
+        if (!docs.length) throw new Error("No documents were given to expire");
+
         docs = this.#idsOrDocsToString(docs);
 
         if (seconds instanceof Date) seconds = Math.round((seconds.getTime() - Date.now()) / 1000);
@@ -293,6 +295,7 @@ export class Model<S extends Schema<any>> {
     }
 
     public async createAndSave(id?: string | number): Promise<string>;
+    // eslint-disable-next-line @typescript-eslint/unified-signatures
     public async createAndSave(data?: { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, false, true>): Promise<string>;
     public async createAndSave(idOrData?: string | number | { $id?: string | number } & MapSchema<ExtractParsedSchemaDefinition<S>, true, true, false, true>): Promise<string> {
         const doc = this.create(<never>idOrData);
@@ -302,7 +305,7 @@ export class Model<S extends Schema<any>> {
     }
 
     public search(): Search<ExtractParsedSchemaDefinition<S>> {
-        return new Search<ExtractParsedSchemaDefinition<S>>(this.#client, <never>this.#schema[schemaData], this.#docType, this.#parsedSchema, {
+        return new Search<ExtractParsedSchemaDefinition<S>>(this.#client, <never> this.#schema[schemaData], this.#docType, this.#parsedSchema, {
             ...this.#options,
             modelName: this.name,
             suffix: this.#options.suffix,
@@ -324,12 +327,14 @@ export class Model<S extends Schema<any>> {
         if (!this.#options.injectScripts) {
             if (!this.#schema.options.noLogs) console.warn("Cannot index relations... Skipping");
         } else {
-            for (let i = 0, values = Object.values(this.#relationsToIndex), length = values.length; i < length; i++) {
+            for (let i = 0, values = Object.values(this.#relationsToIndex), { length } = values; i < length; i++) {
                 const value = values[i];
 
+                // eslint-disable-next-line no-await-in-loop
                 if (await this.#client.get(`${value.key}:index:hash`) === value.hash) continue;
 
                 try {
+                    // eslint-disable-next-line no-await-in-loop
                     await Promise.all([
                         this.#client.unlink(`${value.key}:index:hash`),
                         this.#client.ft.dropIndex(`${value.key}:index`),
@@ -347,11 +352,10 @@ export class Model<S extends Schema<any>> {
                         ])
                     ]);
                 } catch (e) {
-                    if (e instanceof Error && e.message === "Unknown Index name") {
+                    if (e instanceof Error && e.message === "Unknown Index name")
                         continue;
-                    } else throw e;
+                    else throw e;
                 }
-
             }
         }
 
@@ -377,14 +381,14 @@ export class Model<S extends Schema<any>> {
                 this.#client.ft.dropIndex(this.#searchIndex.name)
             ]);
         } catch (e) {
-            if (e instanceof Error && e.message === "Unknown Index name") {
+            if (e instanceof Error && e.message === "Unknown Index name")
                 return;
-            } else throw e;
+            throw e;
         }
     }
 
     public async rawSearch(...args: Array<string>): Promise<ReturnType<NodeRedisClient["ft"]["search"]>> {
-        return await this.#client.ft.search(this.#searchIndex.name, args.join(" "));
+        return this.#client.ft.search(this.#searchIndex.name, args.join(" "));
     }
 
     public sanitize(string: string): string {
@@ -393,13 +397,9 @@ export class Model<S extends Schema<any>> {
 
     public formatId(id: string): string {
         if (id.split(":").length === 1) {
-            const suffix = this.#options.suffix;
+            const { suffix } = this.#options;
 
-            if (typeof suffix === "function") {
-                throw new PrettyError("Due to the use of dynamic suffixes you gave to pass in a full id", {
-                    reference: "nekdis"
-                });
-            }
+            if (typeof suffix === "function") throw new Error("Due to the use of dynamic suffixes you gave to pass in a full id");
 
             return `${this.#options.globalPrefix}:${this.#options.prefix}:${this.name}:${suffix ? `${suffix}:` : ""}${id}`;
         }
@@ -410,9 +410,7 @@ export class Model<S extends Schema<any>> {
     #idsOrDocsToString(idsOrDocs: Array<string | number | Document>): Array<string> {
         const temp = [];
 
-        for (let i = 0, len = idsOrDocs.length; i < len; i++) {
-            temp.push(this.#idOrDocToString(idsOrDocs[i]));
-        }
+        for (let i = 0, len = idsOrDocs.length; i < len; i++) temp.push(this.#idOrDocToString(idsOrDocs[i]));
 
         return temp;
     }
@@ -430,7 +428,7 @@ export class Model<S extends Schema<any>> {
     }
 
     public set options(options: Partial<Exclude<ModelOptions, "globalPrefix">>) {
-        if ("globalPrefix" in options) throw new PrettyError("To edit the global prefix please use the client options", { reference: "nekdis" });
+        if ("globalPrefix" in options) throw new Error("To edit the global prefix please use the client options");
         this.#options = { ...this.#options, ...options };
     }
 }

@@ -1,10 +1,9 @@
-import { SearchField } from "./base";
+import { SearchField } from "./base.js";
 
-import type { ParseSchema } from "../../typings";
-import type { Search } from "../search";
+import type { ParseSchema } from "../../typings/index.js";
+import type { Search } from "../search.js";
 
 export class NumberField<T extends ParseSchema<any>, L extends number> extends SearchField<T, L> {
-
     declare protected value: [string, string];
 
     public eq(value: L): Search<T> {

@@ -8,7 +8,7 @@ import type {
     ParsedFieldType,
     VectorField,
     ParsedMap
-} from "../typings";
+} from "../typings/index.js";
 
 export function parseSchemaToSearchIndex(
     schema: ParsedSchemaDefinition["data"],
@@ -59,7 +59,7 @@ export function parseSchemaToSearchIndex(
         }
 
         if (value.type === "tuple") {
-            for (let j = 0, length = value.elements.length; j < length; j++) {
+            for (let j = 0, { length } = value.elements; j < length; j++) {
                 const indexValue = value.elements[j];
 
                 const parsed = parseSchemaToSearchIndex(
@@ -124,7 +124,7 @@ export function parseSchemaToSearchIndex(
         if (value.type === "string" && value.caseSensitive) index.push("CASESENSITIVE");
         if (value.type === "text") {
             if (typeof value.phonetic !== "undefined") index.push("PHONETIC", value.phonetic);
-            if (typeof value.weight !== "undefined") index.push("WEIGTH", value.weight.toString());
+            if (typeof value.weight !== "undefined") index.push("WEIGHT", value.weight.toString());
         }
     }
 

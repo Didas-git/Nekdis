@@ -1,7 +1,7 @@
-import type { HASHDocument, JSONDocument } from "../document";
-import type { MapSchema } from "./map-schema-to-object";
-import type { ParseSchema } from "./parse-schema";
-import type { Schema } from "../schema";
+import type { HASHDocument, JSONDocument } from "../document/index.js";
+import type { MapSchema } from "./map-schema-to-object.js";
+import type { ParseSchema } from "./parse-schema.js";
+import type { Schema } from "../schema.js";
 
 export type Document = JSONDocument | HASHDocument;
 

@@ -1,10 +1,9 @@
-import { PrettyError } from "@infinite-fansub/logger";
 import { readFile } from "node:fs/promises";
 import { createClient } from "redis";
 import { join } from "node:path";
 
-import { Schema } from "./schema";
-import { Model } from "./model";
+import { Schema } from "./schema.js";
+import { Model } from "./model.js";
 
 import type {
     ExtractSchemaMethods,
@@ -18,11 +17,11 @@ import type {
     URLObject,
     Narrow,
     Module
-} from "./typings";
+} from "./typings/index.js";
 
 export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefinition<SD> = {}> {
     #client!: NodeRedisClient;
-    #models: Map<string, Model<any>> = new Map();
+    readonly #models = new Map<string, Model<any>>();
     #open: boolean = false;
     #options: ClientOptions<SD, MD>;
 
@@ -53,7 +52,7 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
                 }
 
                 resolve(this);
-            }).catch((e) => reject(e));
+            }).catch((e) => { reject(e); });
         });
     }
 
@@ -75,7 +74,7 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
         { [K in keyof (T & SD)]: (T & SD)[K] },
         { [K in keyof (M & MD)]: (M & MD)[K] }
     > {
-        return <never>new Schema(
+        return <never> new Schema(
             {
                 ...this.#options.base?.schema?.definition,
                 ...definition
@@ -92,9 +91,7 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
         let model = this.#models.get(name);
         if (model) return <never>model;
 
-        if (!schema) throw new PrettyError("You have to pass a schema if it doesn't exist", {
-            reference: "nekdis"
-        });
+        if (!schema) throw new Error("You have to pass a schema if it doesn't exist");
 
         model = new Model(this.#client, this.#options.globalPrefix ?? "Nekdis", "V1", name, this.#options.enableInjections ?? false, schema);
         this.#models.set(name, model);
@@ -105,10 +102,10 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
         for (let i = 0, len = modules.length; i < len; i++) {
             const module = modules[i];
             //@ts-expect-error shenanigans
-            this[module.name] = new module.ctor(this);
+            this[module.name] = <never> new module.ctor(this);
         }
 
-        return <never>this;
+        return <never> this;
     }
 
     public get raw(): NodeRedisClient {
@@ -124,20 +121,16 @@ export class Client<SD extends SchemaDefinition = {}, MD extends MethodsDefiniti
     }
 
     public set options(options: ClientOptions<SD, MD>) {
-        if (this.#open) {
-            throw new PrettyError("Client options cannot be modified when the client is connected", {
-                reference: "nekdis"
-            });
-        }
+        if (this.#open) throw new Error("Client options cannot be modified when the client is connected");
 
         this.#options = { ...this.#options, ...options };
         this.#appendToModelProto();
     }
 
+    // eslint-disable-next-line accessor-pairs
     public set redisClient(client: NodeRedisClient) {
-        if (!this.#open) {
+        if (!this.#open)
             this.#client = client;
-        }
     }
 
     #appendToModelProto(): void {

@@ -1,8 +1,8 @@
-import type { FloatArray, InnerSchemaDefinition } from "./schema-and-fields-definition";
-import type { Point } from "./point";
+import type { FloatArray, InnerSchemaDefinition } from "./schema-and-fields-definition.js";
+import type { Point } from "./point.js";
 
 /**
- * @typeParam T - The array and/or tuple type
+ * @template T - The array and/or tuple type
  */
 export interface FieldMap<T = string> {
     string: string;

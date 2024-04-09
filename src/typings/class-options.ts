@@ -1,7 +1,7 @@
 import type { createClient } from "redis";
 
-import type { SchemaDefinition } from "./schema-and-fields-definition";
-import type { MethodsDefinition } from "./methods-definition";
+import type { SchemaDefinition } from "./schema-and-fields-definition.js";
+import type { MethodsDefinition } from "./methods-definition.js";
 
 export type NodeRedisClient = ReturnType<typeof createClient>;
 
@@ -30,7 +30,7 @@ export interface SchemaOptions {
     suffix?: string | (() => string) | undefined;
 }
 
-export interface ModelOptions extends Required<Pick<SchemaOptions, "skipDocumentValidation" | "suffix">> {
+export interface ModelOptions extends Pick<SchemaOptions, "suffix">, Required<Pick<SchemaOptions, "skipDocumentValidation">> {
     injectScripts: boolean;
     globalPrefix: string;
     prefix: string;

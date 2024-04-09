@@ -1,6 +1,6 @@
-import type { FieldMap } from "./field-map";
-import type { Schema } from "../schema";
-import type { Point } from "./point";
+import type { FieldMap } from "./field-map.js";
+import type { Schema } from "../schema.js";
+import type { Point } from "./point.js";
 
 export type SchemaDefinition = Record<string, FieldStringType | FieldType>;
 export type InnerSchemaDefinition = Record<string, SchemaField>;
@@ -62,7 +62,7 @@ export interface StringField extends BaseField {
     caseSensitive?: boolean | undefined;
 }
 
-export interface ParsedStringField extends Required<StringField> {
+export interface ParsedStringField extends Omit<Required<StringField>, "literal"> {
     literal: Array<string> | undefined;
 }
 
@@ -73,7 +73,7 @@ export interface NumberField extends BaseField {
     literal?: number | Array<number> | undefined;
 }
 
-export interface ParsedNumberField extends Required<NumberField> {
+export interface ParsedNumberField extends Omit<Required<NumberField>, "literal"> {
     literal: Array<number> | undefined;
 }
 
@@ -84,7 +84,7 @@ export interface BigIntField extends BaseField {
     literal?: bigint | Array<bigint> | undefined;
 }
 
-export interface ParsedBigIntField extends Required<BigIntField> {
+export interface ParsedBigIntField extends Omit<Required<BigIntField>, "literal"> {
     literal: Array<bigint> | undefined;
 }
 
@@ -148,7 +148,7 @@ export interface ArrayField extends BaseField {
     separator?: string;
 }
 
-export interface ParsedArrayField extends Required<BaseField> {
+export interface ParsedArrayField extends Omit<Required<BaseField>, "default"> {
     type: "array";
     elements: Exclude<FieldStringType, "array"> | ParsedSchemaData;
     default: Array<unknown> | undefined;
@@ -164,7 +164,7 @@ export interface TupleField extends Omit<BaseField, "sortable"> {
     default?: Array<unknown> | undefined;
 }
 
-export interface ParsedTupleField extends Omit<Required<BaseField>, "sortable"> {
+export interface ParsedTupleField extends Omit<Required<BaseField>, "sortable" | "default"> {
     type: "tuple";
     elements: [ParsedFieldType, ...Array<ParsedFieldType>];
     default: Array<unknown> | undefined;
@@ -177,7 +177,7 @@ export interface ObjectField extends Omit<BaseField, "sortable"> {
     default?: Record<string, any> | undefined;
 }
 
-export interface ParsedObjectField extends Required<Omit<BaseField, "sortable">> {
+export interface ParsedObjectField extends Required<Omit<BaseField, "sortable" | "default">> {
     type: "object";
     properties: ParsedSchemaData | null;
     default: Record<string, any> | undefined;

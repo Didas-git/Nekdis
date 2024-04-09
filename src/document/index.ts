@@ -1,2 +1,2 @@
-export * from "./json-document";
-export * from "./hash-document";
+export * from "./json-document.js";
+export * from "./hash-document.js";

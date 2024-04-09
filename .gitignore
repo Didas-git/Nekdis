@@ -2,6 +2,9 @@ node_modules/
 dist/
 bench-dist/
 coverage/
+.astro/
+.env.*
 .DS_Store
+.obsidian
 .dccache
 *v8.log

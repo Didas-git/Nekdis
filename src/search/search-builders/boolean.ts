@@ -1,9 +1,10 @@
-import { SearchField } from "./base";
+import { SearchField } from "./base.js";
 
-import type { ParseSchema } from "../../typings";
-import type { Search } from "../search";
+import type { ParseSchema } from "../../typings/index.js";
+import type { Search } from "../search.js";
 
 export class BooleanField<T extends ParseSchema<any>> extends SearchField<T> {
+    protected override value!: boolean;
 
     public eq(value: boolean): Search<T> {
         this.value = value;

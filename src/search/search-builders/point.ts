@@ -1,12 +1,11 @@
-import { SearchField } from "./base";
+import { SearchField } from "./base.js";
 
-import type { Point, ParseSchema, Units } from "../../typings";
-import type { Search } from "../search";
+import type { ParseSchema, Point, Units } from "../../typings/index.js";
+import type { Search } from "../search.js";
 
 export type CircleFunction = (circle: Circle) => Circle;
 
 export class Circle {
-
     /** @internal */
     public _longitude: number = 0;
 
@@ -19,19 +18,19 @@ export class Circle {
     /** @internal */
     public units: Units = "m";
 
-    public longitude(value: number): Circle {
+    public longitude(value: number): this {
         this._longitude = value;
         return this;
     }
 
-    public latitude(value: number): Circle {
+    public latitude(value: number): this {
         this._latitude = value;
         return this;
     }
 
     public origin(point: Point): Circle;
     public origin(longitude: number, latitude: number): Circle;
-    public origin(pointOrLongitude: number | Point, latitude?: number): Circle {
+    public origin(pointOrLongitude: number | Point, latitude?: number): this {
         if (typeof pointOrLongitude === "object") {
             const { longitude, latitude: lat } = pointOrLongitude;
             this._longitude = longitude;
@@ -44,63 +43,62 @@ export class Circle {
         return this;
     }
 
-    public radius(size: number): Circle {
+    public radius(size: number): this {
         this.size = size;
         return this;
     }
 
-    public get meters(): Circle {
+    public get meters(): this {
         this.units = "m";
         return this;
     }
 
-    public get meter(): Circle {
+    public get meter(): this {
         return this.meters;
     }
 
-    public get m(): Circle {
+    public get m(): this {
         return this.meters;
     }
 
-    public get kilometers(): Circle {
+    public get kilometers(): this {
         this.units = "km";
         return this;
     }
 
-    public get kilometer(): Circle {
+    public get kilometer(): this {
         return this.kilometers;
     }
 
-    public get km(): Circle {
+    public get km(): this {
         return this.kilometers;
     }
 
-    public get feet(): Circle {
+    public get feet(): this {
         this.units = "ft";
         return this;
     }
 
-    public get foot(): Circle {
+    public get foot(): this {
         return this.feet;
     }
 
-    public get ft(): Circle {
+    public get ft(): this {
         return this.feet;
     }
 
-    public get miles(): Circle {
+    public get miles(): this {
         this.units = "mi";
         return this;
     }
 
-    public get mile(): Circle {
+    public get mile(): this {
         return this.miles;
     }
 
-    public get mi(): Circle {
+    public get mi(): this {
         return this.miles;
     }
-
 }
 
 export class PointField<T extends ParseSchema<any>> extends SearchField<T> {
@@ -133,5 +131,4 @@ export class PointField<T extends ParseSchema<any>> extends SearchField<T> {
         const { _longitude, _latitude, size, units } = this.#circle;
         return `[${_longitude} ${_latitude} ${size} ${units}]`;
     }
-
 }

@@ -1,6 +1,6 @@
-import { HASHDocument, JSONDocument } from "../document";
+import { HASHDocument, JSONDocument } from "../document/index.js";
 
-import type { Document } from "../typings";
+import type { Document } from "../typings/index.js";
 
 export class ReferenceArray extends Array<string> {
     public reference(...recordOrDoc: Array<string | Document>): this {

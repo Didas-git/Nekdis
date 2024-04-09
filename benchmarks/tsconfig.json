@@ -1,8 +1,8 @@
 {
     "compilerOptions": {
         "outDir": "../bench-dist/dist",
-        "target": "ES2022",
-        "module": "NodeNext"
+        "target": "ESNext",
+        "module": "Node16",
     },
     "include": [
         "src/**/*"

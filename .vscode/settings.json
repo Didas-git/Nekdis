@@ -1,11 +1,34 @@
 {
     "typescript.tsdk": "node_modules/typescript/lib",
     "cSpell.words": [
+        "CASESENSITIVE",
+        "FCALL",
         "HNSW",
-        "nekdis"
+        "HSET",
+        "JSONCR",
+        "JSONGR",
+        "JSONSR",
+        "nekdis",
+        "STOPWORDS"
     ],
     "Lua.diagnostics.globals": [
         "redis",
         "cjson"
-    ]
+    ],
+    "eslint.experimental.useFlatConfig": true,
+    "eslint.format.enable": true,
+    "eslint.enable": true,
+    "[typescript]": {
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "vscode.typescript-language-features"
+    },
+    "typescript.preferences.importModuleSpecifierEnding": "js",
+    "cSpell.enableFiletypes": [
+        "d2",
+        "mdx"
+    ],
+    "D2.previewTheme": "Terminal",
+    "D2.previewLayout": "tala"
 }
