@@ -191,7 +191,8 @@ export class HASHDocument implements DocumentShared {
             }
         }
 
-        return arr.join(" ");
+        // This will be temporary
+        return <string><unknown>arr;
     }
 
     public get $globalPrefix(): string {

@@ -42,9 +42,8 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
      * LIMIT defaults to 0 10
      * SORTBY DIRECTION defaults to ASC
     */
-    #options: SearchOptions & Required<Pick<SearchOptions, "PARAMS">> = {
-        DIALECT: 2,
-        PARAMS: {}
+    #options: SearchOptions = {
+        DIALECT: 2
     };
 
     #or: Array<Array<SearchField<T>>> = [];
@@ -331,6 +330,7 @@ export class Search<T extends ParseSchema<any>, P extends ParseSearchSchema<T["d
                     this.#vectorQuery = queryPart.toString(`BLOB${this.#blobCount}`);
                 }
 
+                if (typeof this.#options.PARAMS === "undefined") this.#options.PARAMS = {};
                 this.#options.PARAMS[`BLOB${this.#blobCount}`] = queryPart._vector._buffer;
             } else {
                 queryArr.push(queryPart.toString());

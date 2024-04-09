@@ -84,7 +84,7 @@ export const FullHASHBenchSchema = client.schema({
     point: "point",
     bigint: "bigint",
     text: "text",
-    vector: "vector",
+    // vector: "vector",
     stringArray: { type: "array", elements: "string" },
     numberArray: { type: "array", elements: "number" },
     booleanArray: { type: "array", elements: "boolean" },
@@ -92,7 +92,7 @@ export const FullHASHBenchSchema = client.schema({
     pointArray: { type: "array", elements: "point" },
     bigintArray: { type: "array", elements: "bigint" },
     textArray: { type: "array", elements: "text" },
-    vectorArray: { type: "array", elements: "vector" },
+    // vectorArray: { type: "array", elements: "vector" },
     objectArray: { type: "array", elements: { a: "number" } },
     object: {
         type: "object",
@@ -104,7 +104,7 @@ export const FullHASHBenchSchema = client.schema({
             point: "point",
             bigint: "bigint",
             text: "text",
-            vector: "vector",
+            // vector: "vector",
             stringArray: { type: "array", elements: "string" },
             numberArray: { type: "array", elements: "number" },
             booleanArray: { type: "array", elements: "boolean" },
@@ -112,7 +112,7 @@ export const FullHASHBenchSchema = client.schema({
             pointArray: { type: "array", elements: "point" },
             bigintArray: { type: "array", elements: "bigint" },
             textArray: { type: "array", elements: "text" },
-            vectorArray: { type: "array", elements: "vector" },
+            // vectorArray: { type: "array", elements: "vector" },
             nestedObject: {
                 type: "object", properties: {
                     nestedTuple: { type: "tuple", elements: ["boolean"] }
@@ -130,7 +130,7 @@ export const FullHASHBenchSchema = client.schema({
             "point",
             "bigint",
             "text",
-            "vector",
+            // "vector",
             { type: "array", elements: "string" },
             { type: "array", elements: "number" },
             { type: "array", elements: "boolean" },
@@ -138,7 +138,7 @@ export const FullHASHBenchSchema = client.schema({
             { type: "array", elements: "point" },
             { type: "array", elements: "bigint" },
             { type: "array", elements: "text" },
-            { type: "array", elements: "vector" },
+            // { type: "array", elements: "vector" },
             { type: "tuple", elements: ["string", "number"] },
             { type: "object", properties: { a: "boolean" } }
         ]
@@ -265,7 +265,7 @@ export const NoValidationFullHASHBenchSchema = client.schema({
     point: "point",
     bigint: "bigint",
     text: "text",
-    vector: "vector",
+    // vector: "vector",
     stringArray: { type: "array", elements: "string" },
     numberArray: { type: "array", elements: "number" },
     booleanArray: { type: "array", elements: "boolean" },
@@ -273,7 +273,7 @@ export const NoValidationFullHASHBenchSchema = client.schema({
     pointArray: { type: "array", elements: "point" },
     bigintArray: { type: "array", elements: "bigint" },
     textArray: { type: "array", elements: "text" },
-    vectorArray: { type: "array", elements: "vector" },
+    // vectorArray: { type: "array", elements: "vector" },
     objectArray: { type: "array", elements: { a: "number" } },
     object: {
         type: "object",
@@ -285,7 +285,7 @@ export const NoValidationFullHASHBenchSchema = client.schema({
             point: "point",
             bigint: "bigint",
             text: "text",
-            vector: "vector",
+            // vector: "vector",
             stringArray: { type: "array", elements: "string" },
             numberArray: { type: "array", elements: "number" },
             booleanArray: { type: "array", elements: "boolean" },
@@ -293,7 +293,7 @@ export const NoValidationFullHASHBenchSchema = client.schema({
             pointArray: { type: "array", elements: "point" },
             bigintArray: { type: "array", elements: "bigint" },
             textArray: { type: "array", elements: "text" },
-            vectorArray: { type: "array", elements: "vector" },
+            // vectorArray: { type: "array", elements: "vector" },
             nestedObject: {
                 type: "object", properties: {
                     nestedTuple: { type: "tuple", elements: ["boolean"] }
@@ -311,7 +311,7 @@ export const NoValidationFullHASHBenchSchema = client.schema({
             "point",
             "bigint",
             "text",
-            "vector",
+            // "vector",
             { type: "array", elements: "string" },
             { type: "array", elements: "number" },
             { type: "array", elements: "boolean" },
@@ -319,7 +319,7 @@ export const NoValidationFullHASHBenchSchema = client.schema({
             { type: "array", elements: "point" },
             { type: "array", elements: "bigint" },
             { type: "array", elements: "text" },
-            { type: "array", elements: "vector" },
+            // { type: "array", elements: "vector" },
             { type: "tuple", elements: ["string", "number"] },
             { type: "object", properties: { a: "boolean" } }
         ]

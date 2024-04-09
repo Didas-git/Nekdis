@@ -584,7 +584,6 @@ export async function benchFullHASHCreateAndSave(iter: number, amt: number): Pro
                 point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
                 bigint: 1n,
                 text: "some text",
-                vector: [3, 2, 4],
                 stringArray: ["a", "b", "c"],
                 numberArray: [1, 2, 3],
                 booleanArray: [true, false, true],
@@ -597,7 +596,6 @@ export async function benchFullHASHCreateAndSave(iter: number, amt: number): Pro
                 ],
                 bigintArray: [1n, 2n, 3n],
                 textArray: ["this is a", "this is b", "this is c"],
-                vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
                 object: {
                     string: "s",
                     number: 3,
@@ -606,7 +604,6 @@ export async function benchFullHASHCreateAndSave(iter: number, amt: number): Pro
                     point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
                     bigint: 1n,
                     text: "some text",
-                    vector: [3, 2, 4],
                     stringArray: ["a", "b", "c"],
                     numberArray: [1, 2, 3],
                     booleanArray: [true, false, true],
@@ -618,7 +615,6 @@ export async function benchFullHASHCreateAndSave(iter: number, amt: number): Pro
                     ],
                     bigintArray: [1n, 2n, 3n],
                     textArray: ["this is a", "this is b", "this is c"],
-                    vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
                     nestedObject: {
                         nestedTuple: [true]
                     }
@@ -631,7 +627,6 @@ export async function benchFullHASHCreateAndSave(iter: number, amt: number): Pro
                     { latitude: 35.69959561887533, longitude: 139.77083086508688 },
                     1n,
                     "some text",
-                    [3, 2, 4],
                     ["a", "b", "c"],
                     [1, 2, 3],
                     [true, false, true],
@@ -643,7 +638,6 @@ export async function benchFullHASHCreateAndSave(iter: number, amt: number): Pro
                     ],
                     [1n, 2n, 3n],
                     ["this is a", "this is b", "this is c"],
-                    [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
                     ["a", 1],
                     { a: true }
                 ],
@@ -689,7 +683,6 @@ export async function benchBatchFullHASHCreateAndSave(iter: number, amt: number)
                 point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
                 bigint: 1n,
                 text: "some text",
-                vector: [3, 2, 4],
                 stringArray: ["a", "b", "c"],
                 numberArray: [1, 2, 3],
                 booleanArray: [true, false, true],
@@ -702,7 +695,6 @@ export async function benchBatchFullHASHCreateAndSave(iter: number, amt: number)
                 ],
                 bigintArray: [1n, 2n, 3n],
                 textArray: ["this is a", "this is b", "this is c"],
-                vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
                 object: {
                     string: "s",
                     number: 3,
@@ -711,7 +703,6 @@ export async function benchBatchFullHASHCreateAndSave(iter: number, amt: number)
                     point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
                     bigint: 1n,
                     text: "some text",
-                    vector: [3, 2, 4],
                     stringArray: ["a", "b", "c"],
                     numberArray: [1, 2, 3],
                     booleanArray: [true, false, true],
@@ -723,7 +714,6 @@ export async function benchBatchFullHASHCreateAndSave(iter: number, amt: number)
                     ],
                     bigintArray: [1n, 2n, 3n],
                     textArray: ["this is a", "this is b", "this is c"],
-                    vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
                     nestedObject: {
                         nestedTuple: [true]
                     }
@@ -736,7 +726,6 @@ export async function benchBatchFullHASHCreateAndSave(iter: number, amt: number)
                     { latitude: 35.69959561887533, longitude: 139.77083086508688 },
                     1n,
                     "some text",
-                    [3, 2, 4],
                     ["a", "b", "c"],
                     [1, 2, 3],
                     [true, false, true],
@@ -748,7 +737,6 @@ export async function benchBatchFullHASHCreateAndSave(iter: number, amt: number)
                     ],
                     [1n, 2n, 3n],
                     ["this is a", "this is b", "this is c"],
-                    [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
                     ["a", 1],
                     { a: true }
                 ],
@@ -999,7 +987,6 @@ export async function benchNoValFullHASHCreateAndSave(iter: number, amt: number)
                 point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
                 bigint: 1n,
                 text: "some text",
-                vector: [3, 2, 4],
                 stringArray: ["a", "b", "c"],
                 numberArray: [1, 2, 3],
                 booleanArray: [true, false, true],
@@ -1012,7 +999,6 @@ export async function benchNoValFullHASHCreateAndSave(iter: number, amt: number)
                 ],
                 bigintArray: [1n, 2n, 3n],
                 textArray: ["this is a", "this is b", "this is c"],
-                vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
                 object: {
                     string: "s",
                     number: 3,
@@ -1021,7 +1007,6 @@ export async function benchNoValFullHASHCreateAndSave(iter: number, amt: number)
                     point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
                     bigint: 1n,
                     text: "some text",
-                    vector: [3, 2, 4],
                     stringArray: ["a", "b", "c"],
                     numberArray: [1, 2, 3],
                     booleanArray: [true, false, true],
@@ -1033,7 +1018,6 @@ export async function benchNoValFullHASHCreateAndSave(iter: number, amt: number)
                     ],
                     bigintArray: [1n, 2n, 3n],
                     textArray: ["this is a", "this is b", "this is c"],
-                    vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
                     nestedObject: {
                         nestedTuple: [true]
                     }
@@ -1046,7 +1030,6 @@ export async function benchNoValFullHASHCreateAndSave(iter: number, amt: number)
                     { latitude: 35.69959561887533, longitude: 139.77083086508688 },
                     1n,
                     "some text",
-                    [3, 2, 4],
                     ["a", "b", "c"],
                     [1, 2, 3],
                     [true, false, true],
@@ -1058,7 +1041,6 @@ export async function benchNoValFullHASHCreateAndSave(iter: number, amt: number)
                     ],
                     [1n, 2n, 3n],
                     ["this is a", "this is b", "this is c"],
-                    [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
                     ["a", 1],
                     { a: true }
                 ],
@@ -1104,7 +1086,6 @@ export async function benchBatchNoValFullHASHCreateAndSave(iter: number, amt: nu
                 point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
                 bigint: 1n,
                 text: "some text",
-                vector: [3, 2, 4],
                 stringArray: ["a", "b", "c"],
                 numberArray: [1, 2, 3],
                 booleanArray: [true, false, true],
@@ -1117,7 +1098,6 @@ export async function benchBatchNoValFullHASHCreateAndSave(iter: number, amt: nu
                 ],
                 bigintArray: [1n, 2n, 3n],
                 textArray: ["this is a", "this is b", "this is c"],
-                vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
                 object: {
                     string: "s",
                     number: 3,
@@ -1126,7 +1106,6 @@ export async function benchBatchNoValFullHASHCreateAndSave(iter: number, amt: nu
                     point: { latitude: 35.69959561887533, longitude: 139.77083086508688 },
                     bigint: 1n,
                     text: "some text",
-                    vector: [3, 2, 4],
                     stringArray: ["a", "b", "c"],
                     numberArray: [1, 2, 3],
                     booleanArray: [true, false, true],
@@ -1138,7 +1117,6 @@ export async function benchBatchNoValFullHASHCreateAndSave(iter: number, amt: nu
                     ],
                     bigintArray: [1n, 2n, 3n],
                     textArray: ["this is a", "this is b", "this is c"],
-                    vectorArray: [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
                     nestedObject: {
                         nestedTuple: [true]
                     }
@@ -1151,7 +1129,6 @@ export async function benchBatchNoValFullHASHCreateAndSave(iter: number, amt: nu
                     { latitude: 35.69959561887533, longitude: 139.77083086508688 },
                     1n,
                     "some text",
-                    [3, 2, 4],
                     ["a", "b", "c"],
                     [1, 2, 3],
                     [true, false, true],
@@ -1163,7 +1140,6 @@ export async function benchBatchNoValFullHASHCreateAndSave(iter: number, amt: nu
                     ],
                     [1n, 2n, 3n],
                     ["this is a", "this is b", "this is c"],
-                    [[3, 2, 4], [3, 2, 4], [3, 2, 4]],
                     ["a", 1],
                     { a: true }
                 ],
