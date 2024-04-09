@@ -4,39 +4,54 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-dependencies:
-  redis:
-    specifier: ^4.6.13
-    version: 4.6.13
+importers:
 
-devDependencies:
-  '@stylistic/eslint-plugin':
-    specifier: ^1.7.0
-    version: 1.7.0(eslint@9.0.0)(typescript@5.4.4)
-  '@types/node':
-    specifier: ^20.12.6
-    version: 20.12.6
-  bun-types:
-    specifier: ^1.1.3
-    version: 1.1.3
-  eslint:
-    specifier: ^9.0.0
-    version: 9.0.0
-  eslint-plugin-jsdoc:
-    specifier: ^48.2.3
-    version: 48.2.3(eslint@9.0.0)
-  redis-om:
-    specifier: 0.4.3
-    version: 0.4.3
-  ts-node:
-    specifier: ^10.9.2
-    version: 10.9.2(@types/node@20.12.6)(typescript@5.4.4)
-  typescript:
-    specifier: ^5.4.4
-    version: 5.4.4
-  typescript-eslint:
-    specifier: ^7.5.0
-    version: 7.6.0(eslint@9.0.0)(typescript@5.4.4)
+  .:
+    devDependencies:
+      '@stylistic/eslint-plugin':
+        specifier: ^1.7.0
+        version: 1.7.0(eslint@9.0.0)(typescript@5.4.4)
+      '@types/node':
+        specifier: ^20.12.6
+        version: 20.12.6
+      bun-types:
+        specifier: ^1.1.3
+        version: 1.1.3
+      eslint:
+        specifier: ^9.0.0
+        version: 9.0.0
+      eslint-plugin-jsdoc:
+        specifier: ^48.2.3
+        version: 48.2.3(eslint@9.0.0)
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@20.12.6)(typescript@5.4.4)
+      typescript:
+        specifier: ^5.4.4
+        version: 5.4.4
+      typescript-eslint:
+        specifier: ^7.5.0
+        version: 7.6.0(eslint@9.0.0)(typescript@5.4.4)
+
+  packages/benchmarks:
+    dependencies:
+      redis-om:
+        specifier: 0.4.3
+        version: 0.4.3
+
+  packages/examples: {}
+
+  packages/nekdis:
+    dependencies:
+      redis:
+        specifier: ^4.6.13
+        version: 4.6.13
+
+  packages/nekdis-old:
+    dependencies:
+      redis:
+        specifier: ^4.6.13
+        version: 4.6.13
 
 packages:
 
@@ -161,6 +176,7 @@ packages:
       '@redis/client': ^1.0.0
     dependencies:
       '@redis/client': 1.5.14
+    dev: false
 
   /@redis/client@1.5.14:
     resolution: {integrity: sha512-YGn0GqsRBFUQxklhY7v562VMOP0DcmlrHHs3IV1mFE3cbxe31IITUkqhBcIhVSI/2JqtWAJXg5mjV4aU+zD0HA==}
@@ -169,6 +185,7 @@ packages:
       cluster-key-slot: 1.1.2
       generic-pool: 3.9.0
       yallist: 4.0.0
+    dev: false
 
   /@redis/graph@1.1.1(@redis/client@1.5.14):
     resolution: {integrity: sha512-FEMTcTHZozZciLRl6GiiIB4zGm5z5F3F6a6FZCyrfxdKOhFlGkiAqlexWMBzCi4DcRoyiOsuLfW+cjlGWyExOw==}
@@ -176,6 +193,7 @@ packages:
       '@redis/client': ^1.0.0
     dependencies:
       '@redis/client': 1.5.14
+    dev: false
 
   /@redis/json@1.0.6(@redis/client@1.5.14):
     resolution: {integrity: sha512-rcZO3bfQbm2zPRpqo82XbW8zg4G/w4W3tI7X8Mqleq9goQjAGLL7q/1n1ZX4dXEAmORVZ4s1+uKLaUOg7LrUhw==}
@@ -183,6 +201,7 @@ packages:
       '@redis/client': ^1.0.0
     dependencies:
       '@redis/client': 1.5.14
+    dev: false
 
   /@redis/search@1.1.6(@redis/client@1.5.14):
     resolution: {integrity: sha512-mZXCxbTYKBQ3M2lZnEddwEAks0Kc7nauire8q20oA0oA/LoA+E/b5Y5KZn232ztPb1FkIGqo12vh3Lf+Vw5iTw==}
@@ -190,6 +209,7 @@ packages:
       '@redis/client': ^1.0.0
     dependencies:
       '@redis/client': 1.5.14
+    dev: false
 
   /@redis/time-series@1.0.5(@redis/client@1.5.14):
     resolution: {integrity: sha512-IFjIgTusQym2B5IZJG3XKr5llka7ey84fw/NOYqESP5WUfQs9zz1ww/9+qoz4ka/S6KcGBodzlCeZ5UImKbscg==}
@@ -197,6 +217,7 @@ packages:
       '@redis/client': ^1.0.0
     dependencies:
       '@redis/client': 1.5.14
+    dev: false
 
   /@stylistic/eslint-plugin-js@1.7.0(eslint@9.0.0):
     resolution: {integrity: sha512-PN6On/+or63FGnhhMKSQfYcWutRlzOiYlVdLM6yN7lquoBTqUJHYnl4TA4MHwiAt46X5gRxDr1+xPZ1lOLcL+Q==}
@@ -627,6 +648,7 @@ packages:
   /cluster-key-slot@1.1.2:
     resolution: {integrity: sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA==}
     engines: {node: '>=0.10.0'}
+    dev: false
 
   /color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
@@ -883,6 +905,7 @@ packages:
   /generic-pool@3.9.0:
     resolution: {integrity: sha512-hymDOu5B53XvN4QT9dBmZxPX4CWhBPPLguTZ9MMFeFa/Kg0xWVfylOVNlJji/E7yTZWFd/q9GO5TxDLq156D7g==}
     engines: {node: '>= 4'}
+    dev: false
 
   /glob-parent@5.1.2:
     resolution: {integrity: sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==}
@@ -1002,11 +1025,11 @@ packages:
   /jsonpath-plus@7.2.0:
     resolution: {integrity: sha512-zBfiUPM5nD0YZSBT/o/fbCUlCcepMIdP0CJZxM1+KgA4f2T206f6VAg9e7mX35+KlMaIc5qXW34f3BnwJ3w+RA==}
     engines: {node: '>=12.0.0'}
-    dev: true
+    dev: false
 
   /just-clone@6.2.0:
     resolution: {integrity: sha512-1IynUYEc/HAwxhi3WDpIpxJbZpMCvvrrmZVqvj9EhpvbH8lls7HhdhiByjL7DkAaWlLIzpC0Xc/VPvy/UxLNjA==}
-    dev: true
+    dev: false
 
   /keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
@@ -1165,7 +1188,7 @@ packages:
       just-clone: 6.2.0
       redis: 4.6.13
       ulid: 2.3.0
-    dev: true
+    dev: false
 
   /redis@4.6.13:
     resolution: {integrity: sha512-MHgkS4B+sPjCXpf+HfdetBwbRz6vCtsceTmw1pHNYJAsYxrfpOP6dz+piJWGos8wqG7qb3vj/Rrc5qOlmInUuA==}
@@ -1176,6 +1199,7 @@ packages:
       '@redis/json': 1.0.6(@redis/client@1.5.14)
       '@redis/search': 1.1.6(@redis/client@1.5.14)
       '@redis/time-series': 1.0.5(@redis/client@1.5.14)
+    dev: false
 
   /resolve-from@4.0.0:
     resolution: {integrity: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==}
@@ -1338,7 +1362,7 @@ packages:
   /ulid@2.3.0:
     resolution: {integrity: sha512-keqHubrlpvT6G2wH0OEfSW4mquYRcbe/J8NMmveoQOjUqmo+hXtO+ORCpWhdbZ7k72UtY61BL7haGxW6enBnjw==}
     hasBin: true
-    dev: true
+    dev: false
 
   /undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}

@@ -1,0 +1,47 @@
+{
+  "private": true,
+  "name": "nekdis",
+  "version": "0.14.0",
+  "description": "Object mapping, and more, for Redis and Node.js. Written in TypeScript.",
+  "author": "DidaS <didasoficial@gmail.com>",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json",
+    "./dist/utils/symbols.js": null
+  },
+  "files": [
+    "./dist/"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "build": "rm -rf ./dist && tsc && cp -r ./src/scripts ./dist/scripts",
+    "build:test": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Didas-git/Nekdis.git"
+  },
+  "homepage": "https://github.com/Didas-git/Nekdis/tree/main/packages/nekdis",
+  "bugs": {
+    "url": "https://github.com/Didas-git/Nekdis/issues"
+  },
+  "keywords": [
+    "redis",
+    "orm",
+    "odm",
+    "nekdis",
+    "node",
+    "node-redis",
+    "proposal"
+  ],
+  "peerDependencies": {
+    "redis": "^4.6.13"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "private": true,
+  "name": "examples",
+  "author": "DidaS <didasoficial@gmail.com>",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "check": "eslint ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Didas-git/Nekdis.git"
+  },
+  "homepage": "https://github.com/Didas-git/Nekdis/tree/main/packages/example",
+  "bugs": {
+    "url": "https://github.com/Didas-git/Nekdis/issues"
+  }
+}

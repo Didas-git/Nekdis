@@ -1,7 +1,5 @@
 {
   "compilerOptions": {
-    "outDir": "dist",
-    "baseUrl": ".",
     "target": "ESNext",
     "module": "Node16",
     "moduleResolution": "Node16",
@@ -30,8 +28,5 @@
     "skipLibCheck": true,
     "removeComments": true,
     "preserveConstEnums": true
-  },
-  "include": [
-    "src/**/*"
-  ]
+  }
 }

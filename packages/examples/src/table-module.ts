@@ -1,6 +1,7 @@
-import { PrettyError } from "@infinite-fansub/logger";
-
-import { Client, Model, ModelOptions } from "../src";
+/* eslint-disable no-underscore-dangle */
+/* eslint-disable @typescript-eslint/naming-convention */
+import type { Model, ModelOptions } from "../../nekdis-old/src/index.js";
+import { Client } from "../../nekdis-old/src/index.js";
 /*
 This module allows you to define tables to use with normal redis operations
 However it doesn't affect the `Search` functionality since it doesn't have suffix constrains
@@ -10,21 +11,23 @@ the different features and some other possibilities
 */
 class Table<T extends Model<any>> {
     readonly #oldSuffix: ModelOptions["suffix"];
+    public readonly model: T;
 
-    constructor(name: string, public model: T) {
+    public constructor(name: string, model: T) {
+        this.model = model;
         const { suffix } = model.options;
         this.#oldSuffix = suffix;
 
         if (typeof suffix !== "undefined") {
-            if (typeof suffix === "function") throw new PrettyError("Using tables is not allowed with dynamic suffixes");
+            if (typeof suffix === "function") throw new Error("Using tables is not allowed with dynamic suffixes");
 
             model.options = {
                 suffix: `${suffix}:${name}`
-            }
+            };
         } else {
             model.options = {
                 suffix: name
-            }
+            };
         }
     }
 
@@ -32,7 +35,7 @@ class Table<T extends Model<any>> {
     public _cleanUp(): void {
         this.model.options = {
             suffix: this.#oldSuffix
-        }
+        };
     }
 }
 
@@ -43,7 +46,7 @@ const client = new Client({
         schema: {
             methods: {
                 withTable: async function (name: string, table: TableFunction) {
-                    if (typeof table === "function") (await table(new Table(name, <never>this)))._cleanUp();
+                    if (typeof table === "function") (await table(new Table(name, <never> this)))._cleanUp();
                     else table._cleanUp();
                 }
             }
@@ -53,13 +56,12 @@ const client = new Client({
 
 // IIFE
 (async () => {
-
-    await client.connect().then(() => console.log("Connected!"));
+    await client.connect().then(() => { console.log("Connected!"); });
 
     const simpleSchema = client.schema({
         name: "string",
         age: "number"
-    })
+    });
 
     const exampleModel = client.model("test", simpleSchema);
     await exampleModel.createIndex();
@@ -73,14 +75,14 @@ const client = new Client({
     //#region No Tables
     const result1 = await exampleModel.get(1);
 
-    console.log(result1)
+    console.log(result1);
     /*
     Expected Redis log:
-    
+
     "JSON.GET" "Nekdis:V1:test:1"
-    
+
     Expected result:
-     
+
     JSONDocument {
         '$id': '1',
         name: 'DidaS',
@@ -99,7 +101,7 @@ const client = new Client({
             $id: 1,
             name: "DidaS",
             age: 21
-        })
+        });
 
         return table;
     });
@@ -107,14 +109,14 @@ const client = new Client({
     // This could be done in the same `withTable` call but its just to show that you can do it anywhere in the project
     await exampleModel.withTable("table1", async (table: ExampleTable) => {
         const result2 = await table.model.get(1);
-        console.log(result2)
+        console.log(result2);
         /*
         Expected Redis log:
-        
+
         "JSON.GET" "Nekdis:V1:test:table1:1"
-        
+
         Expected result:
-        
+
         JSONDocument {
             '$id': '1',
             name: undefined,
@@ -127,5 +129,4 @@ const client = new Client({
     //#endregion With Tables
 
     await client.disconnect();
-
-})()
+})();

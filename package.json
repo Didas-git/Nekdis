@@ -1,52 +1,30 @@
 {
-  "name": "nekdis",
-  "version": "0.15.0",
-  "description": "Object mapping, and more, for Redis and Node.js. Written in TypeScript.",
-  "type": "module",
-  "main": "dist/index.js",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "require": "./dist/index.js",
-      "default": "./dist/index.js"
-    },
-    "./package.json": "./package.json",
-    "./dist/utils/symbols.js": null
-  },
-  "files": [
-    "./dist/"
-  ],
-  "scripts": {
-    "lint": "eslint .",
-    "build": "rm -rf ./dist && tsc && cp -r ./src/scripts ./dist/scripts",
-    "build:test": "tsc --noEmit",
-    "bench": "rm -rf ./bench-dist && cd benchmarks && tsc && cd .. && node bench-dist/dist/index.mjs"
-  },
-  "repository": "github:Didas-git/Nekdis",
-  "homepage": "https://github.com/Didas-git/Nekdis#readme",
-  "keywords": [
-    "redis",
-    "orm",
-    "odm",
-    "nekdis",
-    "node",
-    "node-redis",
-    "proposal"
-  ],
-  "license": "MIT",
+  "private": true,
   "author": "DidaS <didasoficial@gmail.com>",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "check": "eslint ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Didas-git/Nekdis.git"
+  },
+  "homepage": "https://github.com/Didas-git/Nekdis#readme",
+  "bugs": {
+    "url": "https://github.com/Didas-git/Nekdis/issues"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
   "devDependencies": {
     "@stylistic/eslint-plugin": "^1.7.0",
     "@types/node": "^20.12.6",
     "eslint-plugin-jsdoc": "^48.2.3",
     "bun-types": "^1.1.3",
     "eslint": "^9.0.0",
-    "redis-om": "0.4.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.4",
     "typescript-eslint": "^7.5.0"
-  },
-  "peerDependencies": {
-    "redis": "^4.6.13"
   }
 }

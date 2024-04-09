@@ -8,11 +8,9 @@ export default tsEslint.config({
         "**/*.js",
         "**/*.d.ts",
         "**/*.json",
-        "spec/",
-        "dist/",
-        "scripts/",
-        "examples/",
-        "node_modules/**/*"
+        "**/spec/",
+        "**/dist/",
+        "**/node_modules/**/*"
     ],
 }, {
     files: ["**/*.ts"],

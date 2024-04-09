@@ -5,6 +5,7 @@
         "FCALL",
         "HNSW",
         "HSET",
+        "IIFE",
         "JSONCR",
         "JSONGR",
         "JSONSR",
