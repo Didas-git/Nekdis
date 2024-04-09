@@ -28,5 +28,8 @@
     "skipLibCheck": true,
     "removeComments": true,
     "preserveConstEnums": true
-  }
+  },
+  "exclude": [
+    "eslint.config.js"
+  ]
 }
